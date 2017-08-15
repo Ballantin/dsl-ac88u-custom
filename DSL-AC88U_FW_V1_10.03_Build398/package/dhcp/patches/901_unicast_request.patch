@@ -1,0 +1,140 @@
+diff --git dhcp-4.1.1.orig/client/dhclient.c dhcp-4.1.1/client/dhclient.c
+index 9154c9e..85ae886 100644
+--- dhcp-4.1.1.orig/client/dhclient.c
++++ dhcp-4.1.1/client/dhclient.c
+@@ -1368,6 +1368,9 @@ void dhcpack (packet)
+ 
+ 	log_info ("DHCPACK from %s", piaddr (packet -> client_addr));
+ 
++	memcpy (&client -> server_mac, packet -> haddr, sizeof(struct hardware));
++	client -> xid = random();
++	
+ 	lease = packet_to_lease (packet, client);
+ 	if (!lease) {
+ 		log_info ("packet_to_lease failed.");
+@@ -2542,6 +2545,7 @@ void send_request (cpp)
+ 	int interval;
+ 	struct sockaddr_in destination;
+ 	struct in_addr from;
++	struct hardware hto;
+ 	struct timeval tv;
+ 
+ 	/* Figure out how long it's been since we started transmitting. */
+@@ -2695,11 +2699,22 @@ void send_request (cpp)
+ #endif
+ 
+ 	if (client -> state == S_RENEWING ||
+-	    client -> state == S_REBINDING)
++	    client -> state == S_REBINDING) {
++    if(client -> state == S_RENEWING)
++    {
++      memcpy (&hto, &client -> server_mac, sizeof hto);
++    }
++    else
++    {
++      memset (&hto, 0, sizeof hto);
++    }
+ 		memcpy (&from, client -> active -> address.iabuf,
+ 			sizeof from);
+-	else
++	}
++	else {
++		memset (&hto, 0, sizeof hto);
+ 		from.s_addr = INADDR_ANY;
++	}
+ 
+ 	/* Record the number of seconds since we started sending. */
+ 	if (client -> state == S_REQUESTING)
+@@ -2727,14 +2742,14 @@ void send_request (cpp)
+ 				      &client -> packet,
+ 				      client -> packet_length,
+ 				      from, &destination,
+-				      (struct hardware *)0);
++				      &hto);
+ 	else
+ 		/* Send out a packet. */
+ 		result = send_packet (client -> interface, (struct packet *)0,
+ 				      &client -> packet,
+ 				      client -> packet_length,
+ 				      from, &destination,
+-				      (struct hardware *)0);
++				      &hto);
+ 
+ 	tv . tv_sec = cur_time + client -> interval;
+ 	tv . tv_usec = 0;
+diff --git dhcp-4.1.1.orig/common/socket.c dhcp-4.1.1/common/socket.c
+index f0fa724..e24b78f 100644
+--- dhcp-4.1.1.orig/common/socket.c
++++ dhcp-4.1.1/common/socket.c
+@@ -384,7 +384,7 @@ int if_register_rawsocket(struct interface_info *info)
+ 	struct sockaddr_ll sock;
+ 	int ifindex = 0;
+ 
+-	if ((fd = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_IP))) < 0) {
++	if ((fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_IP))) < 0) {
+ 		log_error("socket call failed: %s", strerror(errno));
+ 		return -1;
+ 	}
+@@ -678,7 +678,7 @@ ssize_t send_raw_packet (interface, packet, raw, len, from, to, hto)
+ 	if (!strcmp (interface -> name, "fallback"))
+ 		return 0;
+ 
+-	if ((fd = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_IP))) < 0) {
++	if ((fd = socket(PF_PACKET, SOCK_RAW,  htons(ETH_P_IP))) < 0) {
+ 		log_error("socket call failed: %s", strerror(errno));
+ 		return -1;
+ 	}
+@@ -713,13 +713,9 @@ ssize_t send_raw_packet (interface, packet, raw, len, from, to, hto)
+ 
+ 	cprintf("%s[%d]: interface->name=%s,  interface->wfdesc=%d\n", __func__, __LINE__, interface->name,  interface->wfdesc);
+ 
+-#if 0	/* tlhhh 2010-12-17. our socket works on IP layer, so just tell the system dest mac, system will finish the rest.
+ 	/* Assemble the headers... */
+-	assemble_hw_header (interface, (unsigned char *)hh, &hbufp, hto);
+-	fudge = hbufp % 4;	/* IP header must be word-aligned. */
+-	memcpy (buf + fudge, (unsigned char *)hh, hbufp);
+-	ibufp = hbufp + fudge;
+-#endif
++	assemble_hw_header (interface, (unsigned char *)buf, &hbufp, hto);
++	ibufp = hbufp;
+ 
+ 	assemble_udp_ip_header (interface, buf, &ibufp, from.s_addr,
+ 				to -> sin_addr.s_addr, to -> sin_port,
+@@ -924,10 +920,16 @@ ssize_t receive_raw_packet (interface, buf, len, from, hfrom)
+ 
+ 	bufix = 0;
+ 
+-#if 0
+ 	/* Decode the physical header... */
+ 	offset = decode_hw_header (interface, ibuf, bufix, hfrom);
+ 
++	/* If the packet send by itself, then just drop it. */	
++	if (0 == memcmp (interface -> hw_address.hbuf,
++		     hfrom -> hbuf, hfrom -> hlen)) {
++		//log_info("The packet send by itself, then just drop it.\n");
++		return 0;
++	}
++
+ 	/* If a physical layer checksum failed (dunno of any
+ 	   physical layer that supports this, but WTH), skip this
+ 	   packet. */
+@@ -937,7 +939,6 @@ ssize_t receive_raw_packet (interface, buf, len, from, hfrom)
+ 
+ 	bufix += offset;
+ 	length -= offset;
+-#endif
+ 	
+ 	/* check if UDP packet? */
+ 
+diff --git dhcp-4.1.1.orig/includes/dhcpd.h dhcp-4.1.1/includes/dhcpd.h
+index a263a82..f90342b 100644
+--- dhcp-4.1.1.orig/includes/dhcpd.h
++++ dhcp-4.1.1/includes/dhcpd.h
+@@ -1068,6 +1068,7 @@ struct client_state {
+ 	struct client_lease *alias;			     /* Alias lease. */
+ 
+ 	struct iaddr destination;		    /* Where to send packet. */
++	struct hardware server_mac;	     /* MAC of boot server */
+ 	u_int32_t xid;					  /* Transaction ID. */
+ 	u_int16_t secs;			    /* secs value from DHCPDISCOVER. */
+ 	TIME first_sending;			/* When was first copy sent? */

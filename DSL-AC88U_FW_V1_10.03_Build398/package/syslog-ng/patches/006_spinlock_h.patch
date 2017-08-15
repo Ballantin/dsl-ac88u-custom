@@ -1,0 +1,13 @@
+--- syslog-ng-3.3.9.orig/lib/ivykis/modules/spinlock.h	2013-10-21 06:29:38.816800411 +0000
++++ syslog-ng-3.3.9/lib/ivykis/modules/spinlock.h	2013-10-21 06:30:04.152800408 +0000
+@@ -47,8 +47,10 @@
+ 
+ static inline void spin_lock(spinlock_t *lock)
+ {
++#if 0
+ 	while (__sync_lock_test_and_set(lock, 1) == 1)
+ 		;
++#endif
+ }
+ 
+ static inline void spin_unlock(spinlock_t *lock)

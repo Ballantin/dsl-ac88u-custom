@@ -1,0 +1,35 @@
+#
+# Makefile for the optical wan detection
+#
+
+obj-${CONFIG_BCM_OPTICALDET} += opticaldet.o
+opticaldet-objs += detect_opt.o detect_dev.o
+
+EXTRA_CFLAGS += -I$(INC_BRCMSHARED_PUB_PATH)/drv/mdio
+EXTRA_CFLAGS += -I$(INC_BRCMSHARED_PUB_PATH)/drv/phys
+
+EXTRA_CFLAGS += -I$(INC_RDPA_PATH)
+EXTRA_CFLAGS += -I$(INC_BDMF_PATH)/framework
+
+EXTRA_CFLAGS += -I$(INC_BRCMDRIVER_PUB_PATH)/$(BRCM_BOARD)
+EXTRA_CFLAGS += -I$(INC_BRCMDRIVER_PRIV_PATH)/$(BRCM_BOARD)
+EXTRA_CFLAGS += -I$(INC_BRCMBOARDPARMS_PATH)/$(BRCM_BOARD)
+EXTRA_CFLAGS += -I$(INC_BRCMSHARED_PUB_PATH)/$(BRCM_BOARD)
+
+ifeq ("$(CONFIG_BCM96838)" ,"y")
+CONFIG_PLATFORM=oren
+EXTRA_CFLAGS += -I$(INC_RDPA_PATH)/oren
+EXTRA_CFLAGS += -I$(INC_BDMF_PATH)/platform/oren
+EXTRA_CFLAGS += -I$(INC_BRCMSHARED_PUB_PATH)/rdp/base
+EXTRA_CFLAGS += -I$(INC_BRCMSHARED_PUB_PATH)/rdp
+EXTRA_CFLAGS += -I$(INC_BRCMSHARED_PUB_PATH)/drv/egphy
+EXTRA_CFLAGS += -I$(INC_BRCMSHARED_PUB_PATH)/drv
+endif
+
+EXTRA_CFLAGS += -Werror -Wall
+
+-include $(TOPDIR)/Rules.make
+
+clean:
+	rm -f *.[ao] *.ko *.cmd
+

@@ -1,0 +1,45 @@
+--- a/doc/openvpn.8	
++++ b/doc/openvpn.8
+@@ -6148,7 +6148,7 @@
+ already installed.  If so, there are still a few things you need to do:
+ 
+ Make device:
+-.B mknod /dev/net/tun c 10 200
++.B mknod /dev/tun c 10 200
+ 
+ Load driver:
+ .B modprobe tun
+@@ -6163,7 +6163,7 @@
+ If you are using Linux 2.4 or higher,
+ make the tun device node and load the tun module:
+ .IP
+-.B mknod /dev/net/tun c 10 200
++.B mknod /dev/tun c 10 200
+ .LP
+ .IP
+ .B modprobe tun
+
+--- a/src/openvpn/tun.c		2013-05-31 20:00:25.000000000 +0800
++++ b/src/openvpn/tun.c 	2015-06-09 17:46:10.000000000 +0800
+@@ -1397,7 +1397,7 @@
+        */
+       const char *node = dev_node;
+       if (!node)
+-	node = "/dev/net/tun";
++	node = "/dev/tun";
+ 
+       /*
+        * Open the interface
+
+--- a/distro/rpm/openvpn.spec.in	2013-05-31 20:00:07.000000000 +0800
++++ b/distro/rpm/openvpn.spec.in	2015-06-09 17:45:00.000000000 +0800
+@@ -143,8 +143,8 @@
+ %post
+ case "`uname -r`" in
+ 2.4*)
+-	/bin/mkdir /dev/net >/dev/null 2>&1
+-	/bin/mknod /dev/net/tun c 10 200 >/dev/null 2>&1
++	/bin/mkdir /dev >/dev/null 2>&1
++	/bin/mknod /dev/tun c 10 200 >/dev/null 2>&1
+ 	;;
+ esac

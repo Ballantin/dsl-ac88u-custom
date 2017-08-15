@@ -1,0 +1,121 @@
+diff --git a/image_utils.c b/image_utils.c
+old mode 100644
+new mode 100755
+index 445c9bc..c3c5f38
+--- a/image_utils.c
++++ b/image_utils.c
+@@ -438,11 +438,18 @@ image_new_from_jpeg(const char *path, int is_file, const uint8_t *buf, int size,
+ 	cinfo.err = jpeg_std_error(&pub);
+ 	pub.error_exit = libjpeg_error_handler;
+ 	jpeg_create_decompress(&cinfo);
++	if( setjmp(setjmp_buffer) )
++	{
++		jpeg_destroy_decompress(&cinfo);
++		DPRINTF(E_WARN, L_METADATA, "image_new from %s. ERROR\n", path);
++		return NULL;
++	}
+ 	if( is_file )
+ 	{
+ 		if( (file = fopen(path, "r")) == NULL )
+ 		{
+ 			jpeg_destroy_decompress(&cinfo);	/* Jared: Fix memory leaking */
++			DPRINTF(E_WARN, L_METADATA, "image_new from %s. Can't open\n", path);
+ 			return NULL;
+ 		}
+ 		jpeg_stdio_src(&cinfo, file);
+@@ -451,13 +458,6 @@ image_new_from_jpeg(const char *path, int is_file, const uint8_t *buf, int size,
+ 	{
+ 		jpeg_memory_src(&cinfo, buf, size);
+ 	}
+-	if( setjmp(setjmp_buffer) )
+-	{
+-		jpeg_destroy_decompress(&cinfo);
+-		if( is_file && file )
+-			fclose(file);
+-		return NULL;
+-	}
+ 	jpeg_read_header(&cinfo, TRUE);
+ 	cinfo.scale_denom = scale;
+ 	cinfo.do_fancy_upsampling = FALSE;
+@@ -465,7 +465,6 @@ image_new_from_jpeg(const char *path, int is_file, const uint8_t *buf, int size,
+ 	jpeg_start_decompress(&cinfo);
+ 	w = cinfo.output_width;
+ 	h = cinfo.output_height;
+-	DPRINTF(E_WARN, L_METADATA, "image_new from %s.\n", path);
+ 	vimage = (rotate & (ROTATE_90|ROTATE_270)) ? image_new(h, w) : image_new(w, h);
+ 	if(!vimage)
+ 	{
+diff --git a/upnphttp.c b/upnphttp.c
+old mode 100644
+new mode 100755
+index 30d2664..4436dce
+--- a/upnphttp.c
++++ b/upnphttp.c
+@@ -1668,7 +1668,8 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
+ 	if( ret != 2 )
+ 	{
+ 		Send500(h);
+-		return;
++		//return;
++		goto resized_error;
+ 	}
+ 	/* Figure out the best destination resolution we can use */
+ 	dstw = width;
+diff --git a/upnpsoap.c b/upnpsoap.c
+old mode 100644
+new mode 100755
+index d226272..cfb8191
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -916,12 +916,23 @@ callback(void *args, int argc, char **argv, char **azColName)
+ 				int srcw, srch;
+ 				if( resolution && (sscanf(resolution, "%6dx%6d", &srcw, &srch) == 2) )
+ 				{
+-					if( srcw > 4096 || srch > 4096 )
+-						add_resized_res(srcw, srch, 4096, 4096, "JPEG_LRG", detailID, passed_args);
+-					if( srcw > 1024 || srch > 768 )
+-						add_resized_res(srcw, srch, 1024, 768, "JPEG_MED", detailID, passed_args);
+-					if( srcw > 640 || srch > 480 )
+-						add_resized_res(srcw, srch, 640, 480, "JPEG_SM", detailID, passed_args);
++					/*
++					 * Jared: resizing large photo MAY cause Out of memory 
++					 * So we set cretira to allow resize photo if the width + high <=4096
++					 */
++					/*
++					 * Jared: Event under condition srcw + srch <= 4096, it still OOM.
++					 * So, I disable resizing feature 
++					 */
++					if( 0 ) { //srcw + srch <= 4096 ) {
++						if( srcw > 4096 || srch > 4096 )
++							add_resized_res(srcw, srch, 4096, 4096, "JPEG_LRG", detailID, passed_args);
++						if( srcw > 1024 || srch > 768 )
++							add_resized_res(srcw, srch, 1024, 768, "JPEG_MED", detailID, passed_args);
++						if( srcw > 640 || srch > 480 )
++							add_resized_res(srcw, srch, 640, 480, "JPEG_SM", detailID, passed_args);
++					}
++					
+ 				}
+ 				if( !(passed_args->flags & FLAG_RESIZE_THUMBS) && tn && atoi(tn) ) {
+ 					ret = strcatf(str, "&lt;res protocolInfo=\"http-get:*:%s:%s\"&gt;"
+@@ -930,8 +941,19 @@ callback(void *args, int argc, char **argv, char **azColName)
+ 					                   mime, "DLNA.ORG_PN=JPEG_TN;DLNA.ORG_CI=1", lan_addr[passed_args->iface].str,
+ 					                   runtime_vars.port, detailID);
+ 				}
+-				else
+-					add_resized_res(srcw, srch, 160, 160, "JPEG_TN", detailID, passed_args);
++				else {
++					/*
++					 * Jared: resizing large photo MAY cause Out of memory 
++					 * So we set cretira to allow resize photo if the width + high <=4096
++					 */
++					/*
++					 * Jared: Event under condition srcw + srch <= 4096, it still OOM.
++					 * So, I disable resizing feature 
++					 */
++					if( 0 ) { //srcw + srch <= 4096 ) {
++						add_resized_res(srcw, srch, 160, 160, "JPEG_TN", detailID, passed_args);
++					}
++				}
+ 			}
+ 			else if( *mime == 'v' ) {
+ 				switch( passed_args->client ) {

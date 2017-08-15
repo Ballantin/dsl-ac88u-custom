@@ -1,0 +1,15 @@
+diff --git a/configure.ac b/configure.ac
+index 61e8142..61dbfb5 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -40,8 +40,8 @@ AC_TYPE_SIZE_T
+ # Checks for library functions.
+ AC_FUNC_VPRINTF
+ AC_FUNC_MEMCMP
+-AC_FUNC_MALLOC
+-AC_FUNC_REALLOC
++# AC_FUNC_MALLOC
++# AC_FUNC_REALLOC
+ AC_CHECK_FUNCS(strcasecmp strdup strerror snprintf vsnprintf vasprintf open vsyslog strncasecmp setlocale)
+ 
+ #check if .section.gnu.warning accepts long strings (for __warn_references)

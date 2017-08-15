@@ -1,0 +1,28 @@
+--- btpd-0.16/cli/list.c	2010-07-31 09:52:48.000000000 +0800
++++ btpd-0.16_new/cli/list.c	2015-08-05 18:12:08.483668890 +0800
+@@ -127,6 +127,25 @@ print_items(struct items* itms, char *fo
+                             case 't': printf("%c",   p->st);             break;
+                             case 'u': printf("%lld", p->totup);          break;
+                             case 'v': printf("%lld", p->rate_down);      break;
++							
++                            case 'R':
++                                if((p->downloaded > 0) && (p->rate_down > 0) && (p->csize > p->cgot) && (p->csize > p->downloaded)) {
++                                    long long not_downloaded = p->csize - p->downloaded;
++                                    long long time_remaining = not_downloaded / p->rate_down; // [seconds]
++                                    long long hour = 0, min = 0 , sec = 0;
++                                    if(time_remaining >= (60 * 60))
++                                        hour = time_remaining / (60 * 60);
++                                    if(time_remaining >= 60) {
++                                        min = (time_remaining - (hour * 60 * 60)) / 60;
++                                        sec = (time_remaining - (hour * 60 * 60)) % 60;
++                                    }
++                                    else
++                                        sec = time_remaining;
++                                    printf("%lld,%lld,%lld", hour, min, sec);
++                                }
++                                else
++                                    printf("0,0,0");
++                                break;
+ 
+                             case '\0': continue;
+                         }

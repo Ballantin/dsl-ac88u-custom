@@ -1,0 +1,82 @@
+--- a/src/openvpn/push.c	2013-05-31 20:00:07.000000000 +0800
++++ b/src/openvpn/push.c	2016-12-15 14:17:18.594301402 +0800
+@@ -49,6 +49,8 @@
+ receive_auth_failed (struct context *c, const struct buffer *buffer)
+ {
+   msg (M_VERB0, "AUTH: Received control message: %s", BSTR(buffer));
++  system("echo 'AUTH Failed.' > /tmp/vpn_client_error_msg");
++  system("mngcli action new_event=vpn_client_stop");
+   connection_list_set_no_advance(&c->options);
+   if (c->options.pull)
+     {
+--- a/src/openvpn/ssl.c	2013-05-31 20:00:25.000000000 +0800
++++ b/src/openvpn/ssl.c	2016-12-15 14:22:56.969666098 +0800
+@@ -2536,6 +2536,8 @@
+   tls_clear_error();
+   ks->state = S_ERROR;
+   msg (D_TLS_ERRORS, "TLS Error: TLS handshake failed");
++  system("echo 'TLS handshake failed' > /tmp/vpn_client_error_msg");
++  system("mngcli action new_event=vpn_client_stop");
+   INCR_ERROR;
+   gc_free (&gc);
+   return false;
+--- a/src/openvpn/options.c	2016-12-15 14:18:22.044932335 +0800
++++ b/src/openvpn/options.c	2016-12-15 14:24:49.939789437 +0800
+@@ -6828,6 +6828,8 @@
+ 	msg (msglevel_fc, "Unrecognized option or missing parameter(s) in %s:%d: %s (%s)", file, line, p[0], PACKAGE_VERSION);
+       else
+ 	msg (msglevel_fc, "Unrecognized option or missing parameter(s): --%s (%s)", p[0], PACKAGE_VERSION);
++      system("echo 'Unrecognized option or missing parameter(s) in .ovpn file.' > /tmp/vpn_client_error_msg");
++      system("mngcli action new_event=vpn_client_stop");
+     }
+  err:
+   gc_free (&gc);
+--- a/src/openvpn/error.c	2013-05-31 20:00:07.000000000 +0800
++++ b/src/openvpn/error.c	2016-12-15 14:59:20.988530179 +0800
+@@ -704,6 +704,7 @@
+ 	perf_output_results ();
+     }
+ 
++       
+   exit (status);
+ }
+ 
+@@ -759,6 +760,8 @@
+   case WSA_IO_INCOMPLETE:
+     return "I/O Operation in progress (WSA_IO_INCOMPLETE)";
+   case WSAEINTR:
++    
++   
+     return "Interrupted system call (WSAEINTR)";
+   case WSAEBADF:
+     return "Bad file number (WSAEBADF)";
+@@ -799,6 +802,8 @@
+   case WSAENETDOWN:
+     return "Network is down (WSAENETDOWN)";
+   case WSAENETUNREACH:
++    system("echo 'Network is unreachable' > /tmp/vpn_client_error_msg");
++    system("mngcli action new_event=vpn_client_stop");
+     return "Network is unreachable (WSAENETUNREACH)";
+   case WSAENETRESET:
+     return "Net dropped connection or reset (WSAENETRESET)";
+--- a/src/openvpn/socket.c	2013-05-31 20:00:25.000000000 +0800
++++ b/src/openvpn/socket.c	2016-12-15 15:12:35.050260356 +0800
+@@ -170,6 +170,8 @@
+       int level = 0;
+ 
+       fmt = "RESOLVE: Cannot resolve host address: %s: %s";
++      //system("echo 'Cannot resolve host address' > /tmp/vpn_client_error_msg");
++      //system("mngcli action new_event=vpn_client_stop");
+       if ((flags & GETADDR_MENTION_RESOLVE_RETRY)
+           && !resolve_retry_seconds)
+         fmt = "RESOLVE: Cannot resolve host address: %s: %s (I would have retried this name query if you had specified the --resolv-retry option.)";
+@@ -1047,7 +1049,8 @@
+ 	   print_sockaddr (remote, &gc),
+ 	   connect_retry_seconds,
+ 	   strerror_ts (status, &gc));
+-
++      system("echo 'TCP connecntion fail.' > /tmp/vpn_client_error_msg");
++      system("mngcli action new_event=vpn_client_stop");
+       gc_reset (&gc);
+ 
+       openvpn_close_socket (*sd);

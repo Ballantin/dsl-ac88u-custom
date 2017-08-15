@@ -1,0 +1,1035 @@
+    	o Jingwei Liang
+    	Add tunnelbroker support
+    	Add md5 support
+    
+    	modified:   src/plugins/Makefile.am
+    	modified:   src/plugins/Makefile.in
+    	new file:   src/plugins/libtunnelbroker.c
+    	new file:   src/plugins/libtunnelbroker.h
+    	new file:   src/plugins/md5.c
+    	new file:   src/plugins/md5.h
+
+diff --git a/src/plugins/Makefile.am b/src/plugins/Makefile.am
+index 96db7e5..89abbfa 100644
+--- a/src/plugins/Makefile.am
++++ b/src/plugins/Makefile.am
+@@ -7,6 +7,7 @@ AM_CFLAGS = -Wall -Wwrite-strings -Wstrict-prototypes -Wno-trigraphs
+ pkglib_LTLIBRARIES = libchangeip.la libdnsdynamic.la libdyndns.la libeurodyndns.la libhn.la libnoip.la libods.la libovh.la libregfish.la libtzo.la libzoneedit.la
+ pkglib_LTLIBRARIES += libSingTel.la
+ pkglib_LTLIBRARIES += libdnsomatic.la
++pkglib_LTLIBRARIES += libtunnelbroker.la
+ 
+ libchangeip_la_SOURCES = libchangeip.c libchangeip.h
+ libchangeip_la_LIBADD  = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+@@ -36,6 +37,8 @@ SSL_LIB_FILE = $(SSL_LIB_DIR)/libssl.a $(SSL_LIB_DIR)/libcrypto.a
+ libSingTel_la_LIBADD  = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la $(SSL_LIB_FILE)
+ libdnsomatic_la_SOURCES = libdnsomatic.c libdnsomatic.h
+ libdnsomatic_la_LIBADD  = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
++libtunnelbroker_la_SOURCES = libtunnelbroker.c libtunnelbroker.h md5.c md5.h
++libtunnelbroker_la_LIBADD  = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+ 
+ ## include dir
+ INCLUDES = -I$(top_srcdir)/include
+@@ -44,3 +47,4 @@ INCLUDES = -I$(top_srcdir)/include
+ include_HEADERS = libchangeip.h libdnsdynamic.h libdyndns.h libeurodyndns.h libhn.h libnoip.h libods.h libovh.h libregfish.h libtzo.h libzoneedit.h
+ include_HEADERS += libSingTel.h
+ include_HEADERS += libdnsomatic.h
++include_HEADERS += libtunnelbroker.h
+diff --git a/src/plugins/Makefile.in b/src/plugins/Makefile.in
+index fedd051..799e1ed 100644
+--- a/src/plugins/Makefile.in
++++ b/src/plugins/Makefile.in
+@@ -99,6 +99,9 @@ libSingTel_la_OBJECTS = $(am_libSingTel_la_OBJECTS)
+ libdnsomatic_la_DEPENDENCIES = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+ am_libdnsomatic_la_OBJECTS = libdnsomatic.lo
+ libdnsomatic_la_OBJECTS = $(am_libdnsomatic_la_OBJECTS)
++libtunnelbroker_la_DEPENDENCIES = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
++am_libtunnelbroker_la_OBJECTS = libtunnelbroker.lo
++libtunnelbroker_la_OBJECTS = $(am_libtunnelbroker_la_OBJECTS)
+ DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
+ depcomp = $(SHELL) $(top_srcdir)/depcomp
+ am__depfiles_maybe = depfiles
+@@ -118,6 +121,7 @@ SOURCES = $(libchangeip_la_SOURCES) $(libdyndns_la_SOURCES) \
+ 	$(libdnsdynamic_la_SOURCES)
+ SOURCES += $(libSingTel_la_SOURCES)
+ SOURCES += $(libdnsomatic_la_SOURCES)
++SOURCES += $(libtunnelbroker_la_SOURCES)
+ DIST_SOURCES = $(libchangeip_la_SOURCES) $(libdyndns_la_SOURCES) \
+ 	$(libeurodyndns_la_SOURCES) $(libhn_la_SOURCES) \
+ 	$(libnoip_la_SOURCES) $(libods_la_SOURCES) \
+@@ -126,6 +130,7 @@ DIST_SOURCES = $(libchangeip_la_SOURCES) $(libdyndns_la_SOURCES) \
+ 	$(libdnsdynamic_la_SOURCES)
+ DIST_SOURCES += $(libSingTel_la_SOURCES)
+ DIST_SOURCES += $(libdnsomatic_la_SOURCES)
++DIST_SOURCES += $(libtunnelbroker_la_SOURCES)
+ 
+ includeHEADERS_INSTALL = $(INSTALL_HEADER)
+ HEADERS = $(include_HEADERS)
+@@ -250,6 +255,7 @@ AM_CFLAGS = -Wall -Wwrite-strings -Wstrict-prototypes -Wno-trigraphs
+ pkglib_LTLIBRARIES = libchangeip.la libdnsdynamic.la libdyndns.la libeurodyndns.la libhn.la libnoip.la libods.la libovh.la libregfish.la libtzo.la libzoneedit.la
+ pkglib_LTLIBRARIES += libSingTel.la
+ pkglib_LTLIBRARIES += libdnsomatic.la
++pkglib_LTLIBRARIES += libtunnelbroker.la
+ libchangeip_la_SOURCES = libchangeip.c libchangeip.h
+ libchangeip_la_LIBADD = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+ libdnsdynamic_la_SOURCES = libdnsdynamic.c libdnsdynamic.h
+@@ -278,10 +284,13 @@ SSL_LIB_FILE = $(SSL_LIB_DIR)/libssl.a $(SSL_LIB_DIR)/libcrypto.a
+ libSingTel_la_LIBADD = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la $(SSL_LIB_FILE)
+ libdnsomatic_la_SOURCES = libdnsomatic.c libdnsomatic.h
+ libdnsomatic_la_LIBADD = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
++libtunnelbroker_la_SOURCES = libtunnelbroker.c libtunnelbroker.h md5.c md5.h
++libtunnelbroker_la_LIBADD = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+ INCLUDES = -I$(top_srcdir)/include
+ include_HEADERS = libdnsdynamic.h libdnsdynamic.h libdyndns.h libeurodyndns.h libhn.h libnoip.h libods.h libovh.h libregfish.h libtzo.h libzoneedit.h
+ include_HEADERS += libSingTel.h
+ include_HEADERS += libdnsomatic.h
++include_HEADERS += libtunnelbroker.h
+ all: all-am
+ 
+ .SUFFIXES:
+@@ -368,6 +377,8 @@ libSingTel.la: $(libSingTel_la_OBJECTS) $(libSingTel_la_DEPENDENCIES)
+ 	$(LINK) -rpath $(pkglibdir) $(libSingTel_la_LDFLAGS) $(libSingTel_la_OBJECTS) $(libSingTel_la_LIBADD) $(LIBS)
+ libdnsomatic.la: $(libdnsomatic_la_OBJECTS) $(libdnsomatic_la_DEPENDENCIES)
+ 	$(LINK) -rpath $(pkglibdir) $(libdnsomatic_la_LDFLAGS) $(libdnsomatic_la_OBJECTS) $(libdnsomatic_la_LIBADD) $(LIBS)
++libtunnelbroker.la: $(libtunnelbroker_la_OBJECTS) $(libtunnelbroker_la_DEPENDENCIES)
++	$(LINK) -rpath $(pkglibdir) $(libtunnelbroker_la_LDFLAGS) $(libtunnelbroker_la_OBJECTS) $(libtunnelbroker_la_LIBADD) $(LIBS)
+ 
+ mostlyclean-compile:
+ 	-rm -f *.$(OBJEXT)
+@@ -388,6 +399,7 @@ distclean-compile:
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libzoneedit.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libSingTel.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libdnsomatic.Plo@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtunnelbroker.Plo@am__quote@
+ 
+ .c.o:
+ @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+diff --git a/src/plugins/libtunnelbroker.c b/src/plugins/libtunnelbroker.c
+new file mode 100644
+index 0000000..f483af9
+--- /dev/null
++++ b/src/plugins/libtunnelbroker.c
+@@ -0,0 +1,299 @@
++/* -- updatedd: libtunnelbroker.c --
++ *
++ * Copyright (C) 2002, 2003, 2004, 2005 Philipp Benner
++ *
++ * This file is part of UpdateDD - http://updatedd.philipp-benner.de.
++ *
++ * UpdateDD is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * any later version.
++ *
++ * UpdateDD is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with UpdateDD; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++ */
++
++/*
++ * Arcadyan Corp. Jingwei Liang 2015/06
++ * More informations please refer http://www.tunnelbroker.net/
++ * port from asuswrt gpl code
++ */
++
++#include <config.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <stdarg.h>
++#include <ctype.h>
++#include <unistd.h>
++#include <getopt.h>
++
++#include <base64encode.h>
++#include <get_connection.h>
++#include <updatedd-exception.h>
++#include <ret_codes.h>
++#include <version.h>
++
++#include "libtunnelbroker.h"
++#include "md5.h"
++
++static void
++print_usage(char *pname, FILE *fp)
++{
++	(void)fprintf(fp,
++		      "\nUsage: %s [...] %s -- [OPTION]... [USERNAME:PASSWORD] HOSTNAME\n\n",
++		      pname, COLORED("tunnelbroker"));
++	(void)fprintf(fp,
++		      "For security reasons use the environment variable LOGIN instead of\n"
++		      "passing the login information directly.\n\n"
++		      "Options:\n"
++		      "   -4    --ipv4 <address>        ip address version 4\n"
++		      "         --help                  print help and exit\n"
++		      "         --version               display version information and exit\n\n"
++		      "Report bugs to <"EMAIL">.\n\n");
++	return;
++}
++
++static void
++print_version(FILE *fp)
++{
++        
++	(void)fprintf(fp,
++		      "\n" PNAME " plugin for www.tunnelbroker.net, version 1.0,\n"
++		      "Copyright (C) 2015 Arcadyan Corp.\n\n"
++
++		      "This is free software, and you are welcome to redistribute it\n"
++		      "under certain conditions; see the source for copying conditions.\n"
++		      "There is NO warranty; not even for MERCHANTABILITY or FITNESS\n"
++		      "FOR A PARTICULAR PURPOSE.\n\n");
++	return;
++}
++
++static void
++ret_msg(int mode, const char *fmt, ...)
++{
++        
++	va_list az;
++        
++	va_start(az, fmt);
++	(void)vs_warn(ret_msg_buf, BUFSIZE, mode, fmt, az);
++	va_end(az);
++        
++	return;
++        
++}
++
++int
++dyndns(int argc, char *argv[])
++{
++        
++	struct arguments args;
++	int s, ret;
++	const char *ptr;
++
++	(void)memset(&args, 0, sizeof(struct arguments));
++	
++	if(get_flags(&args, argc, argv) != RET_OK) {
++		return RET_WRONG_USAGE;
++	}
++        
++	s = get_connection(DYNDNSHOST, PORT, &ptr);
++	if(s == -1) {
++		ret_msg(HERR, "%s: %s", ptr, DYNDNSHOST);
++		ret = RET_WARNING;
++	} else {
++		ret = update_dyndns(s, &args);
++		if(ret == RET_OK) {
++			ret = check_server_msg(s, args.hostname);
++		}
++		(void)close(s);
++	}
++        
++	return ret;
++
++}
++
++static int
++get_flags(struct arguments *args, int argc, char *argv[])
++{
++        
++	int c;
++
++	for(;;) {
++                
++		int option_index = 0;
++		static struct option long_options[] = {
++			{ "ipv4",			1, 0, '4' },
++			{ "help",			0, 0, 'h' },
++			{ "version",		0, 0, 'v' },
++			{ NULL,				0, 0, 0   }
++		};
++                
++		c = getopt_long(argc, argv, "4:",
++				long_options, &option_index);
++                
++		if(c == -1) break;
++                
++		switch(c) {
++		case '4':
++			args->ipv4 = optarg;
++			break;
++		case 'h':
++			print_usage(argv[ARGV_PNAME], stdout);
++			exit(EXIT_SUCCESS);
++		case 'v':
++			print_version(stdout);
++			exit(EXIT_SUCCESS);
++		}
++	}
++
++	switch(argc-optind) {
++        default:
++		ret_msg(NONE, "wrong usage");
++		return RET_WRONG_USAGE;
++                
++        case 2:
++		args->login = getenv("LOGIN");
++		if(args->login == NULL) {
++			ret_msg(NONE,
++				"environment variable LOGIN is empty");
++			return RET_WRONG_USAGE;
++		}
++		break;
++        case 3:
++		args->login = argv[ARGV_LOGIN];
++	}
++	args->hostname = argv[ARGV_HOSTNAME];
++        
++	return RET_OK;
++        
++}
++
++#define BUFLEN		4096
++#define BUFFREE(name)	BUFLEN - strlen(name)
++
++static int
++update_dyndns(const int s, struct arguments *args)
++{
++	char message[BUFLEN];
++	char username[128] = {0};
++	char password[128] = {0};
++	char auth[512]     = {0};
++	unsigned char digestbuf[16];
++	char *bp;
++	int bytes;
++        
++	if(strlen(args->login) > 256) {
++		ret_msg(NONE, "username is too long");
++		return RET_ERROR;
++	}
++
++	(void)snprintf(message, BUFLEN,
++                       "GET /ipv4_end.php?tid=%s",
++                       args->hostname);
++        
++	(void)strncat(message, "&ip=", BUFFREE(message));
++	if(args->ipv4) {
++		(void)strncat(message, args->ipv4, BUFFREE(message));
++	}else {
++		(void)strncat(message, "AUTO", BUFFREE(message));
++	}
++
++	//Split username password
++	sscanf(args->login, "%127[^:]:%127[^\n]", username, password);
++	//printf("usr: %s\n",username);
++	//printf("psw: %s\n",password);
++	if (username[0] != '\0')
++	{
++		(void)strncat(message, "&apikey=", BUFFREE(message));
++		(void)strncat(message, username, BUFFREE(message));
++	}
++
++	//Transfer password
++	md5_buffer(password, strlen(password), digestbuf);
++	for(bytes = 0, bp = auth; bytes < 16; bytes++) {
++		bp += sprintf(bp, "%02x", digestbuf[bytes]);
++	}
++	(void)strncat(message, "&pass=", BUFFREE(message));
++	(void)strncat(message, auth, BUFFREE(message));
++   
++	{
++		char buffer[1024];
++                
++		(void)snprintf(buffer, 1024,
++                               " HTTP/1.1\r\n"
++                               "Host: %s\r\n"
++                               "User-Agent: %s %s - %s\r\n"
++                               "Connection: close\r\n"
++                               "Pragma: no-cache\r\n\r\n",
++                               DYNDNSHOST, PNAME, VERSION, HOMEPAGE);
++		(void)strncat(message, buffer, BUFLEN - 1 - strlen(message));
++	}
++	print_debug("\n\nMessage:"
++		    "\n--------------------------------------\n"
++		    "%s--------------------------------------\n\n",
++                    message);
++	
++	if(write(s, message, strlen(message)) == -1) {
++		ret_msg(PERR, "write() failed");
++		return RET_WARNING;
++	}
++        
++	return RET_OK;
++        
++}
++
++static int
++check_server_msg(int s, const char *hostname)
++{
++        
++	int n;
++	char server_msg[BUFSIZE], *ptr = NULL;
++	char rtn_msg[BUFSIZE];
++        
++	/* get server_msg */
++	(void)memset(server_msg, 0, sizeof(server_msg));
++	if(read(s, server_msg, sizeof(server_msg) - 1) < 0) {
++		ret_msg(PERR, "read() failed");
++		return RET_WARNING;
++	}
++        
++	print_debug("\n\nServer message:"
++		    "\n--------------------------------------\n"
++		    "%s--------------------------------------\n\n",
++		    server_msg);
++
++	//Get return msg from server.	
++	if ((ptr = strstr(server_msg, "+OK:")) != NULL)
++		sscanf(ptr, "+OK%255[^\r\n]", rtn_msg);
++	else if ((ptr = strstr(server_msg, "-ERROR:")) != NULL)
++		sscanf(ptr, "-ERROR%255[^\r\n]", rtn_msg);
++
++	if(strstr(server_msg, "200") != NULL )
++	{
++		if(strstr(server_msg, "+OK:") != NULL ||
++		   strstr(server_msg, "endpoint updated")  != NULL||
++		   strstr(server_msg, "tunnel is already") != NULL )
++		{
++			ret_msg(NONE, "tunnelbroker.net: request successful%s", rtn_msg);
++			return RET_OK;
++		}
++		else
++		{
++			ret_msg(NONE, "tunnelbroker.net: bad request%s", rtn_msg);
++		}
++	} 
++	else
++	{
++		sscanf(server_msg, " HTTP/1.%*c %*3d %255[^\r\n]", rtn_msg);
++		ret_msg(NONE, "unknown return code: %s", rtn_msg);
++	}
++        
++	return RET_ERROR;
++}
+diff --git a/src/plugins/libtunnelbroker.h b/src/plugins/libtunnelbroker.h
+new file mode 100644
+index 0000000..c262b4d
+--- /dev/null
++++ b/src/plugins/libtunnelbroker.h
+@@ -0,0 +1,61 @@
++/* -- updatedd: litunnelbrokerb.h --
++ *
++ * Copyright (C) 2002, 2003, 2004, 2005 Philipp Benner
++ *
++ * This file is part of UpdateDD - http://updatedd.philipp-benner.de.
++ *
++ * UpdateDD is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * any later version.
++ *
++ * UpdateDD is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with UpdateDD; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++ */
++
++/*
++ * Arcadyan Corp. Jingwei Liang 2015/06
++ * More informations please refer http://www.tunnelbroker.net/
++ * port from asuswrt gpl code
++ */
++
++#include <ret_codes.h>
++
++#define DYNDNSHOST	"ipv4.tunnelbroker.net"
++//#define DYNDNSHOST	"dyn.dns.he.net"
++#define PORT		80
++
++#define BUFSIZE		512
++
++#define ARGV_PNAME	0
++#define ARGV_LOGIN	argc-2
++#define ARGV_HOSTNAME	argc-1
++
++#define COLORED(x)	"\033[0;31;1m"x"\033[0m"
++
++static char ret_msg_buf[BUFSIZE];
++
++struct arguments {
++//	const char *backmx;
++	const char *hostname;
++	char *ipv4;
++//	char *mx;
++	char *login;
++//	const char *wildcard;
++};
++
++static int get_flags(struct arguments *args, int argc, char *argv[]);
++static int update_dyndns(const int s, struct arguments *args);
++static int check_server_msg(const int s, const char *hostnames);
++
++char *
++get_retmsg(void)
++{
++	return ret_msg_buf;
++}
+diff --git a/src/plugins/md5.c b/src/plugins/md5.c
+new file mode 100644
+index 0000000..691d8c3
+--- /dev/null
++++ b/src/plugins/md5.c
+@@ -0,0 +1,399 @@
++/* md5.c - Functions to compute MD5 message digest of files or memory blocks
++   according to the definition of MD5 in RFC 1321 from April 1992.
++   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
++   This file is part of the GNU C library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Library General Public License as
++   published by the Free Software Foundation; either version 2 of the
++   License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Library General Public License for more details.
++
++   You should have received a copy of the GNU Library General Public
++   License along with the GNU C Library; see the file COPYING.LIB.  If not,
++   write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
++   Boston, MA 02111-1307, USA.  */
++
++/* Written by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.  */
++
++#ifdef HAVE_CONFIG_H
++# include <config.h>
++#endif
++
++#include <stdlib.h>
++#ifdef HAVE_STRING_H
++# include <string.h>
++#else
++# include <strings.h>
++#endif
++
++#include "md5.h"
++
++#ifdef _LIBC
++# include <endian.h>
++# if __BYTE_ORDER == __BIG_ENDIAN
++#  define WORDS_BIGENDIAN 1
++# endif
++#endif
++
++#if defined(WORDS_BIGENDIAN) || defined(_BIG_ENDIAN)
++# define SWAP(n)							\
++    (((n) << 24) | (((n) & 0xff00) << 8) | (((n) >> 8) & 0xff00) | ((n) >> 24))
++#else
++# define SWAP(n) (n)
++#endif
++
++
++/* This array contains the bytes used to pad the buffer to the next
++   64-byte boundary.  (RFC 1321, 3.1: Step 1)  */
++static const unsigned char fillbuf[64] = { 0x80, 0 /* , 0, 0, ...  */ };
++
++
++/* Initialize structure containing state of computation.
++   (RFC 1321, 3.3: Step 3)  */
++void
++md5_init_ctx (struct md5_ctx *ctx)
++{
++  ctx->A = 0x67452301;
++  ctx->B = 0xefcdab89;
++  ctx->C = 0x98badcfe;
++  ctx->D = 0x10325476;
++
++  ctx->total[0] = ctx->total[1] = 0;
++  ctx->buflen = 0;
++}
++
++/* Put result from CTX in first 16 bytes following RESBUF.  The result
++   must be in little endian byte order.
++
++   IMPORTANT: On some systems it is required that RESBUF is correctly
++   aligned for a 32 bits value.  */
++void *
++md5_read_ctx (const struct md5_ctx *ctx, void *resbuf)
++{
++  ((md5_uint32 *) resbuf)[0] = SWAP (ctx->A);
++  ((md5_uint32 *) resbuf)[1] = SWAP (ctx->B);
++  ((md5_uint32 *) resbuf)[2] = SWAP (ctx->C);
++  ((md5_uint32 *) resbuf)[3] = SWAP (ctx->D);
++
++  return resbuf;
++}
++
++/* Process the remaining bytes in the internal buffer and the usual
++   prolog according to the standard and write the result to RESBUF.
++
++   IMPORTANT: On some systems it is required that RESBUF is correctly
++   aligned for a 32 bits value.  */
++void *
++md5_finish_ctx (struct md5_ctx *ctx, void *resbuf)
++{
++  /* Take yet unprocessed bytes into account.  */
++  md5_uint32 bytes = ctx->buflen;
++  size_t pad;
++
++  /* Now count remaining bytes.  */
++  ctx->total[0] += bytes;
++  if (ctx->total[0] < bytes)
++    ++ctx->total[1];
++
++  pad = bytes >= 56 ? 64 + 56 - bytes : 56 - bytes;
++  memcpy (&ctx->buffer[bytes], fillbuf, pad);
++
++  /* Put the 64-bit file length in *bits* at the end of the buffer.  */
++  *(md5_uint32 *) &ctx->buffer[bytes + pad] = SWAP (ctx->total[0] << 3);
++  *(md5_uint32 *) &ctx->buffer[bytes + pad + 4] = SWAP ((ctx->total[1] << 3) |
++							(ctx->total[0] >> 29));
++
++  /* Process last bytes.  */
++  md5_process_block (ctx->buffer, bytes + pad + 8, ctx);
++
++  return md5_read_ctx (ctx, resbuf);
++}
++
++/* Compute MD5 message digest for bytes read from STREAM.  The
++   resulting message digest number will be written into the 16 bytes
++   beginning at RESBLOCK.  */
++int
++md5_stream (FILE *stream, void *resblock)
++{
++  /* Important: BLOCKSIZE must be a multiple of 64.  */
++#define BLOCKSIZE 4096
++  struct md5_ctx ctx;
++  char buffer[BLOCKSIZE + 72];
++  size_t sum;
++
++  /* Initialize the computation context.  */
++  md5_init_ctx (&ctx);
++
++  /* Iterate over full file contents.  */
++  while (1)
++    {
++      /* We read the file in blocks of BLOCKSIZE bytes.  One call of the
++	 computation function processes the whole buffer so that with the
++	 next round of the loop another block can be read.  */
++      size_t n;
++      sum = 0;
++
++      /* Read block.  Take care for partial reads.  */
++      do
++	{
++	  n = fread (buffer + sum, 1, BLOCKSIZE - sum, stream);
++
++	  sum += n;
++	}
++      while (sum < BLOCKSIZE && n != 0);
++      if (n == 0 && ferror (stream))
++        return 1;
++
++      /* If end of file is reached, end the loop.  */
++      if (n == 0)
++	break;
++
++      /* Process buffer with BLOCKSIZE bytes.  Note that
++			BLOCKSIZE % 64 == 0
++       */
++      md5_process_block (buffer, BLOCKSIZE, &ctx);
++    }
++
++  /* Add the last bytes if necessary.  */
++  if (sum > 0)
++    md5_process_bytes (buffer, sum, &ctx);
++
++  /* Construct result in desired memory.  */
++  md5_finish_ctx (&ctx, resblock);
++  return 0;
++}
++
++/* Compute MD5 message digest for LEN bytes beginning at BUFFER.  The
++   result is always in little endian byte order, so that a byte-wise
++   output yields to the wanted ASCII representation of the message
++   digest.  */
++void *
++md5_buffer (const char *buffer, size_t len, void *resblock)
++{
++  struct md5_ctx ctx;
++
++  /* Initialize the computation context.  */
++  md5_init_ctx (&ctx);
++
++  /* Process whole buffer but last len % 64 bytes.  */
++  md5_process_bytes (buffer, len, &ctx);
++
++  /* Put result in desired memory area.  */
++  return md5_finish_ctx (&ctx, resblock);
++}
++
++
++void
++md5_process_bytes (const void *buffer, size_t len, struct md5_ctx *ctx)
++{
++  /* When we already have some bits in our internal buffer concatenate
++     both inputs first.  */
++  if (ctx->buflen != 0)
++    {
++      size_t left_over = ctx->buflen;
++      size_t add = 128 - left_over > len ? len : 128 - left_over;
++
++      memcpy (&ctx->buffer[left_over], buffer, add);
++      ctx->buflen += add;
++
++      if (left_over + add > 64)
++	{
++	  md5_process_block (ctx->buffer, (left_over + add) & ~63, ctx);
++	  /* The regions in the following copy operation cannot overlap.  */
++	  memcpy (ctx->buffer, &ctx->buffer[(left_over + add) & ~63],
++		  (left_over + add) & 63);
++	  ctx->buflen = (left_over + add) & 63;
++	}
++
++      buffer = (const char *) buffer + add;
++      len -= add;
++    }
++
++  /* Process available complete blocks.  */
++  if (len > 64)
++    {
++      md5_process_block (buffer, len & ~63, ctx);
++      buffer = (const char *) buffer + (len & ~63);
++      len &= 63;
++    }
++
++  /* Move remaining bytes in internal buffer.  */
++  if (len > 0)
++    {
++      memcpy (ctx->buffer, buffer, len);
++      ctx->buflen = len;
++    }
++}
++
++
++/* These are the four functions used in the four steps of the MD5 algorithm
++   and defined in the RFC 1321.  The first function is a little bit optimized
++   (as found in Colin Plumbs public domain implementation).  */
++/* #define FF(b, c, d) ((b & c) | (~b & d)) */
++#define FF(b, c, d) (d ^ (b & (c ^ d)))
++#define FG(b, c, d) FF (d, b, c)
++#define FH(b, c, d) (b ^ c ^ d)
++#define FI(b, c, d) (c ^ (b | ~d))
++
++/* Process LEN bytes of BUFFER, accumulating context into CTX.
++   It is assumed that LEN % 64 == 0.  */
++
++void
++md5_process_block (const void *buffer, size_t len, struct md5_ctx *ctx)
++{
++  md5_uint32 correct_words[16];
++  const md5_uint32 *words = buffer;
++  size_t nwords = len / sizeof (md5_uint32);
++  const md5_uint32 *endp = words + nwords;
++  md5_uint32 A = ctx->A;
++  md5_uint32 B = ctx->B;
++  md5_uint32 C = ctx->C;
++  md5_uint32 D = ctx->D;
++
++  /* First increment the byte count.  RFC 1321 specifies the possible
++     length of the file up to 2^64 bits.  Here we only compute the
++     number of bytes.  Do a double word increment.  */
++  ctx->total[0] += len;
++  if (ctx->total[0] < len)
++    ++ctx->total[1];
++
++  /* Process all bytes in the buffer with 64 bytes in each round of
++     the loop.  */
++  while (words < endp)
++    {
++      md5_uint32 *cwp = correct_words;
++      md5_uint32 A_save = A;
++      md5_uint32 B_save = B;
++      md5_uint32 C_save = C;
++      md5_uint32 D_save = D;
++
++      /* First round: using the given function, the context and a constant
++	 the next context is computed.  Because the algorithms processing
++	 unit is a 32-bit word and it is determined to work on words in
++	 little endian byte order we perhaps have to change the byte order
++	 before the computation.  To reduce the work for the next steps
++	 we store the swapped words in the array CORRECT_WORDS.  */
++
++#define OP(a, b, c, d, s, T)						\
++      do								\
++        {								\
++	  a += FF (b, c, d) + (*cwp++ = SWAP (*words)) + T;		\
++	  ++words;							\
++	  CYCLIC (a, s);						\
++	  a += b;							\
++        }								\
++      while (0)
++
++      /* It is unfortunate that C does not provide an operator for
++	 cyclic rotation.  Hope the C compiler is smart enough.  */
++#define CYCLIC(w, s) (w = (w << s) | (w >> (32 - s)))
++
++      /* Before we start, one word to the strange constants.
++	 They are defined in RFC 1321 as
++
++	 T[i] = (int) (4294967296.0 * fabs (sin (i))), i=1..64
++       */
++
++      /* Round 1.  */
++      OP (A, B, C, D,  7, 0xd76aa478);
++      OP (D, A, B, C, 12, 0xe8c7b756);
++      OP (C, D, A, B, 17, 0x242070db);
++      OP (B, C, D, A, 22, 0xc1bdceee);
++      OP (A, B, C, D,  7, 0xf57c0faf);
++      OP (D, A, B, C, 12, 0x4787c62a);
++      OP (C, D, A, B, 17, 0xa8304613);
++      OP (B, C, D, A, 22, 0xfd469501);
++      OP (A, B, C, D,  7, 0x698098d8);
++      OP (D, A, B, C, 12, 0x8b44f7af);
++      OP (C, D, A, B, 17, 0xffff5bb1);
++      OP (B, C, D, A, 22, 0x895cd7be);
++      OP (A, B, C, D,  7, 0x6b901122);
++      OP (D, A, B, C, 12, 0xfd987193);
++      OP (C, D, A, B, 17, 0xa679438e);
++      OP (B, C, D, A, 22, 0x49b40821);
++
++      /* For the second to fourth round we have the possibly swapped words
++	 in CORRECT_WORDS.  Redefine the macro to take an additional first
++	 argument specifying the function to use.  */
++#undef OP
++#define OP(f, a, b, c, d, k, s, T)					\
++      do 								\
++	{								\
++	  a += f (b, c, d) + correct_words[k] + T;			\
++	  CYCLIC (a, s);						\
++	  a += b;							\
++	}								\
++      while (0)
++
++      /* Round 2.  */
++      OP (FG, A, B, C, D,  1,  5, 0xf61e2562);
++      OP (FG, D, A, B, C,  6,  9, 0xc040b340);
++      OP (FG, C, D, A, B, 11, 14, 0x265e5a51);
++      OP (FG, B, C, D, A,  0, 20, 0xe9b6c7aa);
++      OP (FG, A, B, C, D,  5,  5, 0xd62f105d);
++      OP (FG, D, A, B, C, 10,  9, 0x02441453);
++      OP (FG, C, D, A, B, 15, 14, 0xd8a1e681);
++      OP (FG, B, C, D, A,  4, 20, 0xe7d3fbc8);
++      OP (FG, A, B, C, D,  9,  5, 0x21e1cde6);
++      OP (FG, D, A, B, C, 14,  9, 0xc33707d6);
++      OP (FG, C, D, A, B,  3, 14, 0xf4d50d87);
++      OP (FG, B, C, D, A,  8, 20, 0x455a14ed);
++      OP (FG, A, B, C, D, 13,  5, 0xa9e3e905);
++      OP (FG, D, A, B, C,  2,  9, 0xfcefa3f8);
++      OP (FG, C, D, A, B,  7, 14, 0x676f02d9);
++      OP (FG, B, C, D, A, 12, 20, 0x8d2a4c8a);
++
++      /* Round 3.  */
++      OP (FH, A, B, C, D,  5,  4, 0xfffa3942);
++      OP (FH, D, A, B, C,  8, 11, 0x8771f681);
++      OP (FH, C, D, A, B, 11, 16, 0x6d9d6122);
++      OP (FH, B, C, D, A, 14, 23, 0xfde5380c);
++      OP (FH, A, B, C, D,  1,  4, 0xa4beea44);
++      OP (FH, D, A, B, C,  4, 11, 0x4bdecfa9);
++      OP (FH, C, D, A, B,  7, 16, 0xf6bb4b60);
++      OP (FH, B, C, D, A, 10, 23, 0xbebfbc70);
++      OP (FH, A, B, C, D, 13,  4, 0x289b7ec6);
++      OP (FH, D, A, B, C,  0, 11, 0xeaa127fa);
++      OP (FH, C, D, A, B,  3, 16, 0xd4ef3085);
++      OP (FH, B, C, D, A,  6, 23, 0x04881d05);
++      OP (FH, A, B, C, D,  9,  4, 0xd9d4d039);
++      OP (FH, D, A, B, C, 12, 11, 0xe6db99e5);
++      OP (FH, C, D, A, B, 15, 16, 0x1fa27cf8);
++      OP (FH, B, C, D, A,  2, 23, 0xc4ac5665);
++
++      /* Round 4.  */
++      OP (FI, A, B, C, D,  0,  6, 0xf4292244);
++      OP (FI, D, A, B, C,  7, 10, 0x432aff97);
++      OP (FI, C, D, A, B, 14, 15, 0xab9423a7);
++      OP (FI, B, C, D, A,  5, 21, 0xfc93a039);
++      OP (FI, A, B, C, D, 12,  6, 0x655b59c3);
++      OP (FI, D, A, B, C,  3, 10, 0x8f0ccc92);
++      OP (FI, C, D, A, B, 10, 15, 0xffeff47d);
++      OP (FI, B, C, D, A,  1, 21, 0x85845dd1);
++      OP (FI, A, B, C, D,  8,  6, 0x6fa87e4f);
++      OP (FI, D, A, B, C, 15, 10, 0xfe2ce6e0);
++      OP (FI, C, D, A, B,  6, 15, 0xa3014314);
++      OP (FI, B, C, D, A, 13, 21, 0x4e0811a1);
++      OP (FI, A, B, C, D,  4,  6, 0xf7537e82);
++      OP (FI, D, A, B, C, 11, 10, 0xbd3af235);
++      OP (FI, C, D, A, B,  2, 15, 0x2ad7d2bb);
++      OP (FI, B, C, D, A,  9, 21, 0xeb86d391);
++
++      /* Add the starting values of the context.  */
++      A += A_save;
++      B += B_save;
++      C += C_save;
++      D += D_save;
++    }
++
++  /* Put checksum in context given as argument.  */
++  ctx->A = A;
++  ctx->B = B;
++  ctx->C = C;
++  ctx->D = D;
++}
+diff --git a/src/plugins/md5.h b/src/plugins/md5.h
+new file mode 100644
+index 0000000..74ea777
+--- /dev/null
++++ b/src/plugins/md5.h
+@@ -0,0 +1,146 @@
++/* md5.h - Declaration of functions and data types used for MD5 sum
++   computing library functions.
++   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
++   NOTE: The canonical source of this file is maintained with the GNU C
++   Library.  Bugs can be reported to bug-glibc@prep.ai.mit.edu.
++
++   This program is free software; you can redistribute it and/or modify it
++   under the terms of the GNU General Public License as published by the
++   Free Software Foundation; either version 2, or (at your option) any
++   later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with this program; if not, write to the Free Software Foundation,
++   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
++
++#ifndef _MD5_H
++#define _MD5_H 1
++
++#ifdef HAVE_CONFIG_H
++# include <config.h>
++#endif
++
++#define PARAMS(args) args
++
++#include <stdio.h>
++
++#if defined HAVE_LIMITS_H || _LIBC
++# include <limits.h>
++#endif
++
++/* The following contortions are an attempt to use the C preprocessor
++   to determine an unsigned integral type that is 32 bits wide.  An
++   alternative approach is to use autoconf's AC_CHECK_SIZEOF macro, but
++   doing that would require that the configure script compile and *run*
++   the resulting executable.  Locally running cross-compiled executables
++   is usually not possible.  */
++
++#ifdef _LIBC
++# include <sys/types.h>
++typedef u_int32_t md5_uint32;
++#else
++# if defined __STDC__ && __STDC__
++#  define UINT_MAX_32_BITS 4294967295U
++# else
++#  define UINT_MAX_32_BITS 0xFFFFFFFF
++# endif
++
++/* If UINT_MAX isn't defined, assume it's a 32-bit type.
++   This should be valid for all systems GNU cares about because
++   that doesn't include 16-bit systems, and only modern systems
++   (that certainly have <limits.h>) have 64+-bit integral types.  */
++
++# ifndef UINT_MAX
++#  define UINT_MAX UINT_MAX_32_BITS
++# endif
++
++# if UINT_MAX == UINT_MAX_32_BITS
++   typedef unsigned int md5_uint32;
++# else
++#  if USHRT_MAX == UINT_MAX_32_BITS
++    typedef unsigned short md5_uint32;
++#  else
++#   if ULONG_MAX == UINT_MAX_32_BITS
++     typedef unsigned long md5_uint32;
++#   else
++     /* The following line is intended to evoke an error.
++        Using #error is not portable enough.  */
++     "Cannot determine unsigned 32-bit data type."
++#   endif
++#  endif
++# endif
++#endif
++
++/* Structure to save state of computation between the single steps.  */
++struct md5_ctx
++{
++  md5_uint32 A;
++  md5_uint32 B;
++  md5_uint32 C;
++  md5_uint32 D;
++
++  md5_uint32 total[2];
++  md5_uint32 buflen;
++  char buffer[128];
++};
++
++/*
++ * The following three functions are build up the low level used in
++ * the functions `md5_stream' and `md5_buffer'.
++ */
++
++/* Initialize structure containing state of computation.
++   (RFC 1321, 3.3: Step 3)  */
++extern void md5_init_ctx PARAMS ((struct md5_ctx *ctx));
++
++/* Starting with the result of former calls of this function (or the
++   initialization function update the context for the next LEN bytes
++   starting at BUFFER.
++   It is necessary that LEN is a multiple of 64!!! */
++extern void md5_process_block PARAMS ((const void *buffer, size_t len,
++				       struct md5_ctx *ctx));
++
++/* Starting with the result of former calls of this function (or the
++   initialization function update the context for the next LEN bytes
++   starting at BUFFER.
++   It is NOT required that LEN is a multiple of 64.  */
++extern void md5_process_bytes PARAMS ((const void *buffer, size_t len,
++				       struct md5_ctx *ctx));
++
++/* Process the remaining bytes in the buffer and put result from CTX
++   in first 16 bytes following RESBUF.  The result is always in little
++   endian byte order, so that a byte-wise output yields to the wanted
++   ASCII representation of the message digest.
++
++   IMPORTANT: On some systems it is required that RESBUF is correctly
++   aligned for a 32 bits value.  */
++extern void *md5_finish_ctx PARAMS ((struct md5_ctx *ctx, void *resbuf));
++
++
++/* Put result from CTX in first 16 bytes following RESBUF.  The result is
++   always in little endian byte order, so that a byte-wise output yields
++   to the wanted ASCII representation of the message digest.
++
++   IMPORTANT: On some systems it is required that RESBUF is correctly
++   aligned for a 32 bits value.  */
++extern void *md5_read_ctx PARAMS ((const struct md5_ctx *ctx, void *resbuf));
++
++
++/* Compute MD5 message digest for bytes read from STREAM.  The
++   resulting message digest number will be written into the 16 bytes
++   beginning at RESBLOCK.  */
++extern int md5_stream PARAMS ((FILE *stream, void *resblock));
++
++/* Compute MD5 message digest for LEN bytes beginning at BUFFER.  The
++   result is always in little endian byte order, so that a byte-wise
++   output yields to the wanted ASCII representation of the message
++   digest.  */
++extern void *md5_buffer PARAMS ((const char *buffer, size_t len,
++				 void *resblock));
++
++#endif

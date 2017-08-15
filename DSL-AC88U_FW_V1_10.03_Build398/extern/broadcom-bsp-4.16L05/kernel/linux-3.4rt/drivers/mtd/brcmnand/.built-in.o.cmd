@@ -1,0 +1,1 @@
+cmd_drivers/mtd/brcmnand/built-in.o :=  /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/bin/arm-unknown-linux-uclibcgnueabi-ld -EL    -r -o drivers/mtd/brcmnand/built-in.o drivers/mtd/brcmnand/bcm63xx-nand.o drivers/mtd/brcmnand/brcmnand_base.o drivers/mtd/brcmnand/brcmnand_bbt.o 

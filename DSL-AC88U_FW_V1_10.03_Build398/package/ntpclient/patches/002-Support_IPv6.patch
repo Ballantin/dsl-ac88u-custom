@@ -1,0 +1,185 @@
+--- arc-gz-bcm963xx/build_dir/target-mips-linux/ntpclient/ntpclient.c	2016-02-22 13:21:25.891700552 +0800
++++ patch/ntpclient.c	2016-02-22 12:38:13.387022000 +0800
+@@ -70,6 +70,7 @@
+ struct timeval time_of_send;
+ int live=0;
+ int set_clock=0;   /* non-zero presumably needs root privs */
++int IPV6_PREFERRED = 0;
+ 
+ #ifdef ENABLE_DEBUG
+ int debug=0;
+@@ -280,19 +281,20 @@
+ 	}
+ }
+ 
+-void stuff_net_addr(struct in_addr *p, char *hostname)
++int stuff_net_addr(struct in_addr *p, char *hostname)
+ {
+ 	struct hostent *ntpserver;
+ 	ntpserver=gethostbyname(hostname);
+ 	if (ntpserver == NULL) {
+ 		herror(hostname);
+-		exit(1);
++		return -1;
+ 	}
+ 	if (ntpserver->h_length != 4) {
+ 		fprintf(stderr,"oops %d\n",ntpserver->h_length);
+-		exit(1);
++		return -1;
+ 	}
+ 	memcpy(&(p->s_addr),ntpserver->h_addr_list[0],4);
++	return 0;
+ }
+ 
+ void setup_receive(int usd, unsigned int interface, short port)
+@@ -310,15 +312,33 @@
+ 	listen(usd,3);
+ }
+ 
+-void setup_transmit(int usd, char *host, short port)
++int setup_receive6(int usd, struct in6_addr addr6, short port)
++{
++	struct sockaddr_in6 sa_rcvr;
++	bzero((char *) &sa_rcvr, sizeof(sa_rcvr));
++	sa_rcvr.sin6_family=AF_INET6;
++	sa_rcvr.sin6_addr=addr6;
++	sa_rcvr.sin6_port=htons(port);
++	if(bind(usd,(struct sockaddr *) &sa_rcvr,sizeof(sa_rcvr)) == -1) {
++		fprintf(stderr,"could not bind to udp port %d\n",port);
++		perror("bind");
++		return -1;
++	}
++	listen(usd,3);
++	return 0;
++}
++
++int setup_transmit(int usd, char *host, short port)
+ {
+ 	struct sockaddr_in sa_dest;
+ 	bzero((char *) &sa_dest, sizeof(sa_dest));
+ 	sa_dest.sin_family=AF_INET;
+-	stuff_net_addr(&(sa_dest.sin_addr),host);
++	if (stuff_net_addr(&(sa_dest.sin_addr),host) != 0)
++		return -1;
+ 	sa_dest.sin_port=htons(port);
+ 	if (connect(usd,(struct sockaddr *)&sa_dest,sizeof(sa_dest))==-1)
+ 		{perror("connect");exit(1);}
++	return 0;		
+ }
+ 
+ int primary_loop(int usd, int num_probes, int cycle_time)
+@@ -403,7 +423,7 @@
+ void usage(char *argv0)
+ {
+ 	fprintf(stderr,
+-	"Usage: %s [-c count] [-d] -h hostname [-i interval] [-l]\n"
++	"Usage: %s [-6] [-c count] [-d] -h hostname [-i interval] [-l]\n"
+ 	"\t[-p port] [-r] [-s] \n",
+ 	argv0);
+ }
+@@ -435,11 +455,19 @@
+ 	int replay=0;                 /* replay mode overrides everything */
+ 	char ntps[32], *next;
+ 	int succ = 0;
++	//alex_chen add for IPv6
++	int i, rst, loop_times = 1;
++	struct addrinfo hints;
++	struct addrinfo *result;	
+ 
+ 	for (;;) {
+-		c = getopt( argc, argv, "c:" DEBUG_OPTION "h:i:p:lrs");
++		c = getopt( argc, argv, "6c:" DEBUG_OPTION "h:i:p:lrs");
+ 		if (c == EOF) break;
+ 		switch (c) {
++			case '6':
++				IPV6_PREFERRED = 1;
++				loop_times = 2;
++				break;			
+ 			case 'c':
+ 				probe_count = atoi(optarg);
+ 				break;
+@@ -483,6 +511,7 @@
+ 	}
+ 	if (debug) {
+ 		printf("Configuration:\n"
++		"  -6 IPV6_PREFERRED  %d\n"
+ 		"  -c probe_count %d\n"
+ 		"  -d (debug)     %d\n"
+ 		"  -h hostname    %s\n"
+@@ -490,21 +519,60 @@
+ 		"  -l live        %d\n"
+ 		"  -p local_port  %d\n"
+ 		"  -s set_clock   %d\n",
+-		probe_count, debug, hostname, cycle_time,
++		IPV6_PREFERRED, probe_count, debug, hostname, cycle_time,
+ 		live, udp_local_port, set_clock);
+ 	}
++	
++	if (IPV6_PREFERRED) {
++		memset(&hints, 0, sizeof(struct addrinfo));
++		hints.ai_flags = 0;		
++		hints.ai_family = AF_INET6;
++		hints.ai_socktype = SOCK_DGRAM;
++		hints.ai_protocol = IPPROTO_UDP;
++	}
+ 
++	// when IPV6_PREFERRED set, look up all servers for ipv6 first, then ipv4
++	for(i = 0; i < loop_times; i++) {
+ 	foreach(ntps, hostname, next) {
+ 
+ 		/* Startup sequence */
+-		if ((usd=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP))==-1) {
+-			perror ("socket");
+-			exit(1);
++		if (IPV6_PREFERRED && i == 0) {
++			rst = getaddrinfo(ntps, "ntp", &hints, &result);
++			if (rst != 0) {
++				fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rst));
++				continue;
++			}
++
++			// use the first addr
++			if (result != NULL) {
++				if ((usd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
++					perror ("socket");
++					continue;
++				}				
++				if ((rst = setup_receive6(usd, in6addr_any, udp_local_port)) != 0)
++					continue;
++				if (connect(usd, result->ai_addr, result->ai_addrlen) == -1) {				
++					perror("connect");
++					continue;
++				}
++			}
++			else {
++				continue;
++			}
++
++			freeaddrinfo(result);				/* addrinfo no longer needed */
+ 		}
++		else {		
++			if ((usd=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP))==-1) {
++				perror ("socket");
++				exit(1);
++			}
+ 
+-		setup_receive(usd, INADDR_ANY, udp_local_port);
++			setup_receive(usd, INADDR_ANY, udp_local_port);
+ 
+-		setup_transmit(usd, ntps, NTP_PORT);
++			if ((rst = setup_transmit(usd, ntps, NTP_PORT)) != 0)
++				continue;
++		}
+ 
+ 		if (!primary_loop(usd, probe_count, cycle_time)) {
+ 			close(usd);
+@@ -514,6 +582,9 @@
+ 
+ 		close(usd);
+ 	}
++	if (IPV6_PREFERRED && succ)
++		break;
++	}
+ 	
+ 	if(succ == 1)
+ 		return 0;

@@ -1,0 +1,13 @@
+kernel/net/bridge/netfilter/ebtables.ko
+kernel/net/bridge/netfilter/ebtable_broute.ko
+kernel/net/bridge/netfilter/ebtable_filter.ko
+kernel/net/bridge/netfilter/ebtable_nat.ko
+kernel/net/bridge/netfilter/ebt_ip.ko
+kernel/net/bridge/netfilter/ebt_ip6.ko
+kernel/net/bridge/netfilter/ebt_mark_m.ko
+kernel/net/bridge/netfilter/ebt_vlan.ko
+kernel/net/bridge/netfilter/ebt_time.ko
+kernel/net/bridge/netfilter/ebt_mark.ko
+kernel/net/bridge/netfilter/ebt_ftos.ko
+kernel/net/bridge/netfilter/ebt_skiplog.ko
+kernel/net/bridge/netfilter/ebt_wmm_mark.ko

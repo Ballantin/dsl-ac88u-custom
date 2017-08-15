@@ -1,0 +1,82 @@
+diff -Nur dhcp-4.1.1_orig/includes/dhcpd.h dhcp-4.1.1/includes/dhcpd.h
+--- dhcp-4.1.1_orig/includes/dhcpd.h	2014-06-17 10:50:52.324287001 +0800
++++ dhcp-4.1.1/includes/dhcpd.h	2014-06-17 10:52:46.851286127 +0800
+@@ -75,11 +75,8 @@
+ # include "minires/minires.h"
+ #endif
+ 
+-#ifndef RANDOM_IP
+-/* added by tlhhh 2010-01-24, to support random ip from hash */
+-#define RANDOM_IP 1
+-#endif
+-
++ /*lanhong 2014-6-16, Random IP for client*/
++int random_ip; 
+ struct hash_table;
+ typedef struct hash_table group_hash_t;
+ typedef struct hash_table universe_hash_t;
+@@ -3435,4 +3432,4 @@
+ 		fclose(fp); \
+ 	} \
+ } while (0)
+-#endif
+\ No newline at end of file
++#endif
+diff -Nur dhcp-4.1.1_orig/server/dhcpd.c dhcp-4.1.1/server/dhcpd.c
+--- dhcp-4.1.1_orig/server/dhcpd.c	2014-06-17 10:50:52.372287001 +0800
++++ dhcp-4.1.1/server/dhcpd.c	2014-06-17 10:56:15.540286644 +0800
+@@ -317,6 +317,8 @@
+ 	uid_t set_uid = 0;
+ 	gid_t set_gid = 0;
+ #endif /* PARANOIA */
++	/*lanhong 2014-6-16, Random IP for client*/
++	random_ip = 0;
+ 
+         /* Make sure that file descriptors 0 (stdin), 1, (stdout), and
+            2 (stderr) are open. To do this, we assume that when we
+@@ -465,6 +467,8 @@
+ 			traceinfile = argv [i];
+ 			trace_replay_init ();
+ #endif /* TRACING */
++		} else if (!strcmp (argv [i], "-R")) { /*lanhong 2014-6-16, Random IP for client*/
++			random_ip = 1;
+ 		} else if (argv [i][0] == '-') {
+ 			usage ();
+ 		} else {
+diff -Nur dhcp-4.1.1_orig/server/mdb.c dhcp-4.1.1/server/mdb.c
+--- dhcp-4.1.1_orig/server/mdb.c	2014-06-17 10:50:52.374287001 +0800
++++ dhcp-4.1.1/server/mdb.c	2014-06-17 10:59:36.426287001 +0800
+@@ -2674,7 +2674,6 @@
+ 	return ISC_R_SUCCESS;
+ }
+ 
+-#ifdef RANDOM_IP
+ 
+ #define RANDOM_POOL_SIZE	256
+ int get_random(start, end)
+@@ -2773,7 +2772,6 @@
+ 
+     return count;
+ }
+-#endif
+ 
+ /* Run expiry events on every pool.   This is called on startup so that
+    any expiry events that occurred after the server stopped and before it
+@@ -2793,12 +2791,11 @@
+ 
+ 	/* First, go over the hash list and actually put all the leases
+ 	   on the appropriate lists. */
+-#ifdef RANDOM_IP
+-	/* tlhhh add for random ip to offer */
+-   	lease_ip_hash_random_foreach(lease_ip_addr_hash, lease_instantiate);
+-#else
+-	lease_ip_hash_foreach(lease_ip_addr_hash, lease_instantiate);
+-#endif
++	/*lanhong 2014-6-16, Random IP for client*/
++	if(random_ip)
++		lease_ip_hash_random_foreach(lease_ip_addr_hash, lease_instantiate); /* tlhhh add for random ip to offer */
++	else
++		lease_ip_hash_foreach(lease_ip_addr_hash, lease_instantiate);
+ 
+ 	/* Loop through each pool in each shared network and call the
+ 	 * expiry routine on the pool.  It is no longer safe to follow

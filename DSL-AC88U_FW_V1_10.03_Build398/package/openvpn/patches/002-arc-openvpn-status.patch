@@ -1,0 +1,46 @@
+--- a/src/openvpn/multi.c	2013-05-31 20:00:25.000000000 +0800
++++ b/src/openvpn/multi.c	2015-08-19 16:47:46.000000000 +0800
+@@ -864,6 +864,27 @@
+ 
+ 	  status_printf (so, "END");
+ 	}
++        else if( version == 4 ){
++           /*
++           * Arcadyan Openvpn server status. Adam Chen 2015-08-20; adam_chen@arcadyan.com.tw
++           */
++
++                hash_iterator_init (m->hash, &hi);
++                while ((he = hash_iterator_next (&hi)))
++                {
++                        struct gc_arena gc = gc_new ();
++                        const struct multi_instance *mi = (struct multi_instance *) he->value;
++                        
++                        if (!mi->halt)
++                        {
++                                status_printf (so, "%s %s %s", tls_username (mi->context.c2.tls_multi, false), print_in_addr_t (mi->reporting_addr, IA_EMPTY_IF_UNDEF, &gc), mroute_addr_print (&mi->real, &gc));                         }
++                        gc_free (&gc);
++                }       
++                hash_iterator_free (&hi);
++                
++                status_flush (so);
++                gc_free (&gc_top);
++        }
+       else
+ 	{
+ 	  status_printf (so, "ERROR: bad status format version number");
+
+--- a/src/openvpn/options.c	2013-05-31 20:00:25.000000000 +0800
++++ b/src/openvpn/options.c	2015-08-21 16:54:18.000000000 +0800
+@@ -4703,9 +4703,10 @@
+ 
+       VERIFY_PERMISSION (OPT_P_GENERAL);
+       version = atoi (p[1]);
+-      if (version < 1 || version > 3)
++      if (version < 1 || version > 4)
+ 	{
+-	  msg (msglevel, "--status-version must be 1 to 3");
++	  // Add version 4 for Arcadyan OpenVPN status. Adam Chen 2015-08-21; adam_chen@arcadyan.com.tw
++	  msg (msglevel, "--status-version must be 1 to 4");
+ 	  goto err;
+ 	}
+       options->status_file_version = version;

@@ -1,0 +1,76 @@
+--- a/pptpctrl.c	2006-12-08 08:01:40.000000000 +0800
++++ b/pptpctrl.c	2015-10-27 16:58:02.000000000 +0800
+@@ -82,6 +82,8 @@
+ static void pptp_handle_ctrl_connection(char **pppaddrs, struct in_addr *inetaddrs);
+ 
+ static int startCall(char **pppaddrs, struct in_addr *inetaddrs);
++static int write_pptp_client_ip(struct in_addr *inetaddrs);
++
+ static void launch_pppd(char **pppaddrs, struct in_addr *inetaddrs);
+ 
+ /* Oh the horror.. lets hope this covers all the ones we have to handle */
+@@ -643,6 +645,56 @@
+ 	return pty_fd;
+ }
+ 
++
++/*
++ * Determine if the client is fromt the LAN side.
++ * 2015-10-27 Adam Chen
++ * return 0 if success.
++ * return -1 if fail.
++ *
++ * The pptpd listens the pptp clients. 
++ * If there is a client wanna connnects to the server, it calls pptpctrl to launcd a pppd connection. 
++ * Once it launches, it write done (1) client IP address (2) LAN side IP address (3) LAN side IP mask in /data/pptpd/client_ip
++ */
++static int write_pptp_client_ip(struct in_addr *inetaddrs){
++	char cmd[128];
++	char lan_ipaddr[16];
++	char lan_ipmask[16];
++	char client_ip[16];
++	FILE *fp;
++	char* renewCh;
++	// catch client real IP address
++	snprintf(client_ip, sizeof(client_ip), inet_ntoa(inetaddrs[1]));
++
++	// catch DUT LAN IP address
++	snprintf(cmd, sizeof(cmd), "ifconfig br0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'");
++	fp = popen(cmd, "r");
++	fgets(lan_ipaddr, sizeof(lan_ipaddr), fp);
++	if(fp != NULL)	pclose(fp);
++	renewCh = strstr(lan_ipaddr,"\n");
++	if(renewCh) *renewCh= '\0';
++
++	// catch DUT LAN IP mask
++	snprintf(cmd, sizeof(cmd), "ifconfig br0 | grep 'inet addr:' | cut -d: -f4");
++	fp = popen(cmd, "r");
++	fgets(lan_ipmask, sizeof(lan_ipmask), fp);
++	if(fp != NULL)	pclose(fp);
++	renewCh = strstr(lan_ipmask,"\n");
++	if(renewCh) *renewCh= '\0';
++
++	// write to /data/pptpd/client_ip
++	int ret = -1;
++	fp = fopen("/data/pptpd/client_ip", "w");
++	if(fp == NULL) return ret;
++	fprintf(fp, "%s\n", inet_ntoa(inetaddrs[1]));
++	fprintf(fp, "%s\n", lan_ipaddr);
++	fprintf(fp, "%s\n", lan_ipmask);
++	ret = 0;
++	fclose(fp);
++
++	return ret;
++}
++
+ /*
+  * launch_pppd
+  *
+@@ -668,6 +720,7 @@
+ 		       "CTRL (PPPD Launcher): program binary = %s", 
+ 		       pppd_argv[an - 1]);
+ 	}
++	write_pptp_client_ip(inetaddrs);
+ 
+ #if BSDUSER_PPP
+ 

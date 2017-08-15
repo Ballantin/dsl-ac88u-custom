@@ -1,0 +1,5160 @@
+diff -urpN ebtables-v2.0.10-4-origin/communication.c ebtables-v2.0.10-4/communication.c
+--- ebtables-v2.0.10-4-origin/communication.c	2011-12-16 04:02:47.000000000 +0800
++++ ebtables-v2.0.10-4/communication.c	2014-07-12 07:56:23.000000000 +0800
+@@ -282,7 +282,7 @@ static int store_counters_in_file(char *
+ 	}
+ close_file:
+ 	fclose(file);
+-	return 0;
++	return ret;
+ }
+ 
+ /* Gets executed after ebt_deliver_table. Delivers the counters to the kernel
+diff -urpN ebtables-v2.0.10-4-origin/communication.c.orig ebtables-v2.0.10-4/communication.c.orig
+--- ebtables-v2.0.10-4-origin/communication.c.orig	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/communication.c.orig	2011-12-16 04:02:47.000000000 +0800
+@@ -0,0 +1,772 @@
++/*
++ * communication.c, v2.0 July 2002
++ *
++ * Author: Bart De Schuymer
++ *
++ */
++
++/*
++ * All the userspace/kernel communication is in this file.
++ * The other code should not have to know anything about the way the
++ * kernel likes the structure of the table data.
++ * The other code works with linked lists. So, the translation is done here.
++ */
++
++#include <getopt.h>
++#include <string.h>
++#include <errno.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <sys/socket.h>
++#include "include/ebtables_u.h"
++
++extern char* hooknames[NF_BR_NUMHOOKS];
++
++#ifdef KERNEL_64_USERSPACE_32
++#define sparc_cast (uint64_t)
++#else
++#define sparc_cast
++#endif
++
++int sockfd = -1;
++
++static int get_sockfd()
++{
++	int ret = 0;
++	if (sockfd == -1) {
++		sockfd = socket(AF_INET, SOCK_RAW, PF_INET);
++		if (sockfd < 0) {
++			ebt_print_error("Problem getting a socket, "
++					"you probably don't have the right "
++					"permissions");
++			ret = -1;
++		}
++	}
++	return ret;
++}
++
++static struct ebt_replace *translate_user2kernel(struct ebt_u_replace *u_repl)
++{
++	struct ebt_replace *new;
++	struct ebt_u_entry *e;
++	struct ebt_u_match_list *m_l;
++	struct ebt_u_watcher_list *w_l;
++	struct ebt_u_entries *entries;
++	char *p, *base;
++	int i, j;
++	unsigned int entries_size = 0, *chain_offsets;
++
++	new = (struct ebt_replace *)malloc(sizeof(struct ebt_replace));
++	if (!new)
++		ebt_print_memory();
++	new->valid_hooks = u_repl->valid_hooks;
++	strcpy(new->name, u_repl->name);
++	new->nentries = u_repl->nentries;
++	new->num_counters = u_repl->num_counters;
++	new->counters = sparc_cast u_repl->counters;
++	chain_offsets = (unsigned int *)calloc(u_repl->num_chains, sizeof(unsigned int));
++	if (!chain_offsets)
++		ebt_print_memory();
++	/* Determine size */
++	for (i = 0; i < u_repl->num_chains; i++) {
++		if (!(entries = u_repl->chains[i]))
++			continue;
++		chain_offsets[i] = entries_size;
++		entries_size += sizeof(struct ebt_entries);
++		j = 0;
++		e = entries->entries->next;
++		while (e != entries->entries) {
++			j++;
++			entries_size += sizeof(struct ebt_entry);
++			m_l = e->m_list;
++			while (m_l) {
++				entries_size += m_l->m->match_size +
++				   sizeof(struct ebt_entry_match);
++				m_l = m_l->next;
++			}
++			w_l = e->w_list;
++			while (w_l) {
++				entries_size += w_l->w->watcher_size +
++				   sizeof(struct ebt_entry_watcher);
++				w_l = w_l->next;
++			}
++			entries_size += e->t->target_size +
++			   sizeof(struct ebt_entry_target);
++			e = e->next;
++		}
++		/* A little sanity check */
++		if (j != entries->nentries)
++			ebt_print_bug("Wrong nentries: %d != %d, hook = %s", j,
++			   entries->nentries, entries->name);
++	}
++
++	new->entries_size = entries_size;
++	p = (char *)malloc(entries_size);
++	if (!p)
++		ebt_print_memory();
++
++	/* Put everything in one block */
++	new->entries = sparc_cast p;
++	for (i = 0; i < u_repl->num_chains; i++) {
++		struct ebt_entries *hlp;
++
++		hlp = (struct ebt_entries *)p;
++		if (!(entries = u_repl->chains[i]))
++			continue;
++		if (i < NF_BR_NUMHOOKS)
++			new->hook_entry[i] = sparc_cast hlp;
++		hlp->nentries = entries->nentries;
++		hlp->policy = entries->policy;
++		strcpy(hlp->name, entries->name);
++		hlp->counter_offset = entries->counter_offset;
++		hlp->distinguisher = 0; /* Make the kernel see the light */
++		p += sizeof(struct ebt_entries);
++		e = entries->entries->next;
++		while (e != entries->entries) {
++			struct ebt_entry *tmp = (struct ebt_entry *)p;
++
++			tmp->bitmask = e->bitmask | EBT_ENTRY_OR_ENTRIES;
++			tmp->invflags = e->invflags;
++			tmp->ethproto = e->ethproto;
++			strcpy(tmp->in, e->in);
++			strcpy(tmp->out, e->out);
++			strcpy(tmp->logical_in, e->logical_in);
++			strcpy(tmp->logical_out, e->logical_out);
++			memcpy(tmp->sourcemac, e->sourcemac,
++			   sizeof(tmp->sourcemac));
++			memcpy(tmp->sourcemsk, e->sourcemsk,
++			   sizeof(tmp->sourcemsk));
++			memcpy(tmp->destmac, e->destmac, sizeof(tmp->destmac));
++			memcpy(tmp->destmsk, e->destmsk, sizeof(tmp->destmsk));
++
++			base = p;
++			p += sizeof(struct ebt_entry);
++			m_l = e->m_list;
++			while (m_l) {
++				memcpy(p, m_l->m, m_l->m->match_size +
++				   sizeof(struct ebt_entry_match));
++				p += m_l->m->match_size +
++				   sizeof(struct ebt_entry_match);
++				m_l = m_l->next;
++			}
++			tmp->watchers_offset = p - base;
++			w_l = e->w_list;
++			while (w_l) {
++				memcpy(p, w_l->w, w_l->w->watcher_size +
++				   sizeof(struct ebt_entry_watcher));
++				p += w_l->w->watcher_size +
++				   sizeof(struct ebt_entry_watcher);
++				w_l = w_l->next;
++			}
++			tmp->target_offset = p - base;
++			memcpy(p, e->t, e->t->target_size +
++			   sizeof(struct ebt_entry_target));
++			if (!strcmp(e->t->u.name, EBT_STANDARD_TARGET)) {
++				struct ebt_standard_target *st =
++				   (struct ebt_standard_target *)p;
++				/* Translate the jump to a udc */
++				if (st->verdict >= 0)
++					st->verdict = chain_offsets
++					   [st->verdict + NF_BR_NUMHOOKS];
++			}
++			p += e->t->target_size +
++			   sizeof(struct ebt_entry_target);
++			tmp->next_offset = p - base;
++			e = e->next;
++		}
++	}
++
++	/* Sanity check */
++	if (p - (char *)new->entries != new->entries_size)
++		ebt_print_bug("Entries_size bug");
++	free(chain_offsets);
++	return new;
++}
++
++static void store_table_in_file(char *filename, struct ebt_replace *repl)
++{
++	char *data;
++	int size;
++	int fd;
++
++	/* Start from an empty file with the correct priviliges */
++	if ((fd = creat(filename, 0600)) == -1) {
++		ebt_print_error("Couldn't create file %s", filename);
++		return;
++	}
++
++	size = sizeof(struct ebt_replace) + repl->entries_size +
++	   repl->nentries * sizeof(struct ebt_counter);
++	data = (char *)malloc(size);
++	if (!data)
++		ebt_print_memory();
++	memcpy(data, repl, sizeof(struct ebt_replace));
++	memcpy(data + sizeof(struct ebt_replace), (char *)repl->entries,
++	   repl->entries_size);
++	/* Initialize counters to zero, deliver_counters() can update them */
++	memset(data + sizeof(struct ebt_replace) + repl->entries_size,
++	   0, repl->nentries * sizeof(struct ebt_counter));
++	if (write(fd, data, size) != size)
++		ebt_print_error("Couldn't write everything to file %s",
++				filename);
++	close(fd);
++	free(data);
++}
++
++void ebt_deliver_table(struct ebt_u_replace *u_repl)
++{
++	socklen_t optlen;
++	struct ebt_replace *repl;
++
++	/* Translate the struct ebt_u_replace to a struct ebt_replace */
++	repl = translate_user2kernel(u_repl);
++	if (u_repl->filename != NULL) {
++		store_table_in_file(u_repl->filename, repl);
++		goto free_repl;
++	}
++	/* Give the data to the kernel */
++	optlen = sizeof(struct ebt_replace) + repl->entries_size;
++	if (get_sockfd())
++		goto free_repl;
++	if (!setsockopt(sockfd, IPPROTO_IP, EBT_SO_SET_ENTRIES, repl, optlen))
++		goto free_repl;
++	if (u_repl->command == 8) { /* The ebtables module may not
++	                             * yet be loaded with --atomic-commit */
++		ebtables_insmod("ebtables");
++		if (!setsockopt(sockfd, IPPROTO_IP, EBT_SO_SET_ENTRIES,
++		    repl, optlen))
++			goto free_repl;
++	}
++
++	ebt_print_error("Unable to update the kernel. Two possible causes:\n"
++			"1. Multiple ebtables programs were executing simultaneously. The ebtables\n"
++			"   userspace tool doesn't by default support multiple ebtables programs running\n"
++			"   concurrently. The ebtables option --concurrent or a tool like flock can be\n"
++			"   used to support concurrent scripts that update the ebtables kernel tables.\n"
++			"2. The kernel doesn't support a certain ebtables extension, consider\n"
++			"   recompiling your kernel or insmod the extension.\n");
++free_repl:
++	if (repl) {
++		free(repl->entries);
++		free(repl);
++	}
++}
++
++static int store_counters_in_file(char *filename, struct ebt_u_replace *repl)
++{
++	int size = repl->nentries * sizeof(struct ebt_counter), ret = 0;
++	unsigned int entries_size;
++	struct ebt_replace hlp;
++	FILE *file;
++
++	if (!(file = fopen(filename, "r+b"))) {
++		ebt_print_error("Could not open file %s", filename);
++		return -1;
++	}
++	/* Find out entries_size and then set the file pointer to the
++	 * counters */
++	if (fseek(file, (char *)(&hlp.entries_size) - (char *)(&hlp), SEEK_SET)
++	   || fread(&entries_size, sizeof(char), sizeof(unsigned int), file) !=
++	   sizeof(unsigned int) ||
++	   fseek(file, entries_size + sizeof(struct ebt_replace), SEEK_SET)) {
++		ebt_print_error("File %s is corrupt", filename);
++		ret = -1;
++		goto close_file;
++	}
++	if (fwrite(repl->counters, sizeof(char), size, file) != size) {
++		ebt_print_error("Could not write everything to file %s",
++				filename);
++		ret = -1;
++	}
++close_file:
++	fclose(file);
++	return 0;
++}
++
++/* Gets executed after ebt_deliver_table. Delivers the counters to the kernel
++ * and resets the counterchanges to CNT_NORM */
++void ebt_deliver_counters(struct ebt_u_replace *u_repl)
++{
++	struct ebt_counter *old, *new, *newcounters;
++	socklen_t optlen;
++	struct ebt_replace repl;
++	struct ebt_cntchanges *cc = u_repl->cc->next, *cc2;
++	struct ebt_u_entries *entries = NULL;
++	struct ebt_u_entry *next = NULL;
++	int i, chainnr = -1;
++
++	if (u_repl->nentries == 0)
++		return;
++
++	newcounters = (struct ebt_counter *)
++	   malloc(u_repl->nentries * sizeof(struct ebt_counter));
++	if (!newcounters)
++		ebt_print_memory();
++	memset(newcounters, 0, u_repl->nentries * sizeof(struct ebt_counter));
++	old = u_repl->counters;
++	new = newcounters;
++	while (cc != u_repl->cc) {
++		if (!next || next == entries->entries) {
++			chainnr++;
++			while (chainnr < u_repl->num_chains && (!(entries = u_repl->chains[chainnr]) ||
++			       (next = entries->entries->next) == entries->entries))
++				chainnr++;
++			if (chainnr == u_repl->num_chains)
++				break;
++		}
++		if (next == NULL)
++			ebt_print_bug("next == NULL");
++		if (cc->type == CNT_NORM) {
++			/* 'Normal' rule, meaning we didn't do anything to it
++			 * So, we just copy */
++			*new = *old;
++			next->cnt = *new;
++			next->cnt_surplus.pcnt = next->cnt_surplus.bcnt = 0;
++			old++; /* We've used an old counter */
++			new++; /* We've set a new counter */
++			next = next->next;
++		} else if (cc->type == CNT_DEL) {
++			old++; /* Don't use this old counter */
++		} else {
++			if (cc->type == CNT_CHANGE) {
++				if (cc->change % 3 == 1)
++					new->pcnt = old->pcnt + next->cnt_surplus.pcnt;
++				else if (cc->change % 3 == 2)
++					new->pcnt = old->pcnt - next->cnt_surplus.pcnt;
++				else
++					new->pcnt = next->cnt.pcnt;
++				if (cc->change / 3 == 1)
++					new->bcnt = old->bcnt + next->cnt_surplus.bcnt;
++				else if (cc->change / 3 == 2)
++					new->bcnt = old->bcnt - next->cnt_surplus.bcnt;
++				else
++					new->bcnt = next->cnt.bcnt;
++			} else
++				*new = next->cnt;
++			next->cnt = *new;
++			next->cnt_surplus.pcnt = next->cnt_surplus.bcnt = 0;
++			if (cc->type == CNT_ADD)
++				new++;
++			else {
++				old++;
++				new++;
++			}
++			next = next->next;
++		}
++		cc = cc->next;
++	}
++
++	free(u_repl->counters);
++	u_repl->counters = newcounters;
++	u_repl->num_counters = u_repl->nentries;
++	/* Reset the counterchanges to CNT_NORM and delete the unused cc */
++	i = 0;
++	cc = u_repl->cc->next;
++	while (cc != u_repl->cc) {
++		if (cc->type == CNT_DEL) {
++			cc->prev->next = cc->next;
++			cc->next->prev = cc->prev;
++			cc2 = cc->next;
++			free(cc);
++			cc = cc2;
++		} else {
++			cc->type = CNT_NORM;
++			cc->change = 0;
++			i++;
++			cc = cc->next;
++		}
++	}
++	if (i != u_repl->nentries)
++		ebt_print_bug("i != u_repl->nentries");
++	if (u_repl->filename != NULL) {
++		store_counters_in_file(u_repl->filename, u_repl);
++		return;
++	}
++	optlen = u_repl->nentries * sizeof(struct ebt_counter) +
++	   sizeof(struct ebt_replace);
++	/* Now put the stuff in the kernel's struct ebt_replace */
++	repl.counters = sparc_cast u_repl->counters;
++	repl.num_counters = u_repl->num_counters;
++	memcpy(repl.name, u_repl->name, sizeof(repl.name));
++
++	if (get_sockfd())
++		return;
++	if (setsockopt(sockfd, IPPROTO_IP, EBT_SO_SET_COUNTERS, &repl, optlen))
++		ebt_print_bug("Couldn't update kernel counters");
++}
++
++static int
++ebt_translate_match(struct ebt_entry_match *m, struct ebt_u_match_list ***l)
++{
++	struct ebt_u_match_list *new;
++	int ret = 0;
++
++	new = (struct ebt_u_match_list *)
++	   malloc(sizeof(struct ebt_u_match_list));
++	if (!new)
++		ebt_print_memory();
++	new->m = (struct ebt_entry_match *)
++	   malloc(m->match_size + sizeof(struct ebt_entry_match));
++	if (!new->m)
++		ebt_print_memory();
++	memcpy(new->m, m, m->match_size + sizeof(struct ebt_entry_match));
++	new->next = NULL;
++	**l = new;
++	*l = &new->next;
++	if (ebt_find_match(new->m->u.name) == NULL) {
++		ebt_print_error("Kernel match %s unsupported by userspace tool",
++				new->m->u.name);
++		ret = -1;
++	}
++	return ret;
++}
++
++static int
++ebt_translate_watcher(struct ebt_entry_watcher *w,
++   struct ebt_u_watcher_list ***l)
++{
++	struct ebt_u_watcher_list *new;
++	int ret = 0;
++
++	new = (struct ebt_u_watcher_list *)
++	   malloc(sizeof(struct ebt_u_watcher_list));
++	if (!new)
++		ebt_print_memory();
++	new->w = (struct ebt_entry_watcher *)
++	   malloc(w->watcher_size + sizeof(struct ebt_entry_watcher));
++	if (!new->w)
++		ebt_print_memory();
++	memcpy(new->w, w, w->watcher_size + sizeof(struct ebt_entry_watcher));
++	new->next = NULL;
++	**l = new;
++	*l = &new->next;
++	if (ebt_find_watcher(new->w->u.name) == NULL) {
++		ebt_print_error("Kernel watcher %s unsupported by userspace "
++				"tool", new->w->u.name);
++		ret = -1;
++	}
++	return ret;
++}
++
++static int
++ebt_translate_entry(struct ebt_entry *e, int *hook, int *n, int *cnt,
++   int *totalcnt, struct ebt_u_entry **u_e, struct ebt_u_replace *u_repl,
++   unsigned int valid_hooks, char *base, struct ebt_cntchanges **cc)
++{
++	/* An entry */
++	if (e->bitmask & EBT_ENTRY_OR_ENTRIES) {
++		struct ebt_u_entry *new;
++		struct ebt_u_match_list **m_l;
++		struct ebt_u_watcher_list **w_l;
++		struct ebt_entry_target *t;
++
++		new = (struct ebt_u_entry *)malloc(sizeof(struct ebt_u_entry));
++		if (!new)
++			ebt_print_memory();
++		new->bitmask = e->bitmask;
++		/*
++		 * Plain userspace code doesn't know about
++		 * EBT_ENTRY_OR_ENTRIES
++		 */
++		new->bitmask &= ~EBT_ENTRY_OR_ENTRIES;
++		new->invflags = e->invflags;
++		new->ethproto = e->ethproto;
++		strcpy(new->in, e->in);
++		strcpy(new->out, e->out);
++		strcpy(new->logical_in, e->logical_in);
++		strcpy(new->logical_out, e->logical_out);
++		memcpy(new->sourcemac, e->sourcemac, sizeof(new->sourcemac));
++		memcpy(new->sourcemsk, e->sourcemsk, sizeof(new->sourcemsk));
++		memcpy(new->destmac, e->destmac, sizeof(new->destmac));
++		memcpy(new->destmsk, e->destmsk, sizeof(new->destmsk));
++		if (*totalcnt >= u_repl->nentries)
++			ebt_print_bug("*totalcnt >= u_repl->nentries");
++		new->cnt = u_repl->counters[*totalcnt];
++		new->cnt_surplus.pcnt = new->cnt_surplus.bcnt = 0;
++		new->cc = *cc;
++		*cc = (*cc)->next;
++		new->m_list = NULL;
++		new->w_list = NULL;
++		new->next = (*u_e)->next;
++		new->next->prev = new;
++		(*u_e)->next = new;
++		new->prev = *u_e;
++		*u_e = new;
++		m_l = &new->m_list;
++		EBT_MATCH_ITERATE(e, ebt_translate_match, &m_l);
++		w_l = &new->w_list;
++		EBT_WATCHER_ITERATE(e, ebt_translate_watcher, &w_l);
++
++		t = (struct ebt_entry_target *)(((char *)e) + e->target_offset);
++		new->t = (struct ebt_entry_target *)
++		   malloc(t->target_size + sizeof(struct ebt_entry_target));
++		if (!new->t)
++			ebt_print_memory();
++		if (ebt_find_target(t->u.name) == NULL) {
++			ebt_print_error("Kernel target %s unsupported by "
++					"userspace tool", t->u.name);
++			return -1;
++		}
++		memcpy(new->t, t, t->target_size +
++		   sizeof(struct ebt_entry_target));
++		/* Deal with jumps to udc */
++		if (!strcmp(t->u.name, EBT_STANDARD_TARGET)) {
++			char *tmp = base;
++			int verdict = ((struct ebt_standard_target *)t)->verdict;
++			int i;
++
++			if (verdict >= 0) {
++				tmp += verdict;
++				for (i = NF_BR_NUMHOOKS; i < u_repl->num_chains; i++)
++					if (u_repl->chains[i]->kernel_start == tmp)
++						break;
++				if (i == u_repl->num_chains)
++					ebt_print_bug("Can't find udc for jump");
++				((struct ebt_standard_target *)new->t)->verdict = i-NF_BR_NUMHOOKS;
++			}
++		}
++
++		(*cnt)++;
++		(*totalcnt)++;
++		return 0;
++	} else { /* A new chain */
++		int i;
++		struct ebt_entries *entries = (struct ebt_entries *)e;
++
++		if (*n != *cnt)
++			ebt_print_bug("Nr of entries in the chain is wrong");
++		*n = entries->nentries;
++		*cnt = 0;
++		for (i = *hook + 1; i < NF_BR_NUMHOOKS; i++)
++			if (valid_hooks & (1 << i))
++				break;
++		*hook = i;
++		*u_e = u_repl->chains[*hook]->entries;
++		return 0;
++	}
++}
++
++/* Initialize all chain headers */
++static int
++ebt_translate_chains(struct ebt_entry *e, int *hook,
++   struct ebt_u_replace *u_repl, unsigned int valid_hooks)
++{
++	int i;
++	struct ebt_entries *entries = (struct ebt_entries *)e;
++	struct ebt_u_entries *new;
++
++	if (!(e->bitmask & EBT_ENTRY_OR_ENTRIES)) {
++		for (i = *hook + 1; i < NF_BR_NUMHOOKS; i++)
++			if (valid_hooks & (1 << i))
++				break;
++		new = (struct ebt_u_entries *)malloc(sizeof(struct ebt_u_entries));
++		if (!new)
++			ebt_print_memory();
++		if (i == u_repl->max_chains)
++			ebt_double_chains(u_repl);
++		u_repl->chains[i] = new;
++		if (i >= NF_BR_NUMHOOKS)
++			new->kernel_start = (char *)e;
++		*hook = i;
++		new->nentries = entries->nentries;
++		new->policy = entries->policy;
++		new->entries = (struct ebt_u_entry *)malloc(sizeof(struct ebt_u_entry));
++		if (!new->entries)
++			ebt_print_memory();
++		new->entries->next = new->entries->prev = new->entries;
++		new->counter_offset = entries->counter_offset;
++		strcpy(new->name, entries->name);
++	}
++	return 0;
++}
++
++static int retrieve_from_file(char *filename, struct ebt_replace *repl,
++   char command)
++{
++	FILE *file;
++	char *hlp = NULL, *entries;
++	struct ebt_counter *counters;
++	int size, ret = 0;
++
++	if (!(file = fopen(filename, "r+b"))) {
++		ebt_print_error("Could not open file %s", filename);
++		return -1;
++	}
++	/* Make sure table name is right if command isn't -L or --atomic-commit */
++	if (command != 'L' && command != 8) {
++		hlp = (char *)malloc(strlen(repl->name) + 1);
++		if (!hlp)
++			ebt_print_memory();
++		strcpy(hlp, repl->name);
++	}
++	if (fread(repl, sizeof(char), sizeof(struct ebt_replace), file)
++	   != sizeof(struct ebt_replace)) {
++		ebt_print_error("File %s is corrupt", filename);
++		ret = -1;
++		goto close_file;
++	}
++	if (command != 'L' && command != 8 && strcmp(hlp, repl->name)) {
++		ebt_print_error("File %s contains wrong table name or is "
++				"corrupt", filename);
++		ret = -1;
++		goto close_file;
++	} else if (!ebt_find_table(repl->name)) {
++		ebt_print_error("File %s contains invalid table name",
++				filename);
++		ret = -1;
++		goto close_file;
++	}
++
++	size = sizeof(struct ebt_replace) +
++	   repl->nentries * sizeof(struct ebt_counter) + repl->entries_size;
++	fseek(file, 0, SEEK_END);
++	if (size != ftell(file)) {
++		ebt_print_error("File %s has wrong size", filename);
++		ret = -1;
++		goto close_file;
++	}
++	entries = (char *)malloc(repl->entries_size);
++	if (!entries)
++		ebt_print_memory();
++	repl->entries = sparc_cast entries;
++	if (repl->nentries) {
++		counters = (struct ebt_counter *)
++		   malloc(repl->nentries * sizeof(struct ebt_counter));
++		repl->counters = sparc_cast counters;
++		if (!repl->counters)
++			ebt_print_memory();
++	} else
++		repl->counters = sparc_cast NULL;
++	/* Copy entries and counters */
++	if (fseek(file, sizeof(struct ebt_replace), SEEK_SET) ||
++	   fread((char *)repl->entries, sizeof(char), repl->entries_size, file)
++	   != repl->entries_size ||
++	   fseek(file, sizeof(struct ebt_replace) + repl->entries_size,
++		 SEEK_SET)
++	   || (repl->counters && fread((char *)repl->counters, sizeof(char),
++	   repl->nentries * sizeof(struct ebt_counter), file)
++	   != repl->nentries * sizeof(struct ebt_counter))) {
++		ebt_print_error("File %s is corrupt", filename);
++		free(entries);
++		repl->entries = NULL;
++		ret = -1;
++	}
++close_file:
++	fclose(file);
++	free(hlp);
++	return ret;
++}
++
++static int retrieve_from_kernel(struct ebt_replace *repl, char command,
++				int init)
++{
++	socklen_t optlen;
++	int optname;
++	char *entries;
++
++	optlen = sizeof(struct ebt_replace);
++	if (get_sockfd())
++		return -1;
++	/* --atomic-init || --init-table */
++	if (init)
++		optname = EBT_SO_GET_INIT_INFO;
++	else
++		optname = EBT_SO_GET_INFO;
++	if (getsockopt(sockfd, IPPROTO_IP, optname, repl, &optlen))
++		return -1;
++
++	if ( !(entries = (char *)malloc(repl->entries_size)) )
++		ebt_print_memory();
++	repl->entries = sparc_cast entries;
++	if (repl->nentries) {
++		struct ebt_counter *counters;
++
++		if (!(counters = (struct ebt_counter *)
++		   malloc(repl->nentries * sizeof(struct ebt_counter))) )
++			ebt_print_memory();
++		repl->counters = sparc_cast counters;
++	}
++	else
++		repl->counters = sparc_cast NULL;
++
++	/* We want to receive the counters */
++	repl->num_counters = repl->nentries;
++	optlen += repl->entries_size + repl->num_counters *
++	   sizeof(struct ebt_counter);
++	if (init)
++		optname = EBT_SO_GET_INIT_ENTRIES;
++	else
++		optname = EBT_SO_GET_ENTRIES;
++	if (getsockopt(sockfd, IPPROTO_IP, optname, repl, &optlen))
++		ebt_print_bug("Hmm, what is wrong??? bug#1");
++
++	return 0;
++}
++
++int ebt_get_table(struct ebt_u_replace *u_repl, int init)
++{
++	int i, j, k, hook;
++	struct ebt_replace repl;
++	struct ebt_u_entry *u_e = NULL;
++	struct ebt_cntchanges *new_cc = NULL, *cc;
++
++	strcpy(repl.name, u_repl->name);
++	if (u_repl->filename != NULL) {
++		if (init)
++			ebt_print_bug("Getting initial table data from a file is impossible");
++		if (retrieve_from_file(u_repl->filename, &repl, u_repl->command))
++			return -1;
++		/* -L with a wrong table name should be dealt with silently */
++		strcpy(u_repl->name, repl.name);
++	} else if (retrieve_from_kernel(&repl, u_repl->command, init))
++		return -1;
++
++	/* Translate the struct ebt_replace to a struct ebt_u_replace */
++	u_repl->valid_hooks = repl.valid_hooks;
++	u_repl->nentries = repl.nentries;
++	u_repl->num_counters = repl.num_counters;
++	u_repl->counters = repl.counters;
++	u_repl->cc = (struct ebt_cntchanges *)malloc(sizeof(struct ebt_cntchanges));
++	if (!u_repl->cc)
++		ebt_print_memory();
++	u_repl->cc->next = u_repl->cc->prev = u_repl->cc;
++	cc = u_repl->cc;
++	for (i = 0; i < repl.nentries; i++) {
++		new_cc = (struct ebt_cntchanges *)malloc(sizeof(struct ebt_cntchanges));
++		if (!new_cc)
++			ebt_print_memory();
++		new_cc->type = CNT_NORM;
++		new_cc->change = 0;
++		new_cc->prev = cc;
++		cc->next = new_cc;
++		cc = new_cc;
++	}
++	if (repl.nentries) {
++		new_cc->next = u_repl->cc;
++		u_repl->cc->prev = new_cc;
++	}
++	u_repl->chains = (struct ebt_u_entries **)calloc(EBT_ORI_MAX_CHAINS, sizeof(void *));
++	u_repl->max_chains = EBT_ORI_MAX_CHAINS;
++	hook = -1;
++	/* FIXME: Clean up when an error is encountered */
++	EBT_ENTRY_ITERATE(repl.entries, repl.entries_size, ebt_translate_chains,
++	   &hook, u_repl, u_repl->valid_hooks);
++	if (hook >= NF_BR_NUMHOOKS)
++		u_repl->num_chains = hook + 1;
++	else
++		u_repl->num_chains = NF_BR_NUMHOOKS;
++	i = 0; /* Holds the expected nr. of entries for the chain */
++	j = 0; /* Holds the up to now counted entries for the chain */
++	k = 0; /* Holds the total nr. of entries, should equal u_repl->nentries afterwards */
++	cc = u_repl->cc->next;
++	hook = -1;
++	EBT_ENTRY_ITERATE((char *)repl.entries, repl.entries_size,
++	   ebt_translate_entry, &hook, &i, &j, &k, &u_e, u_repl,
++	   u_repl->valid_hooks, (char *)repl.entries, &cc);
++	if (k != u_repl->nentries)
++		ebt_print_bug("Wrong total nentries");
++	free(repl.entries);
++	return 0;
++}
+diff -urpN ebtables-v2.0.10-4-origin/ebtables.c ebtables-v2.0.10-4/ebtables.c
+--- ebtables-v2.0.10-4-origin/ebtables.c	2011-12-16 04:02:47.000000000 +0800
++++ ebtables-v2.0.10-4/ebtables.c	2014-07-12 07:56:23.000000000 +0800
+@@ -29,6 +29,9 @@
+ #include <signal.h>
+ #include "include/ebtables_u.h"
+ #include "include/ethernetdb.h"
++#include <unistd.h>
++#include <fcntl.h>
++
+ 
+ /* Checks whether a command has already been specified */
+ #define OPT_COMMANDS (replace->flags & OPT_COMMAND || replace->flags & OPT_ZERO)
+@@ -114,6 +117,60 @@ static struct ebt_u_table *table;
+ static struct ebt_u_entry *new_entry;
+ 
+ 
++#define MUTEX_FILE "/tmp/ebtables.lock"
++
++static struct multiprocess_lock_t {
++    int                 fd;
++    struct flock        lock_struct;
++} multiprocess_lock = {};
++
++/* These two are for inter-process locking */
++void get_global_mutex() {
++    int ret;
++
++    if (multiprocess_lock.fd != 0)
++    {
++        fprintf(stderr, "ebtables: tried to get lock twice.  ignoring second attempt...\n");
++        return;  // ok, this is bad, but not aborting -- attempting to make the best of it...
++    }
++
++    multiprocess_lock.fd = open(MUTEX_FILE, O_NONBLOCK | O_CREAT | O_WRONLY);
++    if (multiprocess_lock.fd == -1) {
++        fprintf(stderr, "could not open file %s\n", MUTEX_FILE);
++        exit(1);
++    }
++
++
++    memset(&multiprocess_lock.lock_struct, 0, sizeof(multiprocess_lock.lock_struct));
++    
++    multiprocess_lock.lock_struct.l_type = F_WRLCK;
++    multiprocess_lock.lock_struct.l_whence = SEEK_SET;
++    multiprocess_lock.lock_struct.l_start = 0;
++    multiprocess_lock.lock_struct.l_len = 0;
++    multiprocess_lock.lock_struct.l_pid = getpid();
++    
++    ret = fcntl(multiprocess_lock.fd, F_SETLKW, &multiprocess_lock.lock_struct);
++    if (ret == -1) {
++       fprintf(stderr, "could not lock file\n");
++       exit(1);
++    }
++    
++    return;
++     
++}
++
++void release_global_mutex() {
++    if(multiprocess_lock.fd != 0) {
++        multiprocess_lock.lock_struct.l_type = F_UNLCK;
++        fcntl(multiprocess_lock.fd, F_SETLK, &multiprocess_lock.lock_struct);
++
++        close(multiprocess_lock.fd);  
++
++        memset(&multiprocess_lock, 0, sizeof(multiprocess_lock));    
++    }
++}
++
++
+ static int global_option_offset;
+ #define OPTION_OFFSET 256
+ static struct option *merge_options(struct option *oldopts,
+diff -urpN ebtables-v2.0.10-4-origin/ebtables.c.orig ebtables-v2.0.10-4/ebtables.c.orig
+--- ebtables-v2.0.10-4-origin/ebtables.c.orig	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/ebtables.c.orig	2011-12-16 04:02:47.000000000 +0800
+@@ -0,0 +1,1247 @@
++/*
++ * ebtables.c, v2.0 July 2002
++ *
++ * Author: Bart De Schuymer
++ *
++ *  This code was stongly inspired on the iptables code which is
++ *  Copyright (C) 1999 Paul `Rusty' Russell & Michael J. Neuling
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
++ */
++
++#include <getopt.h>
++#include <string.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <inttypes.h>
++#include <signal.h>
++#include "include/ebtables_u.h"
++#include "include/ethernetdb.h"
++
++/* Checks whether a command has already been specified */
++#define OPT_COMMANDS (replace->flags & OPT_COMMAND || replace->flags & OPT_ZERO)
++
++#define OPT_COMMAND	0x01
++#define OPT_TABLE	0x02
++#define OPT_IN		0x04
++#define OPT_OUT		0x08
++#define OPT_JUMP	0x10
++#define OPT_PROTOCOL	0x20
++#define OPT_SOURCE	0x40
++#define OPT_DEST	0x80
++#define OPT_ZERO	0x100
++#define OPT_LOGICALIN	0x200
++#define OPT_LOGICALOUT	0x400
++#define OPT_KERNELDATA	0x800 /* This value is also defined in ebtablesd.c */
++#define OPT_COUNT	0x1000 /* This value is also defined in libebtc.c */
++#define OPT_CNT_INCR	0x2000 /* This value is also defined in libebtc.c */
++#define OPT_CNT_DECR	0x4000 /* This value is also defined in libebtc.c */
++
++/* Default command line options. Do not mess around with the already
++ * assigned numbers unless you know what you are doing */
++static struct option ebt_original_options[] =
++{
++	{ "append"         , required_argument, 0, 'A' },
++	{ "insert"         , required_argument, 0, 'I' },
++	{ "delete"         , required_argument, 0, 'D' },
++	{ "list"           , optional_argument, 0, 'L' },
++	{ "Lc"             , no_argument      , 0, 4   },
++	{ "Ln"             , no_argument      , 0, 5   },
++	{ "Lx"             , no_argument      , 0, 6   },
++	{ "Lmac2"          , no_argument      , 0, 12  },
++	{ "zero"           , optional_argument, 0, 'Z' },
++	{ "flush"          , optional_argument, 0, 'F' },
++	{ "policy"         , required_argument, 0, 'P' },
++	{ "in-interface"   , required_argument, 0, 'i' },
++	{ "in-if"          , required_argument, 0, 'i' },
++	{ "logical-in"     , required_argument, 0, 2   },
++	{ "logical-out"    , required_argument, 0, 3   },
++	{ "out-interface"  , required_argument, 0, 'o' },
++	{ "out-if"         , required_argument, 0, 'o' },
++	{ "version"        , no_argument      , 0, 'V' },
++	{ "help"           , no_argument      , 0, 'h' },
++	{ "jump"           , required_argument, 0, 'j' },
++	{ "set-counters"   , required_argument, 0, 'c' },
++	{ "change-counters", required_argument, 0, 'C' },
++	{ "proto"          , required_argument, 0, 'p' },
++	{ "protocol"       , required_argument, 0, 'p' },
++	{ "db"             , required_argument, 0, 'b' },
++	{ "source"         , required_argument, 0, 's' },
++	{ "src"            , required_argument, 0, 's' },
++	{ "destination"    , required_argument, 0, 'd' },
++	{ "dst"            , required_argument, 0, 'd' },
++	{ "table"          , required_argument, 0, 't' },
++	{ "modprobe"       , required_argument, 0, 'M' },
++	{ "new-chain"      , required_argument, 0, 'N' },
++	{ "rename-chain"   , required_argument, 0, 'E' },
++	{ "delete-chain"   , optional_argument, 0, 'X' },
++	{ "atomic-init"    , no_argument      , 0, 7   },
++	{ "atomic-commit"  , no_argument      , 0, 8   },
++	{ "atomic-file"    , required_argument, 0, 9   },
++	{ "atomic-save"    , no_argument      , 0, 10  },
++	{ "init-table"     , no_argument      , 0, 11  },
++	{ "concurrent"     , no_argument      , 0, 13  },
++	{ 0 }
++};
++
++static struct option *ebt_options = ebt_original_options;
++
++/* Holds all the data */
++static struct ebt_u_replace *replace;
++
++/* The chosen table */
++static struct ebt_u_table *table;
++
++/* The pointers in here are special:
++ * The struct ebt_target pointer is actually a struct ebt_u_target pointer.
++ * I do not feel like using a union.
++ * We need a struct ebt_u_target pointer because we know the address of the data
++ * they point to won't change. We want to allow that the struct ebt_u_target.t
++ * member can change.
++ * The same holds for the struct ebt_match and struct ebt_watcher pointers */
++static struct ebt_u_entry *new_entry;
++
++
++static int global_option_offset;
++#define OPTION_OFFSET 256
++static struct option *merge_options(struct option *oldopts,
++   const struct option *newopts, unsigned int *options_offset)
++{
++	unsigned int num_old, num_new, i;
++	struct option *merge;
++
++	if (!newopts || !oldopts || !options_offset)
++		ebt_print_bug("merge wrong");
++	for (num_old = 0; oldopts[num_old].name; num_old++);
++	for (num_new = 0; newopts[num_new].name; num_new++);
++
++	global_option_offset += OPTION_OFFSET;
++	*options_offset = global_option_offset;
++
++	merge = malloc(sizeof(struct option) * (num_new + num_old + 1));
++	if (!merge)
++		ebt_print_memory();
++	memcpy(merge, oldopts, num_old * sizeof(struct option));
++	for (i = 0; i < num_new; i++) {
++		merge[num_old + i] = newopts[i];
++		merge[num_old + i].val += *options_offset;
++	}
++	memset(merge + num_old + num_new, 0, sizeof(struct option));
++	/* Only free dynamically allocated stuff */
++	if (oldopts != ebt_original_options)
++		free(oldopts);
++
++	return merge;
++}
++
++static void merge_match(struct ebt_u_match *m)
++{
++	ebt_options = merge_options
++	   (ebt_options, m->extra_ops, &(m->option_offset));
++}
++
++static void merge_watcher(struct ebt_u_watcher *w)
++{
++	ebt_options = merge_options
++	   (ebt_options, w->extra_ops, &(w->option_offset));
++}
++
++static void merge_target(struct ebt_u_target *t)
++{
++	ebt_options = merge_options
++	   (ebt_options, t->extra_ops, &(t->option_offset));
++}
++
++/* Be backwards compatible, so don't use '+' in kernel */
++#define IF_WILDCARD 1
++static void print_iface(const char *iface)
++{
++	char *c;
++
++	if ((c = strchr(iface, IF_WILDCARD)))
++		*c = '+';
++	printf("%s ", iface);
++	if (c)
++		*c = IF_WILDCARD;
++}
++
++/* We use replace->flags, so we can't use the following values:
++ * 0x01 == OPT_COMMAND, 0x02 == OPT_TABLE, 0x100 == OPT_ZERO */
++#define LIST_N    0x04
++#define LIST_C    0x08
++#define LIST_X    0x10
++#define LIST_MAC2 0x20
++
++/* Helper function for list_rules() */
++static void list_em(struct ebt_u_entries *entries)
++{
++	int i, j, space = 0, digits;
++	struct ebt_u_entry *hlp;
++	struct ebt_u_match_list *m_l;
++	struct ebt_u_watcher_list *w_l;
++	struct ebt_u_match *m;
++	struct ebt_u_watcher *w;
++	struct ebt_u_target *t;
++
++	if (replace->flags & LIST_MAC2)
++		ebt_printstyle_mac = 2;
++	else
++		ebt_printstyle_mac = 0;
++	hlp = entries->entries->next;
++	if (replace->flags & LIST_X && entries->policy != EBT_ACCEPT) {
++		printf("ebtables -t %s -P %s %s\n", replace->name,
++		   entries->name, ebt_standard_targets[-entries->policy - 1]);
++	} else if (!(replace->flags & LIST_X)) {
++		printf("\nBridge chain: %s, entries: %d, policy: %s\n",
++		   entries->name, entries->nentries,
++		   ebt_standard_targets[-entries->policy - 1]);
++	}
++
++	if (replace->flags & LIST_N) {
++		i = entries->nentries;
++		while (i > 9) {
++			space++;
++			i /= 10;
++		}
++	}
++
++	for (i = 0; i < entries->nentries; i++) {
++		if (replace->flags & LIST_N) {
++			digits = 0;
++			/* A little work to get nice rule numbers. */
++			j = i + 1;
++			while (j > 9) {
++				digits++;
++				j /= 10;
++			}
++			for (j = 0; j < space - digits; j++)
++				printf(" ");
++			printf("%d. ", i + 1);
++		}
++		if (replace->flags & LIST_X)
++			printf("ebtables -t %s -A %s ",
++			   replace->name, entries->name);
++
++		/* The standard target's print() uses this to find out
++		 * the name of a udc */
++		hlp->replace = replace;
++
++		/* Don't print anything about the protocol if no protocol was
++		 * specified, obviously this means any protocol will do. */
++		if (!(hlp->bitmask & EBT_NOPROTO)) {
++			printf("-p ");
++			if (hlp->invflags & EBT_IPROTO)
++				printf("! ");
++			if (hlp->bitmask & EBT_802_3)
++				printf("Length ");
++			else {
++				struct ethertypeent *ent;
++
++				ent = getethertypebynumber(ntohs(hlp->ethproto));
++				if (!ent)
++					printf("0x%x ", ntohs(hlp->ethproto));
++				else
++					printf("%s ", ent->e_name);
++			}
++		}
++		if (hlp->bitmask & EBT_SOURCEMAC) {
++			printf("-s ");
++			if (hlp->invflags & EBT_ISOURCE)
++				printf("! ");
++			ebt_print_mac_and_mask(hlp->sourcemac, hlp->sourcemsk);
++			printf(" ");
++		}
++		if (hlp->bitmask & EBT_DESTMAC) {
++			printf("-d ");
++			if (hlp->invflags & EBT_IDEST)
++				printf("! ");
++			ebt_print_mac_and_mask(hlp->destmac, hlp->destmsk);
++			printf(" ");
++		}
++		if (hlp->in[0] != '\0') {
++			printf("-i ");
++			if (hlp->invflags & EBT_IIN)
++				printf("! ");
++			print_iface(hlp->in);
++		}
++		if (hlp->logical_in[0] != '\0') {
++			printf("--logical-in ");
++			if (hlp->invflags & EBT_ILOGICALIN)
++				printf("! ");
++			print_iface(hlp->logical_in);
++		}
++		if (hlp->logical_out[0] != '\0') {
++			printf("--logical-out ");
++			if (hlp->invflags & EBT_ILOGICALOUT)
++				printf("! ");
++			print_iface(hlp->logical_out);
++		}
++		if (hlp->out[0] != '\0') {
++			printf("-o ");
++			if (hlp->invflags & EBT_IOUT)
++				printf("! ");
++			print_iface(hlp->out);
++		}
++
++		m_l = hlp->m_list;
++		while (m_l) {
++			m = ebt_find_match(m_l->m->u.name);
++			if (!m)
++				ebt_print_bug("Match not found");
++			m->print(hlp, m_l->m);
++			m_l = m_l->next;
++		}
++		w_l = hlp->w_list;
++		while (w_l) {
++			w = ebt_find_watcher(w_l->w->u.name);
++			if (!w)
++				ebt_print_bug("Watcher not found");
++			w->print(hlp, w_l->w);
++			w_l = w_l->next;
++		}
++
++		printf("-j ");
++		if (strcmp(hlp->t->u.name, EBT_STANDARD_TARGET))
++			printf("%s ", hlp->t->u.name);
++		t = ebt_find_target(hlp->t->u.name);
++		if (!t)
++			ebt_print_bug("Target '%s' not found", hlp->t->u.name);
++		t->print(hlp, hlp->t);
++		if (replace->flags & LIST_C) {
++			uint64_t pcnt = hlp->cnt.pcnt;
++			uint64_t bcnt = hlp->cnt.bcnt;
++
++			if (replace->flags & LIST_X)
++				printf("-c %"PRIu64" %"PRIu64, pcnt, bcnt);
++			else
++				printf(", pcnt = %"PRIu64" -- bcnt = %"PRIu64, pcnt, bcnt);
++		}
++		printf("\n");
++		hlp = hlp->next;
++	}
++}
++
++static void print_help()
++{
++	struct ebt_u_match_list *m_l;
++	struct ebt_u_watcher_list *w_l;
++
++	PRINT_VERSION;
++	printf(
++"Usage:\n"
++"ebtables -[ADI] chain rule-specification [options]\n"
++"ebtables -P chain target\n"
++"ebtables -[LFZ] [chain]\n"
++"ebtables -[NX] [chain]\n"
++"ebtables -E old-chain-name new-chain-name\n\n"
++"Commands:\n"
++"--append -A chain             : append to chain\n"
++"--delete -D chain             : delete matching rule from chain\n"
++"--delete -D chain rulenum     : delete rule at position rulenum from chain\n"
++"--change-counters -C chain\n"
++"          [rulenum] pcnt bcnt : change counters of existing rule\n"
++"--insert -I chain rulenum     : insert rule at position rulenum in chain\n"
++"--list   -L [chain]           : list the rules in a chain or in all chains\n"
++"--flush  -F [chain]           : delete all rules in chain or in all chains\n"
++"--init-table                  : replace the kernel table with the initial table\n"
++"--zero   -Z [chain]           : put counters on zero in chain or in all chains\n"
++"--policy -P chain target      : change policy on chain to target\n"
++"--new-chain -N chain          : create a user defined chain\n"
++"--rename-chain -E old new     : rename a chain\n"
++"--delete-chain -X [chain]     : delete a user defined chain\n"
++"--atomic-commit               : update the kernel w/t table contained in <FILE>\n"
++"--atomic-init                 : put the initial kernel table into <FILE>\n"
++"--atomic-save                 : put the current kernel table into <FILE>\n"
++"--atomic-file file            : set <FILE> to file\n\n"
++"Options:\n"
++"--proto  -p [!] proto         : protocol hexadecimal, by name or LENGTH\n"
++"--src    -s [!] address[/mask]: source mac address\n"
++"--dst    -d [!] address[/mask]: destination mac address\n"
++"--in-if  -i [!] name[+]       : network input interface name\n"
++"--out-if -o [!] name[+]       : network output interface name\n"
++"--logical-in  [!] name[+]     : logical bridge input interface name\n"
++"--logical-out [!] name[+]     : logical bridge output interface name\n"
++"--set-counters -c chain\n"
++"          pcnt bcnt           : set the counters of the to be added rule\n"
++"--modprobe -M program         : try to insert modules using this program\n"
++"--concurrent                  : use a file lock to support concurrent scripts\n"
++"--version -V                  : print package version\n\n"
++"Environment variable:\n"
++ATOMIC_ENV_VARIABLE "          : if set <FILE> (see above) will equal its value"
++"\n\n");
++	m_l = new_entry->m_list;
++	while (m_l) {
++		((struct ebt_u_match *)m_l->m)->help();
++		printf("\n");
++		m_l = m_l->next;
++	}
++	w_l = new_entry->w_list;
++	while (w_l) {
++		((struct ebt_u_watcher *)w_l->w)->help();
++		printf("\n");
++		w_l = w_l->next;
++	}
++	((struct ebt_u_target *)new_entry->t)->help();
++	printf("\n");
++	if (table->help)
++		table->help(ebt_hooknames);
++}
++
++/* Execute command L */
++static void list_rules()
++{
++	int i;
++
++	if (!(replace->flags & LIST_X))
++		printf("Bridge table: %s\n", table->name);
++	if (replace->selected_chain != -1)
++		list_em(ebt_to_chain(replace));
++	else {
++		/* Create new chains and rename standard chains when necessary */
++		if (replace->flags & LIST_X && replace->num_chains > NF_BR_NUMHOOKS) {
++			for (i = NF_BR_NUMHOOKS; i < replace->num_chains; i++)
++				printf("ebtables -t %s -N %s\n", replace->name, replace->chains[i]->name);
++			for (i = 0; i < NF_BR_NUMHOOKS; i++)
++				if (replace->chains[i] && strcmp(replace->chains[i]->name, ebt_hooknames[i]))
++					printf("ebtables -t %s -E %s %s\n", replace->name, ebt_hooknames[i], replace->chains[i]->name);
++		}
++		for (i = 0; i < replace->num_chains; i++)
++			if (replace->chains[i])
++				list_em(replace->chains[i]);
++	}
++}
++
++static int parse_rule_range(const char *argv, int *rule_nr, int *rule_nr_end)
++{
++	char *colon = strchr(argv, ':'), *buffer;
++
++	if (colon) {
++		*colon = '\0';
++		if (*(colon + 1) == '\0')
++			*rule_nr_end = -1; /* Until the last rule */
++		else {
++			*rule_nr_end = strtol(colon + 1, &buffer, 10);
++			if (*buffer != '\0' || *rule_nr_end == 0)
++				return -1;
++		}
++	}
++	if (colon == argv)
++		*rule_nr = 1; /* Beginning with the first rule */
++	else {
++		*rule_nr = strtol(argv, &buffer, 10);
++		if (*buffer != '\0' || *rule_nr == 0)
++			return -1;
++	}
++	if (!colon)
++		*rule_nr_end = *rule_nr;
++	return 0;
++}
++
++/* Incrementing or decrementing rules in daemon mode is not supported as the
++ * involved code overload is not worth it (too annoying to take the increased
++ * counters in the kernel into account). */
++static int parse_change_counters_rule(int argc, char **argv, int *rule_nr, int *rule_nr_end, int exec_style)
++{
++	char *buffer;
++	int ret = 0;
++
++	if (optind + 1 >= argc || (argv[optind][0] == '-' && (argv[optind][1] < '0' || argv[optind][1] > '9')) ||
++	    (argv[optind + 1][0] == '-' && (argv[optind + 1][1] < '0'  && argv[optind + 1][1] > '9')))
++		ebt_print_error2("The command -C needs at least 2 arguments");
++	if (optind + 2 < argc && (argv[optind + 2][0] != '-' || (argv[optind + 2][1] >= '0' && argv[optind + 2][1] <= '9'))) {
++		if (optind + 3 != argc)
++			ebt_print_error2("No extra options allowed with -C start_nr[:end_nr] pcnt bcnt");
++		if (parse_rule_range(argv[optind], rule_nr, rule_nr_end))
++			ebt_print_error2("Something is wrong with the rule number specification '%s'", argv[optind]);
++		optind++;
++	}
++
++	if (argv[optind][0] == '+') {
++		if (exec_style == EXEC_STYLE_DAEMON)
++daemon_incr:
++			ebt_print_error2("Incrementing rule counters (%s) not allowed in daemon mode", argv[optind]);
++		ret += 1;
++		new_entry->cnt_surplus.pcnt = strtoull(argv[optind] + 1, &buffer, 10);
++	} else if (argv[optind][0] == '-') {
++		if (exec_style == EXEC_STYLE_DAEMON)
++daemon_decr:
++			ebt_print_error2("Decrementing rule counters (%s) not allowed in daemon mode", argv[optind]);
++		ret += 2;
++		new_entry->cnt_surplus.pcnt = strtoull(argv[optind] + 1, &buffer, 10);
++	} else
++		new_entry->cnt_surplus.pcnt = strtoull(argv[optind], &buffer, 10);
++
++	if (*buffer != '\0')
++		goto invalid;
++	optind++;
++	if (argv[optind][0] == '+') {
++		if (exec_style == EXEC_STYLE_DAEMON)
++			goto daemon_incr;
++		ret += 3;
++		new_entry->cnt_surplus.bcnt = strtoull(argv[optind] + 1, &buffer, 10);
++	} else if (argv[optind][0] == '-') {
++		if (exec_style == EXEC_STYLE_DAEMON)
++			goto daemon_decr;
++		ret += 6;
++		new_entry->cnt_surplus.bcnt = strtoull(argv[optind] + 1, &buffer, 10);
++	} else
++		new_entry->cnt_surplus.bcnt = strtoull(argv[optind], &buffer, 10);
++
++	if (*buffer != '\0')
++		goto invalid;
++	optind++;
++	return ret;
++invalid:
++	ebt_print_error2("Packet counter '%s' invalid", argv[optind]);
++}
++
++static int parse_iface(char *iface, char *option)
++{
++	char *c;
++
++	if ((c = strchr(iface, '+'))) {
++		if (*(c + 1) != '\0') {
++			ebt_print_error("Spurious characters after '+' wildcard for '%s'", option);
++			return -1;
++		} else
++			*c = IF_WILDCARD;
++	}
++	return 0;
++}
++
++void ebt_early_init_once()
++{
++	ebt_iterate_matches(merge_match);
++	ebt_iterate_watchers(merge_watcher);
++	ebt_iterate_targets(merge_target);
++}
++
++/* signal handler, installed when the option --concurrent is specified. */
++static void sighandler(int signum)
++{
++	exit(-1);
++}
++
++/* We use exec_style instead of #ifdef's because ebtables.so is a shared object. */
++int do_command(int argc, char *argv[], int exec_style,
++               struct ebt_u_replace *replace_)
++{
++	char *buffer;
++	int c, i;
++	int zerochain = -1; /* Needed for the -Z option (we can have -Z <this> -L <that>) */
++	int chcounter = 0; /* Needed for -C */
++	int policy = 0;
++	int rule_nr = 0;
++	int rule_nr_end = 0;
++	struct ebt_u_target *t;
++	struct ebt_u_match *m;
++	struct ebt_u_watcher *w;
++	struct ebt_u_match_list *m_l;
++	struct ebt_u_watcher_list *w_l;
++	struct ebt_u_entries *entries;
++
++	opterr = 0;
++	ebt_modprobe = NULL;
++
++	replace = replace_;
++
++	/* The daemon doesn't use the environment variable */
++	if (exec_style == EXEC_STYLE_PRG) {
++		buffer = getenv(ATOMIC_ENV_VARIABLE);
++		if (buffer) {
++			replace->filename = malloc(strlen(buffer) + 1);
++			if (!replace->filename)
++				ebt_print_memory();
++			strcpy(replace->filename, buffer);
++			buffer = NULL;
++		}
++	}
++
++	replace->flags &= OPT_KERNELDATA; /* ebtablesd needs OPT_KERNELDATA */
++	replace->selected_chain = -1;
++	replace->command = 'h';
++
++	if (!new_entry) {
++		new_entry = (struct ebt_u_entry *)malloc(sizeof(struct ebt_u_entry));
++		if (!new_entry)
++			ebt_print_memory();
++	}
++	/* Put some sane values in our new entry */
++	ebt_initialize_entry(new_entry);
++	new_entry->replace = replace;
++
++	/* The scenario induced by this loop makes that:
++	 * '-t'  ,'-M' and --atomic (if specified) have to come
++	 * before '-A' and the like */
++
++	/* Getopt saves the day */
++	while ((c = getopt_long(argc, argv,
++	   "-A:D:C:I:N:E:X::L::Z::F::P:Vhi:o:j:c:p:s:d:t:M:", ebt_options, NULL)) != -1) {
++		switch (c) {
++
++		case 'A': /* Add a rule */
++		case 'D': /* Delete a rule */
++		case 'C': /* Change counters */
++		case 'P': /* Define policy */
++		case 'I': /* Insert a rule */
++		case 'N': /* Make a user defined chain */
++		case 'E': /* Rename chain */
++		case 'X': /* Delete chain */
++			/* We allow -N chainname -P policy */
++			if (replace->command == 'N' && c == 'P') {
++				replace->command = c;
++				optind--; /* No table specified */
++				goto handle_P;
++			}
++			if (OPT_COMMANDS)
++				ebt_print_error2("Multiple commands are not allowed");
++
++			replace->command = c;
++			replace->flags |= OPT_COMMAND;
++			if (!(replace->flags & OPT_KERNELDATA))
++				ebt_get_kernel_table(replace, 0);
++			if (optarg && (optarg[0] == '-' || !strcmp(optarg, "!")))
++				ebt_print_error2("No chain name specified");
++			if (c == 'N') {
++				if (ebt_get_chainnr(replace, optarg) != -1)
++					ebt_print_error2("Chain %s already exists", optarg);
++				else if (ebt_find_target(optarg))
++					ebt_print_error2("Target with name %s exists", optarg);
++				else if (strlen(optarg) >= EBT_CHAIN_MAXNAMELEN)
++					ebt_print_error2("Chain name length can't exceed %d",
++							EBT_CHAIN_MAXNAMELEN - 1);
++				else if (strchr(optarg, ' ') != NULL)
++					ebt_print_error2("Use of ' ' not allowed in chain names");
++				ebt_new_chain(replace, optarg, EBT_ACCEPT);
++				/* This is needed to get -N x -P y working */
++				replace->selected_chain = ebt_get_chainnr(replace, optarg);
++				break;
++			} else if (c == 'X') {
++				if (optind >= argc) {
++					replace->selected_chain = -1;
++					ebt_delete_chain(replace);
++					break;
++				}
++
++				if (optind < argc - 1)
++					ebt_print_error2("No extra options allowed with -X");
++
++				if ((replace->selected_chain = ebt_get_chainnr(replace, argv[optind])) == -1)
++					ebt_print_error2("Chain '%s' doesn't exist", argv[optind]);
++				ebt_delete_chain(replace);
++				if (ebt_errormsg[0] != '\0')
++					return -1;
++				optind++;
++				break;
++			}
++
++			if ((replace->selected_chain = ebt_get_chainnr(replace, optarg)) == -1)
++				ebt_print_error2("Chain '%s' doesn't exist", optarg);
++			if (c == 'E') {
++				if (optind >= argc)
++					ebt_print_error2("No new chain name specified");
++				else if (optind < argc - 1)
++					ebt_print_error2("No extra options allowed with -E");
++				else if (strlen(argv[optind]) >= EBT_CHAIN_MAXNAMELEN)
++					ebt_print_error2("Chain name length can't exceed %d characters", EBT_CHAIN_MAXNAMELEN - 1);
++				else if (ebt_get_chainnr(replace, argv[optind]) != -1)
++					ebt_print_error2("Chain '%s' already exists", argv[optind]);
++				else if (ebt_find_target(argv[optind]))
++					ebt_print_error2("Target with name '%s' exists", argv[optind]);
++				else if (strchr(argv[optind], ' ') != NULL)
++					ebt_print_error2("Use of ' ' not allowed in chain names");
++				ebt_rename_chain(replace, argv[optind]);
++				optind++;
++				break;
++			} else if (c == 'D' && optind < argc && (argv[optind][0] != '-' || (argv[optind][1] >= '0' && argv[optind][1] <= '9'))) {
++				if (optind != argc - 1)
++					ebt_print_error2("No extra options allowed with -D start_nr[:end_nr]");
++				if (parse_rule_range(argv[optind], &rule_nr, &rule_nr_end))
++					ebt_print_error2("Problem with the specified rule number(s) '%s'", argv[optind]);
++				optind++;
++			} else if (c == 'C') {
++				if ((chcounter = parse_change_counters_rule(argc, argv, &rule_nr, &rule_nr_end, exec_style)) == -1)
++					return -1;
++			} else if (c == 'I') {
++				if (optind >= argc || (argv[optind][0] == '-' && (argv[optind][1] < '0' || argv[optind][1] > '9')))
++					rule_nr = 1;
++				else {
++					rule_nr = strtol(argv[optind], &buffer, 10);
++					if (*buffer != '\0')
++						ebt_print_error2("Problem with the specified rule number '%s'", argv[optind]);
++					optind++;
++				}
++			} else if (c == 'P') {
++handle_P:
++				if (optind >= argc)
++					ebt_print_error2("No policy specified");
++				for (i = 0; i < NUM_STANDARD_TARGETS; i++)
++					if (!strcmp(argv[optind], ebt_standard_targets[i])) {
++						policy = -i -1;
++						if (policy == EBT_CONTINUE)
++							ebt_print_error2("Wrong policy '%s'", argv[optind]);
++						break;
++					}
++				if (i == NUM_STANDARD_TARGETS)
++					ebt_print_error2("Unknown policy '%s'", argv[optind]);
++				optind++;
++			}
++			break;
++		case 'L': /* List */
++		case 'F': /* Flush */
++		case 'Z': /* Zero counters */
++			if (c == 'Z') {
++				if ((replace->flags & OPT_ZERO) || (replace->flags & OPT_COMMAND && replace->command != 'L'))
++print_zero:
++					ebt_print_error2("Command -Z only allowed together with command -L");
++				replace->flags |= OPT_ZERO;
++			} else {
++				if (replace->flags & OPT_COMMAND)
++					ebt_print_error2("Multiple commands are not allowed");
++				replace->command = c;
++				replace->flags |= OPT_COMMAND;
++				if (replace->flags & OPT_ZERO && c != 'L')
++					goto print_zero;
++			}
++
++#ifdef SILENT_DAEMON
++			if (c== 'L' && exec_style == EXEC_STYLE_DAEMON)
++				ebt_print_error2("-L not supported in daemon mode");
++#endif
++
++			if (!(replace->flags & OPT_KERNELDATA))
++				ebt_get_kernel_table(replace, 0);
++			i = -1;
++			if (optind < argc && argv[optind][0] != '-') {
++				if ((i = ebt_get_chainnr(replace, argv[optind])) == -1)
++					ebt_print_error2("Chain '%s' doesn't exist", argv[optind]);
++				optind++;
++			}
++			if (i != -1) {
++				if (c == 'Z')
++					zerochain = i;
++				else
++					replace->selected_chain = i;
++			}
++			break;
++		case 'V': /* Version */
++			if (OPT_COMMANDS)
++				ebt_print_error2("Multiple commands are not allowed");
++			replace->command = 'V';
++			if (exec_style == EXEC_STYLE_DAEMON)
++				ebt_print_error2(PROGNAME" v"PROGVERSION" ("PROGDATE")\n");
++			PRINT_VERSION;
++			exit(0);
++		case 'M': /* Modprobe */
++			if (OPT_COMMANDS)
++				ebt_print_error2("Please put the -M option earlier");
++			free(ebt_modprobe);
++			ebt_modprobe = optarg;
++			break;
++		case 'h': /* Help */
++#ifdef SILENT_DAEMON
++			if (exec_style == EXEC_STYLE_DAEMON)
++				ebt_print_error2("-h not supported in daemon mode");
++#endif
++			if (OPT_COMMANDS)
++				ebt_print_error2("Multiple commands are not allowed");
++			replace->command = 'h';
++
++			/* All other arguments should be extension names */
++			while (optind < argc) {
++				struct ebt_u_match *m;
++				struct ebt_u_watcher *w;
++
++				if (!strcasecmp("list_extensions", argv[optind])) {
++					ebt_list_extensions();
++					exit(0);
++				}
++				if ((m = ebt_find_match(argv[optind])))
++					ebt_add_match(new_entry, m);
++				else if ((w = ebt_find_watcher(argv[optind])))
++					ebt_add_watcher(new_entry, w);
++				else {
++					if (!(t = ebt_find_target(argv[optind])))
++						ebt_print_error2("Extension '%s' not found", argv[optind]);
++					if (replace->flags & OPT_JUMP)
++						ebt_print_error2("Sorry, you can only see help for one target extension at a time");
++					replace->flags |= OPT_JUMP;
++					new_entry->t = (struct ebt_entry_target *)t;
++				}
++				optind++;
++			}
++			break;
++		case 't': /* Table */
++			if (OPT_COMMANDS)
++				ebt_print_error2("Please put the -t option first");
++			ebt_check_option2(&(replace->flags), OPT_TABLE);
++			if (strlen(optarg) > EBT_TABLE_MAXNAMELEN - 1)
++				ebt_print_error2("Table name length cannot exceed %d characters", EBT_TABLE_MAXNAMELEN - 1);
++			strcpy(replace->name, optarg);
++			break;
++		case 'i': /* Input interface */
++		case 2  : /* Logical input interface */
++		case 'o': /* Output interface */
++		case 3  : /* Logical output interface */
++		case 'j': /* Target */
++		case 'p': /* Net family protocol */
++		case 's': /* Source mac */
++		case 'd': /* Destination mac */
++		case 'c': /* Set counters */
++			if (!OPT_COMMANDS)
++				ebt_print_error2("No command specified");
++			if (replace->command != 'A' && replace->command != 'D' && replace->command != 'I' && replace->command != 'C')
++				ebt_print_error2("Command and option do not match");
++			if (c == 'i') {
++				ebt_check_option2(&(replace->flags), OPT_IN);
++				if (replace->selected_chain > 2 && replace->selected_chain < NF_BR_BROUTING)
++					ebt_print_error2("Use -i only in INPUT, FORWARD, PREROUTING and BROUTING chains");
++				if (ebt_check_inverse2(optarg))
++					new_entry->invflags |= EBT_IIN;
++
++				if (strlen(optarg) >= IFNAMSIZ)
++big_iface_length:
++					ebt_print_error2("Interface name length cannot exceed %d characters", IFNAMSIZ - 1);
++				strcpy(new_entry->in, optarg);
++				if (parse_iface(new_entry->in, "-i"))
++					return -1;
++				break;
++			} else if (c == 2) {
++				ebt_check_option2(&(replace->flags), OPT_LOGICALIN);
++				if (replace->selected_chain > 2 && replace->selected_chain < NF_BR_BROUTING)
++					ebt_print_error2("Use --logical-in only in INPUT, FORWARD, PREROUTING and BROUTING chains");
++				if (ebt_check_inverse2(optarg))
++					new_entry->invflags |= EBT_ILOGICALIN;
++
++				if (strlen(optarg) >= IFNAMSIZ)
++					goto big_iface_length;
++				strcpy(new_entry->logical_in, optarg);
++				if (parse_iface(new_entry->logical_in, "--logical-in"))
++					return -1;
++				break;
++			} else if (c == 'o') {
++				ebt_check_option2(&(replace->flags), OPT_OUT);
++				if (replace->selected_chain < 2 || replace->selected_chain == NF_BR_BROUTING)
++					ebt_print_error2("Use -o only in OUTPUT, FORWARD and POSTROUTING chains");
++				if (ebt_check_inverse2(optarg))
++					new_entry->invflags |= EBT_IOUT;
++
++				if (strlen(optarg) >= IFNAMSIZ)
++					goto big_iface_length;
++				strcpy(new_entry->out, optarg);
++				if (parse_iface(new_entry->out, "-o"))
++					return -1;
++				break;
++			} else if (c == 3) {
++				ebt_check_option2(&(replace->flags), OPT_LOGICALOUT);
++				if (replace->selected_chain < 2 || replace->selected_chain == NF_BR_BROUTING)
++					ebt_print_error2("Use --logical-out only in OUTPUT, FORWARD and POSTROUTING chains");
++				if (ebt_check_inverse2(optarg))
++					new_entry->invflags |= EBT_ILOGICALOUT;
++
++				if (strlen(optarg) >= IFNAMSIZ)
++					goto big_iface_length;
++				strcpy(new_entry->logical_out, optarg);
++				if (parse_iface(new_entry->logical_out, "--logical-out"))
++					return -1;    
++				break;
++			} else if (c == 'j') {
++				ebt_check_option2(&(replace->flags), OPT_JUMP);
++				for (i = 0; i < NUM_STANDARD_TARGETS; i++)
++					if (!strcmp(optarg, ebt_standard_targets[i])) {
++						t = ebt_find_target(EBT_STANDARD_TARGET);
++						((struct ebt_standard_target *) t->t)->verdict = -i - 1;
++						break;
++					}
++				if (-i - 1 == EBT_RETURN && replace->selected_chain < NF_BR_NUMHOOKS) {
++					ebt_print_error2("Return target only for user defined chains");
++				} else if (i != NUM_STANDARD_TARGETS)
++					break;
++
++				if ((i = ebt_get_chainnr(replace, optarg)) != -1) {
++					if (i < NF_BR_NUMHOOKS)
++						ebt_print_error2("Don't jump to a standard chain");
++					t = ebt_find_target(EBT_STANDARD_TARGET);
++					((struct ebt_standard_target *) t->t)->verdict = i - NF_BR_NUMHOOKS;
++					break;
++				} else {
++					/* Must be an extension then */
++					struct ebt_u_target *t;
++
++					t = ebt_find_target(optarg);
++					/* -j standard not allowed either */
++					if (!t || t == (struct ebt_u_target *)new_entry->t)
++						ebt_print_error2("Illegal target name '%s'", optarg);
++					new_entry->t = (struct ebt_entry_target *)t;
++					ebt_find_target(EBT_STANDARD_TARGET)->used = 0;
++					t->used = 1;
++				}
++				break;
++			} else if (c == 's') {
++				ebt_check_option2(&(replace->flags), OPT_SOURCE);
++				if (ebt_check_inverse2(optarg))
++					new_entry->invflags |= EBT_ISOURCE;
++
++				if (ebt_get_mac_and_mask(optarg, new_entry->sourcemac, new_entry->sourcemsk))
++					ebt_print_error2("Problem with specified source mac '%s'", optarg);
++				new_entry->bitmask |= EBT_SOURCEMAC;
++				break;
++			} else if (c == 'd') {
++				ebt_check_option2(&(replace->flags), OPT_DEST);
++				if (ebt_check_inverse2(optarg))
++					new_entry->invflags |= EBT_IDEST;
++
++				if (ebt_get_mac_and_mask(optarg, new_entry->destmac, new_entry->destmsk))
++					ebt_print_error2("Problem with specified destination mac '%s'", optarg);
++				new_entry->bitmask |= EBT_DESTMAC;
++				break;
++			} else if (c == 'c') {
++				ebt_check_option2(&(replace->flags), OPT_COUNT);
++				if (ebt_check_inverse2(optarg))
++					ebt_print_error2("Unexpected '!' after -c");
++				if (optind >= argc || optarg[0] == '-' || argv[optind][0] == '-')
++					ebt_print_error2("Option -c needs 2 arguments");
++
++				new_entry->cnt.pcnt = strtoull(optarg, &buffer, 10);
++				if (*buffer != '\0')
++					ebt_print_error2("Packet counter '%s' invalid", optarg);
++				new_entry->cnt.bcnt = strtoull(argv[optind], &buffer, 10);
++				if (*buffer != '\0')
++					ebt_print_error2("Packet counter '%s' invalid", argv[optind]);
++				optind++;
++				break;
++			}
++			ebt_check_option2(&(replace->flags), OPT_PROTOCOL);
++			if (ebt_check_inverse2(optarg))
++				new_entry->invflags |= EBT_IPROTO;
++
++			new_entry->bitmask &= ~((unsigned int)EBT_NOPROTO);
++			i = strtol(optarg, &buffer, 16);
++			if (*buffer == '\0' && (i < 0 || i > 0xFFFF))
++				ebt_print_error2("Problem with the specified protocol");
++			if (*buffer != '\0') {
++				struct ethertypeent *ent;
++
++				if (!strcasecmp(optarg, "LENGTH")) {
++					new_entry->bitmask |= EBT_802_3;
++					break;
++				}
++				ent = getethertypebyname(optarg);
++				if (!ent)
++					ebt_print_error2("Problem with the specified Ethernet protocol '%s', perhaps "_PATH_ETHERTYPES " is missing", optarg);
++				new_entry->ethproto = ent->e_ethertype;
++			} else
++				new_entry->ethproto = i;
++
++			if (new_entry->ethproto < 0x0600)
++				ebt_print_error2("Sorry, protocols have values above or equal to 0x0600");
++			break;
++		case 4  : /* Lc */
++#ifdef SILENT_DAEMON
++			if (exec_style == EXEC_STYLE_DAEMON)
++				ebt_print_error2("--Lc is not supported in daemon mode");
++#endif
++			ebt_check_option2(&(replace->flags), LIST_C);
++			if (replace->command != 'L')
++				ebt_print_error("Use --Lc with -L");
++			replace->flags |= LIST_C;
++			break;
++		case 5  : /* Ln */
++#ifdef SILENT_DAEMON
++			if (exec_style == EXEC_STYLE_DAEMON)
++				ebt_print_error2("--Ln is not supported in daemon mode");
++#endif
++			ebt_check_option2(&(replace->flags), LIST_N);
++			if (replace->command != 'L')
++				ebt_print_error2("Use --Ln with -L");
++			if (replace->flags & LIST_X)
++				ebt_print_error2("--Lx is not compatible with --Ln");
++			replace->flags |= LIST_N;
++			break;
++		case 6  : /* Lx */
++#ifdef SILENT_DAEMON
++			if (exec_style == EXEC_STYLE_DAEMON)
++				ebt_print_error2("--Lx is not supported in daemon mode");
++#endif
++			ebt_check_option2(&(replace->flags), LIST_X);
++			if (replace->command != 'L')
++				ebt_print_error2("Use --Lx with -L");
++			if (replace->flags & LIST_N)
++				ebt_print_error2("--Lx is not compatible with --Ln");
++			replace->flags |= LIST_X;
++			break;
++		case 12 : /* Lmac2 */
++#ifdef SILENT_DAEMON
++			if (exec_style == EXEC_STYLE_DAEMON)
++				ebt_print_error("--Lmac2 is not supported in daemon mode");
++#endif
++			ebt_check_option2(&(replace->flags), LIST_MAC2);
++			if (replace->command != 'L')
++				ebt_print_error2("Use --Lmac2 with -L");
++			replace->flags |= LIST_MAC2;
++			break;
++		case 8 : /* atomic-commit */
++			if (exec_style == EXEC_STYLE_DAEMON)
++				ebt_print_error2("--atomic-commit is not supported in daemon mode");
++			replace->command = c;
++			if (OPT_COMMANDS)
++				ebt_print_error2("Multiple commands are not allowed");
++			replace->flags |= OPT_COMMAND;
++			if (!replace->filename)
++				ebt_print_error2("No atomic file specified");
++			/* Get the information from the file */
++			ebt_get_table(replace, 0);
++			/* We don't want the kernel giving us its counters,
++			 * they would overwrite the counters extracted from
++			 * the file */
++			replace->num_counters = 0;
++			/* Make sure the table will be written to the kernel */
++			free(replace->filename);
++			replace->filename = NULL;
++			break;
++		case 7 : /* atomic-init */
++		case 10: /* atomic-save */
++		case 11: /* init-table */
++			if (exec_style == EXEC_STYLE_DAEMON) {
++				if (c == 7) {
++					ebt_print_error2("--atomic-init is not supported in daemon mode");
++				} else if (c == 10)
++					ebt_print_error2("--atomic-save is not supported in daemon mode");
++				ebt_print_error2("--init-table is not supported in daemon mode");
++			}
++			replace->command = c;
++			if (OPT_COMMANDS)
++				ebt_print_error2("Multiple commands are not allowed");
++			if (c != 11 && !replace->filename)
++				ebt_print_error2("No atomic file specified");
++			replace->flags |= OPT_COMMAND;
++			{
++				char *tmp = replace->filename;
++
++				/* Get the kernel table */
++				replace->filename = NULL;
++				ebt_get_kernel_table(replace, c == 10 ? 0 : 1);
++				replace->filename = tmp;
++			}
++			break;
++		case 9 : /* atomic */
++			if (exec_style == EXEC_STYLE_DAEMON)
++				ebt_print_error2("--atomic is not supported in daemon mode");
++			if (OPT_COMMANDS)
++				ebt_print_error2("--atomic has to come before the command");
++			/* A possible memory leak here, but this is not
++			 * executed in daemon mode */
++			replace->filename = (char *)malloc(strlen(optarg) + 1);
++			strcpy(replace->filename, optarg);
++			break;
++		case 13 : /* concurrent */
++			signal(SIGINT, sighandler);
++			signal(SIGTERM, sighandler);
++			use_lockfd = 1;
++			break;
++		case 1 :
++			if (!strcmp(optarg, "!"))
++				ebt_check_inverse2(optarg);
++			else
++				ebt_print_error2("Bad argument : '%s'", optarg);
++			/* ebt_check_inverse() did optind++ */
++			optind--;
++			continue;
++		default:
++			/* Is it a target option? */
++			t = (struct ebt_u_target *)new_entry->t;
++			if ((t->parse(c - t->option_offset, argv, argc, new_entry, &t->flags, &t->t))) {
++				if (ebt_errormsg[0] != '\0')
++					return -1;
++				goto check_extension;
++			}
++
++			/* Is it a match_option? */
++			for (m = ebt_matches; m; m = m->next)
++				if (m->parse(c - m->option_offset, argv, argc, new_entry, &m->flags, &m->m))
++					break;
++
++			if (m != NULL) {
++				if (ebt_errormsg[0] != '\0')
++					return -1;
++				if (m->used == 0) {
++					ebt_add_match(new_entry, m);
++					m->used = 1;
++				}
++				goto check_extension;
++			}
++
++			/* Is it a watcher option? */
++			for (w = ebt_watchers; w; w = w->next)
++				if (w->parse(c - w->option_offset, argv, argc, new_entry, &w->flags, &w->w))
++					break;
++
++			if (w == NULL && c == '?')
++				ebt_print_error2("Unknown argument: '%s'", argv[optind - 1], (char)optopt, (char)c);
++			else if (w == NULL) {
++				if (!strcmp(t->name, "standard"))
++					ebt_print_error2("Unknown argument: don't forget the -t option");
++				else
++					ebt_print_error2("Target-specific option does not correspond with specified target");
++			}
++			if (ebt_errormsg[0] != '\0')
++				return -1;
++			if (w->used == 0) {
++				ebt_add_watcher(new_entry, w);
++				w->used = 1;
++			}
++check_extension:
++			if (replace->command != 'A' && replace->command != 'I' &&
++			    replace->command != 'D' && replace->command != 'C')
++				ebt_print_error2("Extensions only for -A, -I, -D and -C");
++		}
++		ebt_invert = 0;
++	}
++
++	/* Just in case we didn't catch an error */
++	if (ebt_errormsg[0] != '\0')
++		return -1;
++
++	if (!(table = ebt_find_table(replace->name)))
++		ebt_print_error2("Bad table name");
++
++	if (replace->command == 'h' && !(replace->flags & OPT_ZERO)) {
++		print_help();
++		if (exec_style == EXEC_STYLE_PRG)
++			exit(0);
++	}
++
++	/* Do the final checks */
++	if (replace->command == 'A' || replace->command == 'I' ||
++	   replace->command == 'D' || replace->command == 'C') {
++		/* This will put the hook_mask right for the chains */
++		ebt_check_for_loops(replace);
++		if (ebt_errormsg[0] != '\0')
++			return -1;
++		entries = ebt_to_chain(replace);
++		m_l = new_entry->m_list;
++		w_l = new_entry->w_list;
++		t = (struct ebt_u_target *)new_entry->t;
++		while (m_l) {
++			m = (struct ebt_u_match *)(m_l->m);
++			m->final_check(new_entry, m->m, replace->name,
++			   entries->hook_mask, 0);
++			if (ebt_errormsg[0] != '\0')
++				return -1;
++			m_l = m_l->next;
++		}
++		while (w_l) {
++			w = (struct ebt_u_watcher *)(w_l->w);
++			w->final_check(new_entry, w->w, replace->name,
++			   entries->hook_mask, 0);
++			if (ebt_errormsg[0] != '\0')
++				return -1;
++			w_l = w_l->next;
++		}
++		t->final_check(new_entry, t->t, replace->name,
++		   entries->hook_mask, 0);
++		if (ebt_errormsg[0] != '\0')
++			return -1;
++	}
++	/* So, the extensions can work with the host endian.
++	 * The kernel does not have to do this of course */
++	new_entry->ethproto = htons(new_entry->ethproto);
++
++	if (replace->command == 'P') {
++		if (replace->selected_chain < NF_BR_NUMHOOKS && policy == EBT_RETURN)
++			ebt_print_error2("Policy RETURN only allowed for user defined chains");
++		ebt_change_policy(replace, policy);
++		if (ebt_errormsg[0] != '\0')
++			return -1;
++	} else if (replace->command == 'L') {
++		list_rules();
++		if (!(replace->flags & OPT_ZERO) && exec_style == EXEC_STYLE_PRG)
++			exit(0);
++	}
++	if (replace->flags & OPT_ZERO) {
++		replace->selected_chain = zerochain;
++		ebt_zero_counters(replace);
++	} else if (replace->command == 'F') {
++		ebt_flush_chains(replace);
++	} else if (replace->command == 'A' || replace->command == 'I') {
++		ebt_add_rule(replace, new_entry, rule_nr);
++		if (ebt_errormsg[0] != '\0')
++			return -1;
++		/* Makes undoing the add easier (jumps to delete_the_rule) */
++		if (rule_nr <= 0)
++			rule_nr--;
++		rule_nr_end = rule_nr;
++
++		/* a jump to a udc requires checking for loops */
++		if (!strcmp(new_entry->t->u.name, EBT_STANDARD_TARGET) &&
++		((struct ebt_standard_target *)(new_entry->t))->verdict >= 0) {
++			/* FIXME: this can be done faster */
++			ebt_check_for_loops(replace);
++			if (ebt_errormsg[0] != '\0')
++				goto delete_the_rule;
++		}
++
++		/* Do the final_check(), for all entries.
++		 * This is needed when adding a rule that has a chain target */
++		i = -1;
++		while (++i != replace->num_chains) {
++			struct ebt_u_entry *e;
++
++			entries = replace->chains[i];
++			if (!entries) {
++				if (i < NF_BR_NUMHOOKS)
++					continue;
++				else
++					ebt_print_bug("whoops\n");
++			}
++			e = entries->entries->next;
++			while (e != entries->entries) {
++				/* Userspace extensions use host endian */
++				e->ethproto = ntohs(e->ethproto);
++				ebt_do_final_checks(replace, e, entries);
++				if (ebt_errormsg[0] != '\0')
++					goto delete_the_rule;
++				e->ethproto = htons(e->ethproto);
++				e = e->next;
++			}
++		}
++		/* Don't reuse the added rule */
++		new_entry = NULL;
++	} else if (replace->command == 'D') {
++delete_the_rule:
++		ebt_delete_rule(replace, new_entry, rule_nr, rule_nr_end);
++		if (ebt_errormsg[0] != '\0')
++			return -1;
++	} else if (replace->command == 'C') {
++		ebt_change_counters(replace, new_entry, rule_nr, rule_nr_end, &(new_entry->cnt_surplus), chcounter);
++		if (ebt_errormsg[0] != '\0')
++			return -1;
++	}
++	/* Commands -N, -E, -X, --atomic-commit, --atomic-commit, --atomic-save,
++	 * --init-table fall through */
++
++	if (ebt_errormsg[0] != '\0')
++		return -1;
++	if (table->check)
++		table->check(replace);
++
++	if (exec_style == EXEC_STYLE_PRG) {/* Implies ebt_errormsg[0] == '\0' */
++		ebt_deliver_table(replace);
++
++		if (replace->nentries)
++			ebt_deliver_counters(replace);
++	}
++	return 0;
++}
+diff -urpN ebtables-v2.0.10-4-origin/ebtablesd.c ebtables-v2.0.10-4/ebtablesd.c
+--- ebtables-v2.0.10-4-origin/ebtablesd.c	2011-12-16 04:02:47.000000000 +0800
++++ ebtables-v2.0.10-4/ebtablesd.c	2014-07-12 07:56:23.000000000 +0800
+@@ -47,6 +47,9 @@ static void copy_table_names()
+ 	strcpy(replace[2].name, "broute");
+ }
+ 
++extern void get_global_mutex();
++extern void release_global_mutex();
++
+ int main(int argc_, char *argv_[])
+ {
+ 	char *argv[EBTD_ARGC_MAX], *args[4], name[] = "mkdir",
+@@ -54,6 +57,8 @@ int main(int argc_, char *argv_[])
+ 	     cmdline[EBTD_CMDLINE_MAXLN];
+ 	int readfd, base = 0, offset = 0, n = 0, ret = 0, quotemode = 0;
+ 
++	get_global_mutex();
++
+ 	/* Make sure the pipe directory exists */
+ 	args[0] = name;
+ 	args[1] = mkdir_option;
+@@ -369,6 +374,7 @@ write_msg:
+ 	}
+ do_exit:
+ 	unlink(EBTD_PIPE);
+-	
++	release_global_mutex();
++    
+ 	return 0;
+ }
+diff -urpN ebtables-v2.0.10-4-origin/ebtablesd.c.orig ebtables-v2.0.10-4/ebtablesd.c.orig
+--- ebtables-v2.0.10-4-origin/ebtablesd.c.orig	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/ebtablesd.c.orig	2011-12-16 04:02:47.000000000 +0800
+@@ -0,0 +1,374 @@
++/*
++ * ebtablesd.c, January 2005
++ *
++ * Author: Bart De Schuymer
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
++ */
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++#include <signal.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <sys/wait.h>
++#include <fcntl.h>
++#include <errno.h>
++#include "include/ebtables_u.h"
++
++#define OPT_KERNELDATA	0x800 /* Also defined in ebtables.c */
++
++static struct ebt_u_replace replace[3];
++#define OPEN_METHOD_FILE 1
++#define OPEN_METHOD_KERNEL 2
++static int open_method[3];
++void ebt_early_init_once();
++
++static void sigpipe_handler(int sig)
++{
++}
++static void copy_table_names()
++{
++	strcpy(replace[0].name, "filter");
++	strcpy(replace[1].name, "nat");
++	strcpy(replace[2].name, "broute");
++}
++
++int main(int argc_, char *argv_[])
++{
++	char *argv[EBTD_ARGC_MAX], *args[4], name[] = "mkdir",
++	     mkdir_option[] = "-p", mkdir_dir[] = EBTD_PIPE_DIR,
++	     cmdline[EBTD_CMDLINE_MAXLN];
++	int readfd, base = 0, offset = 0, n = 0, ret = 0, quotemode = 0;
++
++	/* Make sure the pipe directory exists */
++	args[0] = name;
++	args[1] = mkdir_option;
++	args[2] = mkdir_dir;
++	args[3] = NULL;
++	switch (fork()) {
++	case 0:
++		execvp(args[0], args);
++
++		/* Not usually reached */
++		exit(0);
++	case -1:
++		return -1;
++
++	default: /* Parent */
++		wait(NULL);
++	}
++
++	if (mkfifo(EBTD_PIPE, 0600) < 0 && errno != EEXIST) {
++		printf("Error creating FIFO " EBTD_PIPE "\n");
++		ret = -1;
++		goto do_exit;
++	}
++
++	if ((readfd = open(EBTD_PIPE, O_RDONLY | O_NONBLOCK, 0)) == -1) {
++		perror("open");
++		ret = -1;
++		goto do_exit;
++	}
++
++	if (signal(SIGPIPE, sigpipe_handler) == SIG_ERR) {
++		perror("signal");
++		ret = -1;
++		goto do_exit;
++	}
++
++	ebt_silent = 1;
++
++	copy_table_names();
++	ebt_early_init_once();
++
++	while (1) {
++		int n2, i, argc, table_nr, ntot;
++
++		/* base == 0 */
++		ntot = read(readfd, cmdline+offset, EBTD_CMDLINE_MAXLN-offset-1);
++		if (ntot <= 0)
++			continue;
++		ntot += offset;
++continue_read:
++		/* Put '\0' between arguments. */
++		for (; offset < ntot; n++, offset++) {
++			if (cmdline[offset] == '\"') {
++				quotemode ^= 1;
++				cmdline[offset] = '\0';
++			} else if (!quotemode && cmdline[offset] == ' ') {
++				cmdline[offset] = '\0';
++			} else if (cmdline[offset] == '\n') {
++				if (quotemode)
++					ebt_print_error("ebtablesd: wrong number of \" delimiters");
++				cmdline[offset] = '\0';
++				break;
++			}
++		}
++		if (n == 0) {
++			if (offset == ntot) {
++				/* The ntot bytes were parsed and ended with '\n' */
++				base = 0;
++				offset = 0;
++				continue;
++			}
++			offset++;
++			base = offset;
++			n = 0;
++			goto continue_read;
++		}
++		if (offset == ntot) { /* The ntot bytes were parsed but no complete rule is yet specified */
++			if (base == 0) {
++				ebt_print_error("ebtablesd: the maximum command line length is %d", EBTD_CMDLINE_MAXLN-1);
++				goto write_msg;
++			}
++			memmove(cmdline, cmdline+base+offset, ntot-offset);
++			offset -= base;
++			offset++;
++			base = 0;
++			continue;
++		}
++
++		table_nr = 0;
++		n2 = 0;
++		argc = 0;
++		while (n2 < n && argc < EBTD_ARGC_MAX) {
++			if (*(cmdline + base + n2) == '\0') {
++				n2++;
++				continue;
++			}
++			argv[argc++] = cmdline + base + n2;
++			n2 += strlen(cmdline + base + n2) + 1;
++		}
++		offset++; /* Move past the '\n' */
++		base = offset;
++
++		if (argc > EBTD_ARGC_MAX) {
++			ebt_print_error("ebtablesd: maximum %d arguments "
++			                "allowed", EBTD_ARGC_MAX - 1);
++			goto write_msg;
++		}
++		if (argc == 1) {
++			ebt_print_error("ebtablesd: no arguments");
++			goto write_msg;
++		}
++
++		/* Parse the options */
++		if (!strcmp(argv[1], "-t")) {
++			if (argc < 3) {
++				ebt_print_error("ebtablesd: -t but no table");
++				goto write_msg;
++			}
++			for (i = 0; i < 3; i++)
++				if (!strcmp(replace[i].name, argv[2]))
++					break;
++			if (i == 3) {
++				ebt_print_error("ebtablesd: table '%s' was "
++				                "not recognized", argv[2]);
++				goto write_msg;
++			}
++			table_nr = i;
++		} else if (!strcmp(argv[1], "free")) {
++			if (argc != 3) {
++				ebt_print_error("ebtablesd: command free "
++				                "needs exactly one argument");
++				goto write_msg;
++			}
++			for (i = 0; i < 3; i++)
++				if (!strcmp(replace[i].name, argv[2]))
++					break;
++			if (i == 3) {
++				ebt_print_error("ebtablesd: table '%s' was "
++				                "not recognized", argv[2]);
++				goto write_msg;
++			}
++			if (!(replace[i].flags & OPT_KERNELDATA)) {
++				ebt_print_error("ebtablesd: table %s has not "
++				                "been opened");
++				goto write_msg;
++			}
++			ebt_cleanup_replace(&replace[i]);
++			copy_table_names();
++			replace[i].flags &= ~OPT_KERNELDATA;
++			goto write_msg;
++		} else if (!strcmp(argv[1], "open")) {
++			if (argc != 3) {
++				ebt_print_error("ebtablesd: command open "
++				                "needs exactly one argument");
++				goto write_msg;
++			}
++
++			for (i = 0; i < 3; i++)
++				if (!strcmp(replace[i].name, argv[2]))
++					break;
++			if (i == 3) {
++				ebt_print_error("ebtablesd: table '%s' was "
++				                "not recognized", argv[2]);
++				goto write_msg;
++			}
++			if (replace[i].flags & OPT_KERNELDATA) {
++				ebt_print_error("ebtablesd: table %s needs to "
++				                "be freed before it can be "
++				                "opened");
++				goto write_msg;
++			}
++			if (!ebt_get_kernel_table(&replace[i], 0)) {
++				replace[i].flags |= OPT_KERNELDATA;
++				open_method[i] = OPEN_METHOD_KERNEL;
++			}
++			goto write_msg;
++		} else if (!strcmp(argv[1], "fopen")) {
++			struct ebt_u_replace tmp;
++
++			memset(&tmp, 0, sizeof(tmp));
++			if (argc != 4) {
++				ebt_print_error("ebtablesd: command fopen "
++				                "needs exactly two arguments");
++				goto write_msg;
++			}
++
++			for (i = 0; i < 3; i++)
++				if (!strcmp(replace[i].name, argv[2]))
++					break;
++			if (i == 3) {
++				ebt_print_error("ebtablesd: table '%s' was "
++				                "not recognized", argv[2]);
++				goto write_msg;
++			}
++			if (replace[i].flags & OPT_KERNELDATA) {
++				ebt_print_error("ebtablesd: table %s needs to "
++				                "be freed before it can be "
++				                "opened");
++				goto write_msg;
++			}
++			tmp.filename = (char *)malloc(strlen(argv[3]) + 1);
++			if (!tmp.filename) {
++				ebt_print_error("Out of memory");
++				goto write_msg;
++			}
++			strcpy(tmp.filename, argv[3]);
++			strcpy(tmp.name, "filter");
++			tmp.command = 'L'; /* Make sure retrieve_from_file()
++			                    * doesn't complain about wrong
++			                    * table name */
++
++			ebt_get_kernel_table(&tmp, 0);
++			free(tmp.filename);
++			tmp.filename = NULL;
++			if (ebt_errormsg[0] != '\0')
++				goto write_msg;
++
++			if (strcmp(tmp.name, argv[2])) {
++				ebt_print_error("ebtablesd: opened file with "
++				                "wrong table name '%s'", tmp.name);
++				ebt_cleanup_replace(&tmp);
++				goto write_msg;
++			}
++			replace[i] = tmp;
++			replace[i].command = '\0';
++			replace[i].flags |= OPT_KERNELDATA;
++			open_method[i] = OPEN_METHOD_FILE;
++			goto write_msg;
++		} else if (!strcmp(argv[1], "commit")) {
++			if (argc != 3) {
++				ebt_print_error("ebtablesd: command commit "
++				                "needs exactly one argument");
++				goto write_msg;
++			}
++
++			for (i = 0; i < 3; i++)
++				if (!strcmp(replace[i].name, argv[2]))
++					break;
++			if (i == 3) {
++				ebt_print_error("ebtablesd: table '%s' was "
++				                "not recognized", argv[2]);
++				goto write_msg;
++			}
++			if (!(replace[i].flags & OPT_KERNELDATA)) {
++				ebt_print_error("ebtablesd: table %s has not "
++				                "been opened");
++				goto write_msg;
++			}
++			/* The counters from the kernel are useless if we 
++			 * didn't start from a kernel table */
++			if (open_method[i] == OPEN_METHOD_FILE)
++				replace[i].num_counters = 0;
++			ebt_deliver_table(&replace[i]);
++			if (ebt_errormsg[0] == '\0' && open_method[i] == OPEN_METHOD_KERNEL)
++				ebt_deliver_counters(&replace[i]);
++			goto write_msg;
++		} else if (!strcmp(argv[1], "fcommit")) {
++			if (argc != 4) {
++				ebt_print_error("ebtablesd: command commit "
++				                "needs exactly two argument");
++				goto write_msg;
++			}
++
++			for (i = 0; i < 3; i++)
++				if (!strcmp(replace[i].name, argv[2]))
++					break;
++			if (i == 3) {
++				ebt_print_error("ebtablesd: table '%s' was "
++				                "not recognized", argv[2]);
++				goto write_msg;
++			}
++			if (!(replace[i].flags & OPT_KERNELDATA)) {
++				ebt_print_error("ebtablesd: table %s has not "
++				                "been opened");
++				goto write_msg;
++			}
++			replace[i].filename = (char *)malloc(strlen(argv[3]) + 1);
++			if (!replace[i].filename) {
++				ebt_print_error("Out of memory");
++				goto write_msg;
++			}
++			strcpy(replace[i].filename, argv[3]);
++			ebt_deliver_table(&replace[i]);
++			if (ebt_errormsg[0] == '\0' && open_method[i] == OPEN_METHOD_KERNEL)
++				ebt_deliver_counters(&replace[i]);
++			free(replace[i].filename);
++			replace[i].filename = NULL;
++			goto write_msg;
++		}else if (!strcmp(argv[1], "quit")) {
++			if (argc != 2) {
++				ebt_print_error("ebtablesd: command quit does "
++				                "not take any arguments");
++				goto write_msg;
++			}
++			break;
++		}
++		if (!(replace[table_nr].flags & OPT_KERNELDATA)) {
++			ebt_print_error("ebtablesd: table %s has not been "
++			                "opened", replace[table_nr].name);
++			goto write_msg;
++		}
++		optind = 0; /* Setting optind = 1 causes serious annoyances */
++		do_command(argc, argv, EXEC_STYLE_DAEMON, &replace[table_nr]);
++		ebt_reinit_extensions();
++write_msg:
++#ifndef SILENT_DAEMON
++		if (ebt_errormsg[0] != '\0')
++			printf("%s.\n", ebt_errormsg);
++#endif
++		ebt_errormsg[0]= '\0';
++		n = 0;
++		goto continue_read;
++	}
++do_exit:
++	unlink(EBTD_PIPE);
++	
++	return 0;
++}
+diff -urpN ebtables-v2.0.10-4-origin/ebtables-restore.c ebtables-v2.0.10-4/ebtables-restore.c
+--- ebtables-v2.0.10-4-origin/ebtables-restore.c	2011-12-16 04:02:47.000000000 +0800
++++ ebtables-v2.0.10-4/ebtables-restore.c	2014-07-12 07:56:23.000000000 +0800
+@@ -36,6 +36,9 @@ static void copy_table_names()
+ 	strcpy(replace[2].name, "broute");
+ }
+ 
++extern void get_global_mutex();
++extern void release_global_mutex();
++
+ #define ebtrest_print_error(format, args...) do {fprintf(stderr, "ebtables-restore: "\
+                                              "line %d: "format".\n", line, ##args); exit(-1);} while (0)
+ int main(int argc_, char *argv_[])
+@@ -44,6 +47,8 @@ int main(int argc_, char *argv_[])
+ 	int i, offset, quotemode = 0, argc, table_nr = -1, line = 0, whitespace;
+ 	char ebtables_str[] = "ebtables";
+ 
++	get_global_mutex();
++
+ 	if (argc_ != 1)
+ 		ebtrest_print_error("options are not supported");
+ 	ebt_silent = 0;
+@@ -131,5 +136,8 @@ int main(int argc_, char *argv_[])
+ 		ebt_deliver_table(&replace[table_nr]);
+ 		ebt_deliver_counters(&replace[table_nr]);
+ 	}
++    
++	release_global_mutex();
++    
+ 	return 0;
+ }
+diff -urpN ebtables-v2.0.10-4-origin/ebtables-restore.c.orig ebtables-v2.0.10-4/ebtables-restore.c.orig
+--- ebtables-v2.0.10-4-origin/ebtables-restore.c.orig	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/ebtables-restore.c.orig	2011-12-16 04:02:47.000000000 +0800
+@@ -0,0 +1,135 @@
++/*
++ * ebtables-restore.c, October 2005
++ *
++ * Author: Bart De Schuymer
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
++ */
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <errno.h>
++#include <unistd.h>
++#include "include/ebtables_u.h"
++
++static struct ebt_u_replace replace[3];
++void ebt_early_init_once();
++
++#define OPT_KERNELDATA  0x800 /* Also defined in ebtables.c */
++
++static void copy_table_names()
++{
++	strcpy(replace[0].name, "filter");
++	strcpy(replace[1].name, "nat");
++	strcpy(replace[2].name, "broute");
++}
++
++#define ebtrest_print_error(format, args...) do {fprintf(stderr, "ebtables-restore: "\
++                                             "line %d: "format".\n", line, ##args); exit(-1);} while (0)
++int main(int argc_, char *argv_[])
++{
++	char *argv[EBTD_ARGC_MAX], cmdline[EBTD_CMDLINE_MAXLN];
++	int i, offset, quotemode = 0, argc, table_nr = -1, line = 0, whitespace;
++	char ebtables_str[] = "ebtables";
++
++	if (argc_ != 1)
++		ebtrest_print_error("options are not supported");
++	ebt_silent = 0;
++	copy_table_names();
++	ebt_early_init_once();
++	argv[0] = ebtables_str;
++
++	while (fgets(cmdline, EBTD_CMDLINE_MAXLN, stdin)) {
++		line++;
++		if (*cmdline == '#' || *cmdline == '\n')
++			continue;
++		*strchr(cmdline, '\n') = '\0';
++		if (*cmdline == '*') {
++			if (table_nr != -1) {
++				ebt_deliver_table(&replace[table_nr]);
++				ebt_deliver_counters(&replace[table_nr]);
++			}
++			for (i = 0; i < 3; i++)
++				if (!strcmp(replace[i].name, cmdline+1))
++					break;
++			if (i == 3)
++				ebtrest_print_error("table '%s' was not recognized", cmdline+1);
++			table_nr = i;
++			replace[table_nr].command = 11;
++			ebt_get_kernel_table(&replace[table_nr], 1);
++			replace[table_nr].command = 0;
++			replace[table_nr].flags = OPT_KERNELDATA; /* Prevent do_command from initialising replace */
++			continue;
++		} else if (table_nr == -1)
++			ebtrest_print_error("no table specified");
++		if (*cmdline == ':') {
++			int policy, chain_nr;
++			char *ch;
++
++			if (!(ch = strchr(cmdline, ' ')))
++				ebtrest_print_error("no policy specified");
++			*ch = '\0';
++			for (i = 0; i < NUM_STANDARD_TARGETS; i++)
++				if (!strcmp(ch+1, ebt_standard_targets[i])) {
++					policy = -i -1;
++					if (policy == EBT_CONTINUE)
++						i = NUM_STANDARD_TARGETS;
++					break;
++				}
++			if (i == NUM_STANDARD_TARGETS)
++				ebtrest_print_error("invalid policy specified");
++			/* No need to check chain name for consistency, since
++			 * we're supposed to be reading an automatically generated
++			 * file. */
++			if ((chain_nr = ebt_get_chainnr(&replace[table_nr], cmdline+1)) == -1)
++				ebt_new_chain(&replace[table_nr], cmdline+1, policy);
++			else
++				replace[table_nr].chains[chain_nr]->policy = policy;
++			continue;
++		}
++		argv[1] = cmdline;
++		offset = whitespace = 0;
++		argc = 2;
++		while (cmdline[offset] != '\0') {
++			if (cmdline[offset] == '\"') {
++				whitespace = 0;
++				quotemode ^= 1;
++				if (quotemode)
++					argv[argc++] = &cmdline[offset+1];
++				else if (cmdline[offset+1] != ' ' && cmdline[offset+1] != '\0')
++					ebtrest_print_error("syntax error at \"");
++				cmdline[offset] = '\0';
++			} else if (!quotemode && cmdline[offset] == ' ') {
++				whitespace = 1;
++				cmdline[offset] = '\0';
++			} else if (whitespace == 1) {
++				argv[argc++] = &cmdline[offset];
++				whitespace = 0;
++			}
++			offset++;
++		}
++		if (quotemode)
++			ebtrest_print_error("wrong use of '\"'");
++		optind = 0; /* Setting optind = 1 causes serious annoyances */
++		do_command(argc, argv, EXEC_STYLE_DAEMON, &replace[table_nr]);
++		ebt_reinit_extensions();
++	}
++
++	if (table_nr != -1) {
++		ebt_deliver_table(&replace[table_nr]);
++		ebt_deliver_counters(&replace[table_nr]);
++	}
++	return 0;
++}
+diff -urpN ebtables-v2.0.10-4-origin/ebtables-standalone.c ebtables-v2.0.10-4/ebtables-standalone.c
+--- ebtables-v2.0.10-4-origin/ebtables-standalone.c	2011-12-16 04:02:47.000000000 +0800
++++ ebtables-v2.0.10-4/ebtables-standalone.c	2014-07-12 07:56:23.000000000 +0800
+@@ -4,11 +4,17 @@
+ static struct ebt_u_replace replace;
+ void ebt_early_init_once();
+ 
++extern void get_global_mutex();
++extern void release_global_mutex();
++
++
+ int main(int argc, char *argv[])
+ {
++	get_global_mutex();
+ 	ebt_silent = 0;
+ 	ebt_early_init_once();
+ 	strcpy(replace.name, "filter");
+ 	do_command(argc, argv, EXEC_STYLE_PRG, &replace);
++	release_global_mutex();
+ 	return 0;
+ }
+diff -urpN ebtables-v2.0.10-4-origin/ebtables-standalone.c.orig ebtables-v2.0.10-4/ebtables-standalone.c.orig
+--- ebtables-v2.0.10-4-origin/ebtables-standalone.c.orig	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/ebtables-standalone.c.orig	2011-12-16 04:02:47.000000000 +0800
+@@ -0,0 +1,14 @@
++#include <string.h>
++#include "include/ebtables_u.h"
++
++static struct ebt_u_replace replace;
++void ebt_early_init_once();
++
++int main(int argc, char *argv[])
++{
++	ebt_silent = 0;
++	ebt_early_init_once();
++	strcpy(replace.name, "filter");
++	do_command(argc, argv, EXEC_STYLE_PRG, &replace);
++	return 0;
++}
+diff -urpN ebtables-v2.0.10-4-origin/examples/ulog/test_ulog.c ebtables-v2.0.10-4/examples/ulog/test_ulog.c
+--- ebtables-v2.0.10-4-origin/examples/ulog/test_ulog.c	2011-12-16 04:00:34.000000000 +0800
++++ ebtables-v2.0.10-4/examples/ulog/test_ulog.c	2014-07-12 07:56:23.000000000 +0800
+@@ -130,6 +130,10 @@ recv_new:
+ 	return msg;
+ }
+ 
++
++extern void get_global_mutex();
++extern void release_global_mutex();
++
+ int main(int argc, char **argv)
+ {
+ 	int i, curr_len, pktcnt = 0;
+@@ -142,6 +146,7 @@ int main(int argc, char **argv)
+ 	struct icmphdr *icmph;
+ 	struct tm* ptm;
+ 	char time_str[40], *ctmp;
++	get_global_mutex();
+ 
+ 	if (argc == 2) {
+ 		i = strtoul(argv[1], &ctmp, 10);
+@@ -157,12 +162,14 @@ int main(int argc, char **argv)
+ 	sfd = socket(PF_NETLINK, SOCK_RAW, NETLINK_NFLOG);
+ 	if (!sfd) {
+ 		perror("socket");
++		release_global_mutex();
+ 		exit(-1);
+ 	}
+ 
+ 	if (bind(sfd, (struct sockaddr *)(&sa_local), sizeof(sa_local)) ==
+ 	    -1) {
+ 		perror("bind");
++		release_global_mutex();
+ 		exit(-1);
+ 	}
+ 	i = setsockopt(sfd, SOL_SOCKET, SO_RCVBUF, &rcvbufsize,
+@@ -287,6 +294,7 @@ letscontinue:
+ 		       "######END#OF##PACKET#DUMP######\n"
+ 		       "###############################\n");
+ 	}
++	release_global_mutex();
+ 
+ 	return 0;
+ }
+diff -urpN ebtables-v2.0.10-4-origin/examples/ulog/test_ulog.c.orig ebtables-v2.0.10-4/examples/ulog/test_ulog.c.orig
+--- ebtables-v2.0.10-4-origin/examples/ulog/test_ulog.c.orig	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/examples/ulog/test_ulog.c.orig	2011-12-16 04:00:34.000000000 +0800
+@@ -0,0 +1,292 @@
++
++/*
++ * Simple example program to log packets received with the ulog
++ * watcher of ebtables.
++ *
++ * usage:
++ * Add the appropriate ebtables ulog rule, e.g. (0 < NLGROUP < 33):
++ *   ebtables -A FORWARD --ulog-nlgroup NLGROUP
++ * Start this application somewhere:
++ *   test_ulog NLGROUP
++ *
++ * compile with make test_ulog KERNEL_INCLUDES=<path_to_kernel_include_dir>
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
++ */
++
++
++#include <asm/types.h>
++#include <sys/socket.h>
++#include <sys/time.h>
++#include <time.h>
++#include <linux/netlink.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <netdb.h>
++#include <errno.h>
++#include <netinet/if_ether.h>
++#include <netinet/ether.h>
++#include <netinet/ip.h>
++#include <netinet/ip_icmp.h>
++#include "../../include/ebtables_u.h"
++#include "../../include/ethernetdb.h"
++#include <linux/netfilter_bridge/ebt_ulog.h>
++
++/* <linux/if_vlan.h> doesn't hand this to userspace :-( */
++#define VLAN_HLEN 4
++struct vlan_hdr {
++	unsigned short TCI;
++	unsigned short encap;
++};
++
++static struct sockaddr_nl sa_local =
++{
++	.nl_family = AF_NETLINK,
++	.nl_groups = 1,
++};
++
++static struct sockaddr_nl sa_kernel =
++{
++	.nl_family = AF_NETLINK,
++	.nl_pid = 0,
++	.nl_groups = 1,
++};
++
++static const char *hookstr[NF_BR_NUMHOOKS] =
++{
++        [NF_BR_POST_ROUTING] "POSTROUTING",
++         [NF_BR_PRE_ROUTING] "PREROUTING",
++           [NF_BR_LOCAL_OUT] "OUTPUT",
++            [NF_BR_LOCAL_IN] "INPUT",
++            [NF_BR_BROUTING] "BROUTING",
++             [NF_BR_FORWARD] "FORWARD"
++};
++
++#define DEBUG_QUEUE 0
++#define BUFLEN 65536
++static char buf[BUFLEN];
++static int sfd;
++
++/* Get the next ebt_ulog packet, talk to the kernel if necessary */
++ebt_ulog_packet_msg_t *ulog_get_packet()
++{
++	static struct nlmsghdr *nlh = NULL;
++	static int len, remain_len;
++	static int pkts_per_msg = 0;
++	ebt_ulog_packet_msg_t *msg;
++	socklen_t addrlen = sizeof(sa_kernel);
++
++	if (!nlh) {
++recv_new:
++		if (pkts_per_msg && DEBUG_QUEUE)
++			printf("PACKETS IN LAST MSG: %d\n", pkts_per_msg);
++		pkts_per_msg = 0;
++		len = recvfrom(sfd, buf, BUFLEN, 0,
++		               (struct sockaddr *)&sa_kernel, &addrlen);
++		if (addrlen != sizeof(sa_kernel)) {
++			printf("addrlen %u != %u\n", addrlen,
++			       (uint32_t)sizeof(sa_kernel));
++			exit(-1);
++		}
++		if (len == -1) {
++			perror("recvmsg");
++			if (errno == EINTR)
++				goto recv_new;
++			exit(-1);
++		}
++		nlh = (struct nlmsghdr *)buf;
++		if (nlh->nlmsg_flags & MSG_TRUNC || len > BUFLEN) {
++			printf("Packet truncated");
++			exit(-1);
++		}
++		if (!NLMSG_OK(nlh, BUFLEN)) {
++			perror("Netlink message parse error\n");
++			return NULL;
++		}
++	}
++
++	msg = NLMSG_DATA(nlh);
++
++	remain_len = (len - ((char *)nlh - buf));
++	if (nlh->nlmsg_flags & NLM_F_MULTI && nlh->nlmsg_type != NLMSG_DONE)
++		nlh = NLMSG_NEXT(nlh, remain_len);
++	else
++		nlh = NULL;
++
++	pkts_per_msg++;
++	return msg;
++}
++
++int main(int argc, char **argv)
++{
++	int i, curr_len, pktcnt = 0;
++	int rcvbufsize = BUFLEN;
++	ebt_ulog_packet_msg_t *msg;
++	struct ethhdr *ehdr;
++	struct ethertypeent *etype;
++	struct protoent *prototype;
++	struct iphdr *iph;
++	struct icmphdr *icmph;
++	struct tm* ptm;
++	char time_str[40], *ctmp;
++
++	if (argc == 2) {
++		i = strtoul(argv[1], &ctmp, 10);
++		if (*ctmp != '\0' || i < 1 || i > 32) {
++			printf("Usage: %s <group number>\nWith  0 < group "
++			       "number < 33\n", argv[0]);
++			exit(0);
++		}
++		sa_local.nl_groups = sa_kernel.nl_groups = 1 << (i - 1);
++	}
++
++	sa_local.nl_pid = getpid();
++	sfd = socket(PF_NETLINK, SOCK_RAW, NETLINK_NFLOG);
++	if (!sfd) {
++		perror("socket");
++		exit(-1);
++	}
++
++	if (bind(sfd, (struct sockaddr *)(&sa_local), sizeof(sa_local)) ==
++	    -1) {
++		perror("bind");
++		exit(-1);
++	}
++	i = setsockopt(sfd, SOL_SOCKET, SO_RCVBUF, &rcvbufsize,
++	               sizeof(rcvbufsize));
++
++	while (1) {
++		if (!(msg = ulog_get_packet()))
++			continue;
++
++		if (msg->version != EBT_ULOG_VERSION) {
++			printf("WRONG VERSION: %d INSTEAD OF %d\n",
++			       msg->version, EBT_ULOG_VERSION);
++			continue;
++		}
++		printf("PACKET NR: %d\n", ++pktcnt);
++		iph = NULL;
++		curr_len = ETH_HLEN;
++
++		printf("INDEV=%s\nOUTDEV=%s\nPHYSINDEV=%s\nPHYSOUTDEV=%s\n"
++		       "PREFIX='%s'", msg->indev, msg->outdev, msg->physindev,
++		       msg->physoutdev, msg->prefix);
++
++		ptm = localtime(&msg->stamp.tv_sec);
++		strftime (time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", ptm);
++		printf("\nARRIVAL TIME: %s\nMARK=%lu\nHOOK=%s\n", time_str,
++		       msg->mark, hookstr[msg->hook]);
++
++		if (msg->data_len < curr_len) {
++			printf("====>Packet smaller than Ethernet header "
++			       "length<====\n");
++			goto letscontinue;
++		}
++
++		printf("::::::::ETHERNET:HEADER::::::::\n");
++
++		ehdr = (struct ethhdr *)msg->data;
++		printf("MAC SRC=%s\n", ether_ntoa((const struct ether_addr *)
++		       ehdr->h_source));
++		printf("MAC DST=%s\nETHERNET PROTOCOL=", ether_ntoa(
++		       (const struct ether_addr *)ehdr->h_dest));
++		etype = getethertypebynumber(ntohs(ehdr->h_proto));
++		if (!etype)
++			printf("0x%x\n", ntohs(ehdr->h_proto));
++		else
++			printf("%s\n", etype->e_name);
++
++		if (ehdr->h_proto == htons(ETH_P_8021Q)) {
++			struct vlan_hdr *vlanh = (struct vlan_hdr *)
++			                          (((char *)ehdr) + curr_len);
++			printf("::::::::::VLAN:HEADER::::::::::\n");
++			curr_len += VLAN_HLEN;
++			if (msg->data_len < curr_len) {
++				printf("====>Packet only contains partial "
++				       "VLAN header<====\n");
++				goto letscontinue;
++			}
++
++			printf("VLAN TCI=%d\n", ntohs(vlanh->TCI));
++			printf("VLAN ENCAPS PROTOCOL=");
++			etype = getethertypebynumber(ntohs(vlanh->encap));
++			if (!etype)
++				printf("0x%x\n", ntohs(vlanh->encap));
++			else
++				printf("%s\n", etype->e_name);
++			if (ehdr->h_proto == htons(ETH_P_IP))
++				iph = (struct iphdr *)(vlanh + 1);
++		} else if (ehdr->h_proto == htons(ETH_P_IP))
++			iph = (struct iphdr *)(((char *)ehdr) + curr_len);
++		if (!iph)
++			goto letscontinue;
++
++		curr_len += sizeof(struct iphdr);
++		if (msg->data_len < curr_len || msg->data_len <
++		    (curr_len += iph->ihl * 4 - sizeof(struct iphdr))) {
++			printf("====>Packet only contains partial IP "
++			       "header<====\n");
++			goto letscontinue;
++		}
++
++		printf(":::::::::::IP:HEADER:::::::::::\n");
++		printf("IP SRC ADDR=");
++		for (i = 0; i < 4; i++)
++			printf("%d%s", ((unsigned char *)&iph->saddr)[i],
++			   (i == 3) ? "" : ".");
++		printf("\nIP DEST ADDR=");
++		for (i = 0; i < 4; i++)
++			printf("%d%s", ((unsigned char *)&iph->daddr)[i],
++			   (i == 3) ? "" : ".");
++		printf("\nIP PROTOCOL=");
++		if (!(prototype = getprotobynumber(iph->protocol)))
++			printf("%d\n", iph->protocol);
++		else
++			printf("%s\n", prototype->p_name);
++
++		if (iph->protocol != IPPROTO_ICMP)
++			goto letscontinue;
++
++		icmph = (struct icmphdr *)(((char *)ehdr) + curr_len);
++		curr_len += 4;
++		if (msg->data_len < curr_len) {
++truncated_icmp:
++			printf("====>Packet only contains partial ICMP "
++			       "header<====\n");
++			goto letscontinue;
++		}
++		if (icmph->type != ICMP_ECHO && icmph->type != ICMP_ECHOREPLY)
++			goto letscontinue;
++
++		curr_len += 4;
++		if (msg->data_len < curr_len)
++			goto truncated_icmp;
++		/* Normally the process id, it's sent out in machine
++		 * byte order */
++
++		printf("ICMP_ECHO IDENTIFIER=%u\n", icmph->un.echo.id);
++		printf("ICMP_ECHO SEQ NR=%u\n", ntohs(icmph->un.echo.sequence));
++
++letscontinue:
++		printf("===>Total Packet length: %ld, of which we examined "
++		       "%d bytes\n", msg->data_len, curr_len);
++		printf("###############################\n"
++		       "######END#OF##PACKET#DUMP######\n"
++		       "###############################\n");
++	}
++
++	return 0;
++}
+diff -urpN ebtables-v2.0.10-4-origin/extensions/ebt_ftos.c ebtables-v2.0.10-4/extensions/ebt_ftos.c
+--- ebtables-v2.0.10-4-origin/extensions/ebt_ftos.c	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/extensions/ebt_ftos.c	2014-07-12 07:22:56.000000000 +0800
+@@ -0,0 +1,179 @@
++/* 
++ * Description: EBTables time extension module for userspace.
++ *  Authors:  Song Wang <songw@broadcom.com>, ported from FTOS patch netfilter/iptables
++ *           The following is the original disclaimer.
++ *
++ * Shared library add-on to iptables for FTOS
++ *
++ * (C) 2000 by Matthew G. Marsh <mgm@paktronix.com>
++ *
++ * This program is distributed under the terms of GNU GPL v2, 1991
++ *
++ * libipt_FTOS.c borrowed heavily from libipt_TOS.c  11/09/2000
++ *
++ */
++#include <stdio.h>
++#include <string.h>
++#include <stdlib.h>
++#include <getopt.h>
++
++#include "../include/ebtables_u.h"
++#include "../include/linux/netfilter_bridge/ebt_ftos_t.h"
++
++static int ftos_supplied;
++
++#define FTOS_TRGT    '1'
++#define FTOS_SET     '2'
++#define FTOS_WMM     '4'
++#define FTOS_8021Q   '8'
++static struct option opts[] =
++{
++	{ "ftos-target" , required_argument, 0, FTOS_TRGT },
++	{ "set-ftos"    , required_argument, 0, FTOS_SET },
++	{ "wmm-ftos"    , no_argument      , 0, FTOS_WMM },
++	{ "8021q-ftos"  , no_argument      , 0, FTOS_8021Q },
++	{ 0 }
++};
++
++static void print_help()
++{
++	printf(
++	"ftos target options:\n"
++	" --set-ftos value     : Set TOS byte in IP packet header \n"
++	"			 This value can be in decimal (ex: 32)\n"
++	"			 in hex (ex: 0x20)\n"
++	" --ftos-target target : ACCEPT, DROP, RETURN or CONTINUE\n");
++}
++
++static void init(struct ebt_entry_target *target)
++{
++	struct ebt_ftos_t_info *ftosinfo =
++	   (struct ebt_ftos_t_info *)target->data;
++
++	ftosinfo->target = EBT_CONTINUE;
++	ftosinfo->ftos = 0;
++	ftos_supplied = 0;
++}
++
++#define OPT_FTOS_TARGET       0x01
++#define OPT_FTOS_SETFTOS      0x02
++#define OPT_FTOS_WMMFTOS      0x04
++#define OPT_FTOS_8021QFTOS    0x08
++
++static int
++parse(int c, char **argv, int argc,
++   const struct ebt_u_entry *entry, unsigned int *flags,
++   struct ebt_entry_target **target)
++{
++	struct ebt_ftos_t_info *ftosinfo =
++	   (struct ebt_ftos_t_info *)(*target)->data;
++	char *end;
++
++	switch (c) {
++	case FTOS_TRGT:
++		ebt_check_option2(flags, FTOS_TRGT);
++		if (FILL_TARGET(optarg, ftosinfo->target))
++			ebt_print_error("Illegal --ftos-target target");
++		break;
++	case FTOS_SET:
++		ebt_check_option2(flags, FTOS_SET);
++		ftosinfo->ftos = (u_int8_t)strtoul(optarg, &end, 0);
++        ftosinfo->ftos_set = OPT_FTOS_SETFTOS;
++		if (*end != '\0' || end == optarg)
++			ebt_print_error("Bad FTOS value '%s'", optarg);
++		ftos_supplied = 1;
++                break;
++    case FTOS_WMM:
++        ebt_check_option2(flags, OPT_FTOS_SETFTOS);
++        ftosinfo->ftos_set = FTOS_WMM;
++        //printf("LEON DEBUG: wmm-ftos..........\n");
++        ftos_supplied = 1;
++        break;
++    case FTOS_8021Q:
++        ebt_check_option2(flags, OPT_FTOS_8021QFTOS);
++        ftosinfo->ftos_set = FTOS_8021Q;
++        //printf("LEON DEBUG: 8021q-ftos..........\n");
++        ftos_supplied = 1;
++        break;
++	 default:
++		return 0;
++	}
++	return 1;
++}
++
++static void
++final_check(const struct ebt_u_entry *entry,
++   const struct ebt_entry_target *target, const char *name,
++   unsigned int hookmask, unsigned int time)
++{
++	struct ebt_ftos_t_info *ftosinfo = (struct ebt_ftos_t_info *)target->data;
++
++	if (time == 0 && ftos_supplied == 0)
++		ebt_print_error("No ftos value supplied");
++	if (BASE_CHAIN && ftosinfo->target == EBT_RETURN)
++		ebt_print_error("--ftos-target RETURN not allowed on base chain");
++}
++
++
++/* Prints out the targinfo. */
++static void 
++print(const struct ebt_u_entry *entry,
++   const struct ebt_entry_target *target)
++{
++	const struct ebt_ftos_t_info *ftosinfo = (const struct ebt_ftos_t_info*)target->data;
++    if(ftosinfo->ftos_set == FTOS_WMM)
++        printf("WMM mapping to Tos");
++    else if(ftosinfo->ftos_set == FTOS_8021Q)
++        printf("802.1Q mapping to Tos");
++    else
++	printf("TOS set 0x%x", ftosinfo->ftos);
++
++	if (ftosinfo->target == EBT_ACCEPT)
++		return;
++	printf(" --ftos-target %s", TARGET_NAME(ftosinfo->target));
++}
++
++static int 
++compare(const struct ebt_entry_target *t1,
++  	 const struct ebt_entry_target *t2)
++{
++	struct ebt_ftos_t_info *ftosinfo1 =
++	   (struct ebt_ftos_t_info *)t1->data;
++	struct ebt_ftos_t_info *ftosinfo2 =
++	   (struct ebt_ftos_t_info *)t2->data;
++
++	return ftosinfo1->target == ftosinfo2->target &&
++	   ftosinfo1->ftos == ftosinfo2->ftos &&
++	   ftosinfo1->ftos_set == ftosinfo2->ftos_set;
++}
++
++#if 0
++/* Saves the union ipt_targinfo in parsable form to stdout. */
++static void
++save(const struct ipt_ip *ip, const struct ipt_entry_target *target)
++{
++	const struct ipt_FTOS_info *finfo =
++		(const struct ipt_FTOS_info *)target->data;
++
++	printf("--set-ftos 0x%02x ", finfo->ftos);
++}
++#endif
++
++static
++struct  ebt_u_target ftos_target = 
++{
++    EBT_FTOS_TARGET,
++    sizeof(struct ebt_ftos_t_info),
++    print_help,
++    init,
++    parse,
++    final_check,
++    print,
++    compare,
++    opts
++};
++
++void _init(void)
++{
++	ebt_register_target(&ftos_target);
++}
+diff -urpN ebtables-v2.0.10-4-origin/extensions/ebt_ip.c ebtables-v2.0.10-4/extensions/ebt_ip.c
+--- ebtables-v2.0.10-4-origin/extensions/ebt_ip.c	2011-12-16 04:02:47.000000000 +0800
++++ ebtables-v2.0.10-4/extensions/ebt_ip.c	2014-07-12 07:56:23.000000000 +0800
+@@ -16,7 +16,7 @@
+ #include <getopt.h>
+ #include <netdb.h>
+ #include "../include/ebtables_u.h"
+-#include <linux/netfilter_bridge/ebt_ip.h>
++#include "../include/linux/netfilter_bridge/ebt_ip.h"
+ 
+ #define IP_SOURCE '1'
+ #define IP_DEST   '2'
+@@ -24,6 +24,7 @@
+ #define IP_PROTO  '4'
+ #define IP_SPORT  '5'
+ #define IP_DPORT  '6'
++#define IP_myDSCP '7' /* brcm */
+ 
+ static struct option opts[] =
+ {
+@@ -38,6 +39,7 @@ static struct option opts[] =
+ 	{ "ip-sport"            , required_argument, 0, IP_SPORT  },
+ 	{ "ip-destination-port" , required_argument, 0, IP_DPORT  },
+ 	{ "ip-dport"            , required_argument, 0, IP_DPORT  },
++	{ "ip-dscp"             , required_argument, 0, IP_myDSCP }, /* brcm */
+ 	{ 0 }
+ };
+ 
+@@ -103,6 +105,7 @@ static void print_help()
+ "--ip-src    [!] address[/mask]: ip source specification\n"
+ "--ip-dst    [!] address[/mask]: ip destination specification\n"
+ "--ip-tos    [!] tos           : ip tos specification\n"
++"--ip-dscp   [!] dscp          : ip dscp specification\n"
+ "--ip-proto  [!] protocol      : ip protocol specification\n"
+ "--ip-sport  [!] port[:port]   : tcp/udp source port or port range\n"
+ "--ip-dport  [!] port[:port]   : tcp/udp destination port or port range\n");
+@@ -122,6 +125,8 @@ static void init(struct ebt_entry_match 
+ #define OPT_PROTO  0x08
+ #define OPT_SPORT  0x10
+ #define OPT_DPORT  0x20
++#define OPT_DSCP   0x40 /* brcm */
++
+ static int parse(int c, char **argv, int argc, const struct ebt_u_entry *entry,
+    unsigned int *flags, struct ebt_entry_match **match)
+ {
+@@ -181,6 +186,17 @@ static int parse(int c, char **argv, int
+ 		ipinfo->bitmask |= EBT_IP_TOS;
+ 		break;
+ 
++	case IP_myDSCP:   /* brcm */
++		ebt_check_option2(flags, OPT_DSCP);
++		if (ebt_check_inverse2(optarg))
++			ipinfo->invflags |= EBT_IP_DSCP;
++		i = strtol(optarg, &end, 16);
++		if (i < 0 || i > 255 || (i & 0x3) || *end != '\0')
++			ebt_print_error("Problem with specified IP dscp");
++		ipinfo->dscp = i;
++		ipinfo->bitmask |= EBT_IP_DSCP;
++		break;
++
+ 	case IP_PROTO:
+ 		ebt_check_option2(flags, OPT_PROTO);
+ 		if (ebt_check_inverse2(optarg))
+@@ -280,6 +296,13 @@ static void print(const struct ebt_u_ent
+ 			printf("! ");
+ 		print_port_range(ipinfo->dport);
+ 	}
++   /* brcm */
++	if (ipinfo->bitmask & EBT_IP_DSCP) {
++		printf("--ip-dscp ");
++		if (ipinfo->invflags & EBT_IP_DSCP)
++			printf("! ");
++		printf("0x%02X ", ipinfo->dscp);
++	}
+ }
+ 
+ static int compare(const struct ebt_entry_match *m1,
+@@ -322,6 +345,11 @@ static int compare(const struct ebt_entr
+ 		   ipinfo1->dport[1] != ipinfo2->dport[1])
+ 			return 0;
+ 	}
++   /* brcm */
++	if (ipinfo1->bitmask & EBT_IP_DSCP) {
++		if (ipinfo1->dscp != ipinfo2->dscp)
++			return 0;
++	}
+ 	return 1;
+ }
+ 
+diff -urpN ebtables-v2.0.10-4-origin/extensions/ebt_ip.c.orig ebtables-v2.0.10-4/extensions/ebt_ip.c.orig
+--- ebtables-v2.0.10-4-origin/extensions/ebt_ip.c.orig	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/extensions/ebt_ip.c.orig	2011-12-16 04:02:47.000000000 +0800
+@@ -0,0 +1,344 @@
++/* ebt_ip
++ * 
++ * Authors:
++ * Bart De Schuymer <bdschuym@pandora.be>
++ *
++ * Changes:
++ *    added ip-sport and ip-dport; parsing of port arguments is
++ *    based on code from iptables-1.2.7a
++ *    Innominate Security Technologies AG <mhopf@innominate.com>
++ *    September, 2002
++ */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <getopt.h>
++#include <netdb.h>
++#include "../include/ebtables_u.h"
++#include <linux/netfilter_bridge/ebt_ip.h>
++
++#define IP_SOURCE '1'
++#define IP_DEST   '2'
++#define IP_myTOS  '3' /* include/bits/in.h seems to already define IP_TOS */
++#define IP_PROTO  '4'
++#define IP_SPORT  '5'
++#define IP_DPORT  '6'
++
++static struct option opts[] =
++{
++	{ "ip-source"           , required_argument, 0, IP_SOURCE },
++	{ "ip-src"              , required_argument, 0, IP_SOURCE },
++	{ "ip-destination"      , required_argument, 0, IP_DEST   },
++	{ "ip-dst"              , required_argument, 0, IP_DEST   },
++	{ "ip-tos"              , required_argument, 0, IP_myTOS  },
++	{ "ip-protocol"         , required_argument, 0, IP_PROTO  },
++	{ "ip-proto"            , required_argument, 0, IP_PROTO  },
++	{ "ip-source-port"      , required_argument, 0, IP_SPORT  },
++	{ "ip-sport"            , required_argument, 0, IP_SPORT  },
++	{ "ip-destination-port" , required_argument, 0, IP_DPORT  },
++	{ "ip-dport"            , required_argument, 0, IP_DPORT  },
++	{ 0 }
++};
++
++/* put the mask into 4 bytes */
++/* transform a protocol and service name into a port number */
++static uint16_t parse_port(const char *protocol, const char *name)
++{
++	struct servent *service;
++	char *end;
++	int port;
++
++	port = strtol(name, &end, 10);
++	if (*end != '\0') {
++		if (protocol && 
++		    (service = getservbyname(name, protocol)) != NULL)
++			return ntohs(service->s_port);
++	}
++	else if (port >= 0 || port <= 0xFFFF) {
++		return port;
++	}
++	ebt_print_error("Problem with specified %s port '%s'", 
++			protocol?protocol:"", name);
++	return 0;
++}
++
++static void
++parse_port_range(const char *protocol, const char *portstring, uint16_t *ports)
++{
++	char *buffer;
++	char *cp;
++	
++	buffer = strdup(portstring);
++	if ((cp = strchr(buffer, ':')) == NULL)
++		ports[0] = ports[1] = parse_port(protocol, buffer);
++	else {
++		*cp = '\0';
++		cp++;
++		ports[0] = buffer[0] ? parse_port(protocol, buffer) : 0;
++		if (ebt_errormsg[0] != '\0')
++			return;
++		ports[1] = cp[0] ? parse_port(protocol, cp) : 0xFFFF;
++		if (ebt_errormsg[0] != '\0')
++			return;
++		
++		if (ports[0] > ports[1])
++			ebt_print_error("Invalid portrange (min > max)");
++	}
++	free(buffer);
++}
++
++static void print_port_range(uint16_t *ports)
++{
++	if (ports[0] == ports[1])
++		printf("%d ", ports[0]);
++	else
++		printf("%d:%d ", ports[0], ports[1]);
++}
++
++static void print_help()
++{
++	printf(
++"ip options:\n"
++"--ip-src    [!] address[/mask]: ip source specification\n"
++"--ip-dst    [!] address[/mask]: ip destination specification\n"
++"--ip-tos    [!] tos           : ip tos specification\n"
++"--ip-proto  [!] protocol      : ip protocol specification\n"
++"--ip-sport  [!] port[:port]   : tcp/udp source port or port range\n"
++"--ip-dport  [!] port[:port]   : tcp/udp destination port or port range\n");
++}
++
++static void init(struct ebt_entry_match *match)
++{
++	struct ebt_ip_info *ipinfo = (struct ebt_ip_info *)match->data;
++
++	ipinfo->invflags = 0;
++	ipinfo->bitmask = 0;
++}
++
++#define OPT_SOURCE 0x01
++#define OPT_DEST   0x02
++#define OPT_TOS    0x04
++#define OPT_PROTO  0x08
++#define OPT_SPORT  0x10
++#define OPT_DPORT  0x20
++static int parse(int c, char **argv, int argc, const struct ebt_u_entry *entry,
++   unsigned int *flags, struct ebt_entry_match **match)
++{
++	struct ebt_ip_info *ipinfo = (struct ebt_ip_info *)(*match)->data;
++	char *end;
++	long int i;
++
++	switch (c) {
++	case IP_SOURCE:
++		ebt_check_option2(flags, OPT_SOURCE);
++		ipinfo->bitmask |= EBT_IP_SOURCE;
++
++	case IP_DEST:
++		if (c == IP_DEST) {
++			ebt_check_option2(flags, OPT_DEST);
++			ipinfo->bitmask |= EBT_IP_DEST;
++		}
++		if (ebt_check_inverse2(optarg)) {
++			if (c == IP_SOURCE)
++				ipinfo->invflags |= EBT_IP_SOURCE;
++			else
++				ipinfo->invflags |= EBT_IP_DEST;
++		}
++		if (c == IP_SOURCE)
++			ebt_parse_ip_address(optarg, &ipinfo->saddr, &ipinfo->smsk);
++		else
++			ebt_parse_ip_address(optarg, &ipinfo->daddr, &ipinfo->dmsk);
++		break;
++
++	case IP_SPORT:
++	case IP_DPORT:
++		if (c == IP_SPORT) {
++			ebt_check_option2(flags, OPT_SPORT);
++			ipinfo->bitmask |= EBT_IP_SPORT;
++			if (ebt_check_inverse2(optarg))
++				ipinfo->invflags |= EBT_IP_SPORT;
++		} else {
++			ebt_check_option2(flags, OPT_DPORT);
++			ipinfo->bitmask |= EBT_IP_DPORT;
++			if (ebt_check_inverse2(optarg))
++				ipinfo->invflags |= EBT_IP_DPORT;
++		}
++		if (c == IP_SPORT)
++			parse_port_range(NULL, optarg, ipinfo->sport);
++		else
++			parse_port_range(NULL, optarg, ipinfo->dport);
++		break;
++
++	case IP_myTOS:
++		ebt_check_option2(flags, OPT_TOS);
++		if (ebt_check_inverse2(optarg))
++			ipinfo->invflags |= EBT_IP_TOS;
++		i = strtol(optarg, &end, 16);
++		if (i < 0 || i > 255 || *end != '\0')
++			ebt_print_error2("Problem with specified IP tos");
++		ipinfo->tos = i;
++		ipinfo->bitmask |= EBT_IP_TOS;
++		break;
++
++	case IP_PROTO:
++		ebt_check_option2(flags, OPT_PROTO);
++		if (ebt_check_inverse2(optarg))
++			ipinfo->invflags |= EBT_IP_PROTO;
++		i = strtoul(optarg, &end, 10);
++		if (*end != '\0') {
++			struct protoent *pe;
++
++			pe = getprotobyname(optarg);
++			if (pe == NULL)
++				ebt_print_error("Unknown specified IP protocol - %s", argv[optind - 1]);
++			ipinfo->protocol = pe->p_proto;
++		} else {
++			ipinfo->protocol = (unsigned char) i;
++		}
++		ipinfo->bitmask |= EBT_IP_PROTO;
++		break;
++	default:
++		return 0;
++	}
++	return 1;
++}
++
++static void final_check(const struct ebt_u_entry *entry,
++   const struct ebt_entry_match *match, const char *name,
++   unsigned int hookmask, unsigned int time)
++{
++	struct ebt_ip_info *ipinfo = (struct ebt_ip_info *)match->data;
++
++	if (entry->ethproto != ETH_P_IP || entry->invflags & EBT_IPROTO) {
++		ebt_print_error("For IP filtering the protocol must be "
++		            "specified as IPv4");
++	} else if (ipinfo->bitmask & (EBT_IP_SPORT|EBT_IP_DPORT) &&
++		(!(ipinfo->bitmask & EBT_IP_PROTO) ||
++		ipinfo->invflags & EBT_IP_PROTO ||
++		(ipinfo->protocol!=IPPROTO_TCP &&
++		 ipinfo->protocol!=IPPROTO_UDP &&
++		 ipinfo->protocol!=IPPROTO_SCTP &&
++		 ipinfo->protocol!=IPPROTO_DCCP)))
++		ebt_print_error("For port filtering the IP protocol must be "
++				"either 6 (tcp), 17 (udp), 33 (dccp) or "
++				"132 (sctp)");
++}
++
++static void print(const struct ebt_u_entry *entry,
++   const struct ebt_entry_match *match)
++{
++	struct ebt_ip_info *ipinfo = (struct ebt_ip_info *)match->data;
++	int j;
++
++	if (ipinfo->bitmask & EBT_IP_SOURCE) {
++		printf("--ip-src ");
++		if (ipinfo->invflags & EBT_IP_SOURCE)
++			printf("! ");
++		for (j = 0; j < 4; j++)
++			printf("%d%s",((unsigned char *)&ipinfo->saddr)[j],
++			   (j == 3) ? "" : ".");
++		printf("%s ", ebt_mask_to_dotted(ipinfo->smsk));
++	}
++	if (ipinfo->bitmask & EBT_IP_DEST) {
++		printf("--ip-dst ");
++		if (ipinfo->invflags & EBT_IP_DEST)
++			printf("! ");
++		for (j = 0; j < 4; j++)
++			printf("%d%s", ((unsigned char *)&ipinfo->daddr)[j],
++			   (j == 3) ? "" : ".");
++		printf("%s ", ebt_mask_to_dotted(ipinfo->dmsk));
++	}
++	if (ipinfo->bitmask & EBT_IP_TOS) {
++		printf("--ip-tos ");
++		if (ipinfo->invflags & EBT_IP_TOS)
++			printf("! ");
++		printf("0x%02X ", ipinfo->tos);
++	}
++	if (ipinfo->bitmask & EBT_IP_PROTO) {
++		struct protoent *pe;
++
++		printf("--ip-proto ");
++		if (ipinfo->invflags & EBT_IP_PROTO)
++			printf("! ");
++		pe = getprotobynumber(ipinfo->protocol);
++		if (pe == NULL) {
++			printf("%d ", ipinfo->protocol);
++		} else {
++			printf("%s ", pe->p_name);
++		}
++	}
++	if (ipinfo->bitmask & EBT_IP_SPORT) {
++		printf("--ip-sport ");
++		if (ipinfo->invflags & EBT_IP_SPORT)
++			printf("! ");
++		print_port_range(ipinfo->sport);
++	}
++	if (ipinfo->bitmask & EBT_IP_DPORT) {
++		printf("--ip-dport ");
++		if (ipinfo->invflags & EBT_IP_DPORT)
++			printf("! ");
++		print_port_range(ipinfo->dport);
++	}
++}
++
++static int compare(const struct ebt_entry_match *m1,
++   const struct ebt_entry_match *m2)
++{
++	struct ebt_ip_info *ipinfo1 = (struct ebt_ip_info *)m1->data;
++	struct ebt_ip_info *ipinfo2 = (struct ebt_ip_info *)m2->data;
++
++	if (ipinfo1->bitmask != ipinfo2->bitmask)
++		return 0;
++	if (ipinfo1->invflags != ipinfo2->invflags)
++		return 0;
++	if (ipinfo1->bitmask & EBT_IP_SOURCE) {
++		if (ipinfo1->saddr != ipinfo2->saddr)
++			return 0;
++		if (ipinfo1->smsk != ipinfo2->smsk)
++			return 0;
++	}
++	if (ipinfo1->bitmask & EBT_IP_DEST) {
++		if (ipinfo1->daddr != ipinfo2->daddr)
++			return 0;
++		if (ipinfo1->dmsk != ipinfo2->dmsk)
++			return 0;
++	}
++	if (ipinfo1->bitmask & EBT_IP_TOS) {
++		if (ipinfo1->tos != ipinfo2->tos)
++			return 0;
++	}
++	if (ipinfo1->bitmask & EBT_IP_PROTO) {
++		if (ipinfo1->protocol != ipinfo2->protocol)
++			return 0;
++	}
++	if (ipinfo1->bitmask & EBT_IP_SPORT) {
++		if (ipinfo1->sport[0] != ipinfo2->sport[0] ||
++		   ipinfo1->sport[1] != ipinfo2->sport[1])
++			return 0;
++	}
++	if (ipinfo1->bitmask & EBT_IP_DPORT) {
++		if (ipinfo1->dport[0] != ipinfo2->dport[0] ||
++		   ipinfo1->dport[1] != ipinfo2->dport[1])
++			return 0;
++	}
++	return 1;
++}
++
++static struct ebt_u_match ip_match =
++{
++	.name		= "ip",
++	.size		= sizeof(struct ebt_ip_info),
++	.help		= print_help,
++	.init		= init,
++	.parse		= parse,
++	.final_check	= final_check,
++	.print		= print,
++	.compare	= compare,
++	.extra_ops	= opts,
++};
++
++void _init(void)
++{
++	ebt_register_match(&ip_match);
++}
+diff -urpN ebtables-v2.0.10-4-origin/extensions/ebt_mark.c ebtables-v2.0.10-4/extensions/ebt_mark.c
+--- ebtables-v2.0.10-4-origin/extensions/ebt_mark.c	2011-12-16 04:02:47.000000000 +0800
++++ ebtables-v2.0.10-4/extensions/ebt_mark.c	2014-07-12 07:56:23.000000000 +0800
+@@ -11,7 +11,7 @@
+ #include <string.h>
+ #include <getopt.h>
+ #include "../include/ebtables_u.h"
+-#include <linux/netfilter_bridge/ebt_mark_t.h>
++#include "../include/linux/netfilter_bridge/ebt_mark_t.h"
+ 
+ static int mark_supplied;
+ 
+@@ -20,6 +20,8 @@ static int mark_supplied;
+ #define MARK_ORMARK  '3'
+ #define MARK_ANDMARK '4'
+ #define MARK_XORMARK '5'
++#define MARK_SETVTAG '6'
++
+ static struct option opts[] =
+ {
+ 	{ "mark-target" , required_argument, 0, MARK_TARGET },
+@@ -30,6 +32,7 @@ static struct option opts[] =
+ 	{ "mark-or"     , required_argument, 0, MARK_ORMARK  },
+ 	{ "mark-and"    , required_argument, 0, MARK_ANDMARK },
+ 	{ "mark-xor"    , required_argument, 0, MARK_XORMARK },
++	{ "vtag-set"    , required_argument, 0, MARK_SETVTAG },
+ 	{ 0 }
+ };
+ 
+@@ -41,6 +44,7 @@ static void print_help()
+ 	" --mark-or  value     : Or nfmark with value (nfmark |= value)\n"
+ 	" --mark-and value     : And nfmark with value (nfmark &= value)\n"
+ 	" --mark-xor value     : Xor nfmark with value (nfmark ^= value)\n"
++	" --vtag-set value     : Set vlan tag value\n"
+ 	" --mark-target target : ACCEPT, DROP, RETURN or CONTINUE\n");
+ }
+ 
+@@ -59,6 +63,7 @@ static void init(struct ebt_entry_target
+ #define OPT_MARK_ORMARK   0x04
+ #define OPT_MARK_ANDMARK  0x08
+ #define OPT_MARK_XORMARK  0x10
++#define OPT_MARK_SETVTAG  0x20
+ static int parse(int c, char **argv, int argc,
+    const struct ebt_u_entry *entry, unsigned int *flags,
+    struct ebt_entry_target **target)
+@@ -100,6 +105,10 @@ static int parse(int c, char **argv, int
+ 			ebt_print_error2("--mark-xor cannot be used together with specific --mark option");
+ 		markinfo->target = (markinfo->target & EBT_VERDICT_BITS) | MARK_XOR_VALUE;
+                 break;
++	case MARK_SETVTAG:
++		ebt_check_option2(flags, OPT_MARK_SETVTAG);
++		markinfo->target = (markinfo->target & EBT_VERDICT_BITS) | VTAG_SET_VALUE;
++		break;
+ 	 default:
+ 		return 0;
+ 	}
+@@ -140,6 +149,8 @@ static void print(const struct ebt_u_ent
+ 		printf("--mark-xor");
+ 	else if (tmp == MARK_AND_VALUE)
+ 		printf("--mark-and");
++	else if (tmp == VTAG_SET_VALUE)
++		printf("--vtag-set");
+ 	else
+ 		ebt_print_error("oops, unknown mark action, try a later version of ebtables");
+ 	printf(" 0x%lx", markinfo->mark);
+diff -urpN ebtables-v2.0.10-4-origin/extensions/ebt_mark.c.orig ebtables-v2.0.10-4/extensions/ebt_mark.c.orig
+--- ebtables-v2.0.10-4-origin/extensions/ebt_mark.c.orig	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/extensions/ebt_mark.c.orig	2011-12-16 04:02:47.000000000 +0800
+@@ -0,0 +1,178 @@
++/* ebt_mark
++ *
++ * Authors:
++ * Bart De Schuymer <bdschuym@pandora.be>
++ *
++ * July, 2002, September 2006
++ */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <getopt.h>
++#include "../include/ebtables_u.h"
++#include <linux/netfilter_bridge/ebt_mark_t.h>
++
++static int mark_supplied;
++
++#define MARK_TARGET  '1'
++#define MARK_SETMARK '2'
++#define MARK_ORMARK  '3'
++#define MARK_ANDMARK '4'
++#define MARK_XORMARK '5'
++static struct option opts[] =
++{
++	{ "mark-target" , required_argument, 0, MARK_TARGET },
++	/* an oldtime messup, we should have always used the scheme
++	 * <extension-name>-<option> */
++	{ "set-mark"    , required_argument, 0, MARK_SETMARK },
++	{ "mark-set"    , required_argument, 0, MARK_SETMARK },
++	{ "mark-or"     , required_argument, 0, MARK_ORMARK  },
++	{ "mark-and"    , required_argument, 0, MARK_ANDMARK },
++	{ "mark-xor"    , required_argument, 0, MARK_XORMARK },
++	{ 0 }
++};
++
++static void print_help()
++{
++	printf(
++	"mark target options:\n"
++	" --mark-set value     : Set nfmark value\n"
++	" --mark-or  value     : Or nfmark with value (nfmark |= value)\n"
++	" --mark-and value     : And nfmark with value (nfmark &= value)\n"
++	" --mark-xor value     : Xor nfmark with value (nfmark ^= value)\n"
++	" --mark-target target : ACCEPT, DROP, RETURN or CONTINUE\n");
++}
++
++static void init(struct ebt_entry_target *target)
++{
++	struct ebt_mark_t_info *markinfo =
++	   (struct ebt_mark_t_info *)target->data;
++
++	markinfo->target = EBT_ACCEPT;
++	markinfo->mark = 0;
++	mark_supplied = 0;
++}
++
++#define OPT_MARK_TARGET   0x01
++#define OPT_MARK_SETMARK  0x02
++#define OPT_MARK_ORMARK   0x04
++#define OPT_MARK_ANDMARK  0x08
++#define OPT_MARK_XORMARK  0x10
++static int parse(int c, char **argv, int argc,
++   const struct ebt_u_entry *entry, unsigned int *flags,
++   struct ebt_entry_target **target)
++{
++	struct ebt_mark_t_info *markinfo =
++	   (struct ebt_mark_t_info *)(*target)->data;
++	char *end;
++
++	switch (c) {
++	case MARK_TARGET:
++		{ int tmp;
++		ebt_check_option2(flags, OPT_MARK_TARGET);
++		if (FILL_TARGET(optarg, tmp))
++			ebt_print_error2("Illegal --mark-target target");
++		/* the 4 lsb are left to designate the target */
++		markinfo->target = (markinfo->target & ~EBT_VERDICT_BITS) | (tmp & EBT_VERDICT_BITS);
++		}
++		return 1;
++	case MARK_SETMARK:
++		ebt_check_option2(flags, OPT_MARK_SETMARK);
++		if (*flags & (OPT_MARK_ORMARK|OPT_MARK_ANDMARK|OPT_MARK_XORMARK))
++			ebt_print_error2("--mark-set cannot be used together with specific --mark option");
++                break;
++	case MARK_ORMARK:
++		ebt_check_option2(flags, OPT_MARK_ORMARK);
++		if (*flags & (OPT_MARK_SETMARK|OPT_MARK_ANDMARK|OPT_MARK_XORMARK))
++			ebt_print_error2("--mark-or cannot be used together with specific --mark option");
++		markinfo->target = (markinfo->target & EBT_VERDICT_BITS) | MARK_OR_VALUE;
++                break;
++	case MARK_ANDMARK:
++		ebt_check_option2(flags, OPT_MARK_ANDMARK);
++		if (*flags & (OPT_MARK_SETMARK|OPT_MARK_ORMARK|OPT_MARK_XORMARK))
++			ebt_print_error2("--mark-and cannot be used together with specific --mark option");
++		markinfo->target = (markinfo->target & EBT_VERDICT_BITS) | MARK_AND_VALUE;
++                break;
++	case MARK_XORMARK:
++		ebt_check_option2(flags, OPT_MARK_XORMARK);
++		if (*flags & (OPT_MARK_SETMARK|OPT_MARK_ANDMARK|OPT_MARK_ORMARK))
++			ebt_print_error2("--mark-xor cannot be used together with specific --mark option");
++		markinfo->target = (markinfo->target & EBT_VERDICT_BITS) | MARK_XOR_VALUE;
++                break;
++	 default:
++		return 0;
++	}
++	/* mutual code */
++	markinfo->mark = strtoul(optarg, &end, 0);
++	if (*end != '\0' || end == optarg)
++		ebt_print_error2("Bad MARK value '%s'", optarg);
++	mark_supplied = 1;
++	return 1;
++}
++
++static void final_check(const struct ebt_u_entry *entry,
++   const struct ebt_entry_target *target, const char *name,
++   unsigned int hookmask, unsigned int time)
++{
++	struct ebt_mark_t_info *markinfo =
++	   (struct ebt_mark_t_info *)target->data;
++
++	if (time == 0 && mark_supplied == 0) {
++		ebt_print_error("No mark value supplied");
++	} else if (BASE_CHAIN && (markinfo->target|~EBT_VERDICT_BITS) == EBT_RETURN)
++		ebt_print_error("--mark-target RETURN not allowed on base chain");
++}
++
++static void print(const struct ebt_u_entry *entry,
++   const struct ebt_entry_target *target)
++{
++	struct ebt_mark_t_info *markinfo =
++	   (struct ebt_mark_t_info *)target->data;
++	int tmp;
++
++	tmp = markinfo->target & ~EBT_VERDICT_BITS;
++	if (tmp == MARK_SET_VALUE)
++		printf("--mark-set");
++	else if (tmp == MARK_OR_VALUE)
++		printf("--mark-or");
++	else if (tmp == MARK_XOR_VALUE)
++		printf("--mark-xor");
++	else if (tmp == MARK_AND_VALUE)
++		printf("--mark-and");
++	else
++		ebt_print_error("oops, unknown mark action, try a later version of ebtables");
++	printf(" 0x%lx", markinfo->mark);
++	tmp = markinfo->target | ~EBT_VERDICT_BITS;
++	printf(" --mark-target %s", TARGET_NAME(tmp));
++}
++
++static int compare(const struct ebt_entry_target *t1,
++   const struct ebt_entry_target *t2)
++{
++	struct ebt_mark_t_info *markinfo1 =
++	   (struct ebt_mark_t_info *)t1->data;
++	struct ebt_mark_t_info *markinfo2 =
++	   (struct ebt_mark_t_info *)t2->data;
++
++	return markinfo1->target == markinfo2->target &&
++	   markinfo1->mark == markinfo2->mark;
++}
++
++static struct ebt_u_target mark_target =
++{
++	.name		= "mark",
++	.size		= sizeof(struct ebt_mark_t_info),
++	.help		= print_help,
++	.init		= init,
++	.parse		= parse,
++	.final_check	= final_check,
++	.print		= print,
++	.compare	= compare,
++	.extra_ops	= opts,
++};
++
++void _init(void)
++{
++	ebt_register_target(&mark_target);
++}
+diff -urpN ebtables-v2.0.10-4-origin/extensions/ebt_skiplog.c ebtables-v2.0.10-4/extensions/ebt_skiplog.c
+--- ebtables-v2.0.10-4-origin/extensions/ebt_skiplog.c	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/extensions/ebt_skiplog.c	2014-07-12 07:22:56.000000000 +0800
+@@ -0,0 +1,62 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <getopt.h>
++#include "../include/ebtables_u.h"
++
++static struct option opts[] =
++{
++	{ 0 }
++};
++
++static void print_help()
++{
++	printf(
++	"skiplog target takes no options:\n");
++}
++
++static void init(struct ebt_entry_target *target)
++{
++}
++
++static int parse(int c, char **argv, int argc,
++   const struct ebt_u_entry *entry, unsigned int *flags,
++   struct ebt_entry_target **target)
++{
++	return 1;
++}
++
++static void final_check(const struct ebt_u_entry *entry,
++   const struct ebt_entry_target *target, const char *name,
++   unsigned int hookmask, unsigned int time)
++{
++}
++
++static void print(const struct ebt_u_entry *entry,
++   const struct ebt_entry_target *target)
++{
++}
++
++static int compare(const struct ebt_entry_target *t1,
++   const struct ebt_entry_target *t2)
++{
++	return 1;
++}
++
++static struct ebt_u_target skiplog_target =
++{
++    "SKIPLOG",
++    0,
++    print_help,
++    init,
++    parse,
++    final_check,
++    print,
++    compare,
++    opts
++};
++
++void _init(void)
++{
++	ebt_register_target(&skiplog_target);
++}
+diff -urpN ebtables-v2.0.10-4-origin/extensions/ebt_time.c ebtables-v2.0.10-4/extensions/ebt_time.c
+--- ebtables-v2.0.10-4-origin/extensions/ebt_time.c	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/extensions/ebt_time.c	2014-07-12 07:22:56.000000000 +0800
+@@ -0,0 +1,351 @@
++/*
++  Description: EBTables time extension module for userspace.
++  Authors:  Song Wang <songw@broadcom.com>, ported from netfilter/iptables
++            The following is the original disclaimer.
++
++ Shared library add-on to iptables to add TIME matching support. 
++*/
++#include <stdio.h>
++#include <netdb.h>
++#include <string.h>
++#include <stdlib.h>
++#include <getopt.h>
++#include <errno.h>
++
++#include "../include/ebtables_u.h"
++#include "../include/linux/netfilter_bridge/ebt_time.h"
++#include <time.h>
++
++static int globaldays;
++
++/* Function which prints out usage message. */
++static void
++help(void)
++{
++	printf(
++"time options:\n"
++" --timestart value --timestop value --days listofdays\n"
++"          timestart value : HH:MM\n"
++"          timestop  value : HH:MM\n"
++"          listofdays value: a list of days to apply -> ie. Mon,Tue,Wed,Thu,Fri. Case sensitive\n");
++}
++
++static struct option opts[] = {
++	{ "timestart", required_argument, 0, '1' },
++	{ "timestop", required_argument, 0, '2' },
++	{ "days", required_argument, 0, '3'},
++	{0}
++};
++
++/* Initialize the match. */
++static void
++init(struct ebt_entry_match *m)
++{
++	globaldays = 0;
++}
++
++static int
++string_to_number(const char *s, unsigned int min, unsigned int max,
++                 unsigned int *ret)
++{
++        long number;
++        char *end;
++
++        /* Handle hex, octal, etc. */
++        errno = 0;
++        number = strtol(s, &end, 0);
++        if (*end == '\0' && end != s) {
++                /* we parsed a number, let's see if we want this */
++                if (errno != ERANGE && min <= number && number <= max) {
++                        *ret = number;
++                        return 0;
++                }
++        }
++        return -1;
++}
++
++/**
++ * param: part1, a pointer on a string 2 chars maximum long string, that will contain the hours.
++ * param: part2, a pointer on a string 2 chars maximum long string, that will contain the minutes.
++ * param: str_2_parse, the string to parse.
++ * return: 1 if ok, 0 if error.
++ */
++static int
++split_time(char **part1, char **part2, const char *str_2_parse)
++{
++	unsigned short int i,j=0;
++	char *rpart1 = *part1;
++	char *rpart2 = *part2;
++	unsigned char found_column = 0;
++
++	/* Check the length of the string */
++	if (strlen(str_2_parse) > 5)
++		return 0;
++	/* parse the first part until the ':' */
++	for (i=0; i<2; i++)
++	{
++		if (str_2_parse[i] == ':')
++			found_column = 1;
++		else
++			rpart1[i] = str_2_parse[i];
++	}
++	if (!found_column)
++		i++;
++	j=i;
++	/* parse the second part */
++	for (; i<strlen(str_2_parse); i++)
++	{
++		rpart2[i-j] = str_2_parse[i];
++	}
++	/* if we are here, format should be ok. */
++	return 1;
++}
++
++static void
++parse_time_string(unsigned int *hour, unsigned int *minute, const char *time)
++{
++	char *hours;
++	char *minutes;
++
++	hours = (char *)malloc(3);
++	minutes = (char *)malloc(3);
++	bzero((void *)hours, 3);
++	bzero((void *)minutes, 3);
++
++	if (split_time(&hours, &minutes, time) == 1)
++	{
++                /* if the number starts with 0, replace it with a space else
++                   this string_to_number will interpret it as octal !! */
++                if ((hours[0] == '0') && (hours[1] != '\0'))
++			hours[0] = ' ';
++		if ((minutes[0] == '0') && (minutes[1] != '\0'))
++			minutes[0] = ' ';
++
++		if((string_to_number(hours, 0, 23, hour) == -1) ||
++			(string_to_number(minutes, 0, 59, minute) == -1)) {
++			*hour = *minute = (-1);
++		}
++	}
++	if ((*hour != (-1)) && (*minute != (-1))) {
++		free(hours);
++		free(minutes);
++		return;
++	}
++
++	/* If we are here, there was a problem ..*/
++	ebt_print_error("invalid time %s specified, should be HH:MM format", time);
++}
++
++/* return 1->ok, return 0->error */
++static int
++parse_day(int *days, int from, int to, const char *string)
++{
++	char *dayread;
++	char *days_str[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
++	unsigned short int days_of_week[7] = {64, 32, 16, 8, 4, 2, 1};
++	unsigned int i;
++
++	dayread = (char *)malloc(4);
++	bzero(dayread, 4);
++	if ((to-from) != 3) {
++		free(dayread);
++		return 0;
++	}
++	for (i=from; i<to; i++)
++		dayread[i-from] = string[i];
++	for (i=0; i<7; i++)
++		if (strcmp(dayread, days_str[i]) == 0)
++		{
++			*days |= days_of_week[i];
++			free(dayread);
++			return 1;
++		}
++	/* if we are here, we didn't read a valid day */
++	free(dayread);
++	return 0;
++}
++
++static void
++parse_days_string(int *days, const char *daystring)
++{
++	int len;
++	int i=0;
++	//char *err = "invalid days specified, should be Sun,Mon,Tue... format";
++
++	len = strlen(daystring);
++	if (len < 3)
++		ebt_print_error("invalid days specified, should be Sun,Mon,Tue... format");	
++	while(i<len)
++	{
++		if (parse_day(days, i, i+3, daystring) == 0)
++			ebt_print_error("invalid days specified, should be Sun,Mon,Tue... format");
++		i += 4;
++	}
++}
++
++#define EBT_TIME_START 0x01
++#define EBT_TIME_STOP  0x02
++#define EBT_TIME_DAYS  0x04
++
++
++/* Function which parses command options; returns true if it
++   ate an option */
++static int
++parse(int c, char **argv, int argc,
++      const struct ebt_u_entry *entry,
++      unsigned int *flags, struct ebt_entry_match **match)
++{
++	struct ebt_time_info *timeinfo = (struct ebt_time_info *)(*match)->data;
++	unsigned int hours, minutes;
++
++	switch (c) /* c is the return value of getopt_long */
++	{
++		/* timestart */
++	case '1':
++		if (*flags & EBT_TIME_START)
++                        ebt_print_error("Can't specify --timestart twice");
++		parse_time_string(&hours, &minutes, optarg);
++		timeinfo->time_start = (hours * 60) + minutes;
++		*flags |= EBT_TIME_START;
++		break;
++		/* timestop */
++	case '2':
++		if (*flags & EBT_TIME_STOP)
++                        ebt_print_error("Can't specify --timestop twice");
++		parse_time_string(&hours, &minutes, optarg);
++		timeinfo->time_stop = (hours * 60) + minutes;
++		*flags |= EBT_TIME_STOP;
++		break;
++
++		/* days */
++	case '3':
++		if (*flags & EBT_TIME_DAYS)
++                        ebt_print_error("Can't specify --days twice");
++		parse_days_string(&globaldays, optarg);
++		timeinfo->days_match = globaldays;
++		*flags |= EBT_TIME_DAYS;
++		break;
++	default:
++		return 0;
++	}
++	/* default value if not specified */
++	if (!(*flags & EBT_TIME_START))
++		timeinfo->time_start = 0;
++	if (!(*flags & EBT_TIME_STOP))
++		timeinfo->time_stop = 1439; /* 23*60+59 = 1439*/
++	if (!(*flags & EBT_TIME_DAYS))
++		timeinfo->days_match = 0;
++
++	return 1;
++}
++
++/* Final check; must have specified --timestart --timestop --days. */
++static void
++final_check(const struct ebt_u_entry *entry,
++   const struct ebt_entry_match *match, const char *name,
++   unsigned int hookmask, unsigned int time)
++{
++        struct ebt_time_info *timeinfo = (struct ebt_time_info *)match->data;
++
++	/*
++	printf("start=%d,stop=%d,days=%d\n",
++		timeinfo->time_start,timeinfo->time_stop,timeinfo->days_match);
++	*/
++	if (timeinfo->time_stop < timeinfo->time_start)
++		ebt_print_error("stop time can't be smaller than start time");
++}
++
++
++static void
++print_days(int daynum)
++{
++	char *days[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
++	unsigned short int days_of_week[7] = {64, 32, 16, 8, 4, 2, 1};
++	unsigned short int i, nbdays=0;
++
++	for (i=0; i<7; i++) {
++		if ((days_of_week[i] & daynum) == days_of_week[i])
++		{
++			if (nbdays>0)
++				printf(",%s", days[i]);
++			else
++				printf("%s", days[i]);
++			++nbdays;
++		}
++	}
++}
++
++static void
++divide_time(int fulltime, int *hours, int *minutes)
++{
++	*hours = fulltime / 60;
++	*minutes = fulltime % 60;
++}
++
++/* Prints out the matchinfo. */
++static void
++print(const struct ebt_u_entry *entry,
++      const struct ebt_entry_match *match)
++{
++	struct ebt_time_info *time = ((struct ebt_time_info *)match->data);
++	int hour_start, hour_stop, minute_start, minute_stop;
++
++	divide_time(time->time_start, &hour_start, &minute_start);
++	divide_time(time->time_stop, &hour_stop, &minute_stop);
++	printf(" TIME from %d:%d to %d:%d on ",
++	       hour_start, minute_start,
++	       hour_stop, minute_stop);
++	print_days(time->days_match);
++	printf(" ");
++}
++
++#if 0
++/* Saves the data in parsable form to stdout. */
++static void
++save(const struct ipt_ip *ip, const struct ebt_entry_match *match)
++{
++	struct ebt_time_info *time = ((struct ebt_time_info *)match->data);
++	int hour_start, hour_stop, minute_start, minute_stop;
++
++	divide_time(time->time_start, &hour_start, &minute_start);
++	divide_time(time->time_stop, &hour_stop, &minute_stop);
++	printf(" --timestart %.2d:%.2d --timestop %.2d:%.2d --days ",
++	       hour_start, minute_start,
++	       hour_stop, minute_stop);
++	print_days(time->days_match);
++	printf(" ");
++}
++#endif
++
++static int 
++compare(const struct ebt_entry_match *m1, const struct ebt_entry_match *m2)
++{
++        struct ebt_time_info *timeinfo1 = (struct ebt_time_info *)m1->data;
++        struct ebt_time_info *timeinfo2 = (struct ebt_time_info *)m2->data;
++
++        if (timeinfo1->days_match != timeinfo2->days_match)
++                return 0;
++        if (timeinfo1->time_start != timeinfo2->time_start)
++                return 0;
++        if (timeinfo1->time_stop != timeinfo2->time_stop)
++                return 0;
++        return 1;
++}
++
++static struct ebt_u_match time_match =
++{
++   .name          = "time",
++   .size          = sizeof(struct ebt_time_info),
++   .help          = help,
++   .init          = init,
++   .parse         = parse,
++   .final_check   = final_check,
++   .print         = print,
++   .compare       = compare,
++   .extra_ops     = opts,
++};
++
++void _init(void)
++{
++	ebt_register_match(&time_match);
++}
+diff -urpN ebtables-v2.0.10-4-origin/extensions/ebt_wmm_mark.c ebtables-v2.0.10-4/extensions/ebt_wmm_mark.c
+--- ebtables-v2.0.10-4-origin/extensions/ebt_wmm_mark.c	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/extensions/ebt_wmm_mark.c	2014-07-12 07:22:56.000000000 +0800
+@@ -0,0 +1,189 @@
++/*
++ *  ebt_wmm_mark
++ *
++ */
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <getopt.h>
++#include "../include/ebtables_u.h"
++#include "../include/linux/netfilter_bridge/ebt_wmm_mark_t.h"
++
++//static int mark_supplied;
++#define WMM_MARK_TARGET '1'
++#define WMM_MARK_TAG  '2'
++#define WMM_MARK_POS  '4'
++#define WMM_MARK_SET  '8'
++
++static struct option opts[] =
++{
++	{ "wmm-mark-target" 	, required_argument, 0, WMM_MARK_TARGET },
++	{ "wmm-marktag"    	, required_argument, 0, WMM_MARK_TAG },
++	{ "wmm-markpos"      , required_argument, 0, WMM_MARK_POS },
++	{ "wmm-markset"    	, required_argument, 0, WMM_MARK_SET },	
++	{ 0 }
++};
++
++static void print_help()
++{
++	printf(
++	"wmm-mark target options:\n"
++	" --wmm-mark-target target : ACCEPT, DROP, RETURN or CONTINUE\n"	
++	" --wmm-marktag value      : set nfmark based on: dscp or vlan \n"
++	" --wmm-markset value      : set nfmark regardless of the mark based on\n"	
++	" --wmm-markpos            : bit offset of nfmark to set\n");
++}
++
++static void init(struct ebt_entry_target *target)
++{
++	struct ebt_wmm_mark_t_info *markinfo =
++	   (struct ebt_wmm_mark_t_info *)target->data;
++
++	markinfo->target = EBT_ACCEPT;
++	markinfo->mark = WMM_MARK_DSCP;
++	markinfo->markpos = PRIO_LOC_NFMARK;
++	markinfo->markset = WMM_MARK_VALUE_NONE;	
++//	mark_supplied = 0;
++}
++
++#define OPT_WMM_MARK_TARGET	0x01
++#define OPT_WMM_MARK_TAG   	0x02
++#define OPT_WMM_MARK_POS   	0x04
++#define OPT_WMM_MARK_SET   	0x08
++
++static int parse(int c, char **argv, int argc,
++   const struct ebt_u_entry *entry, unsigned int *flags,
++   struct ebt_entry_target **target)
++{
++	struct ebt_wmm_mark_t_info *markinfo =
++	   (struct ebt_wmm_mark_t_info *)(*target)->data;
++	char *end;
++
++	//printf("c:%d, flags=%d\n", c, *flags);
++	
++	switch (c) {
++	case WMM_MARK_TARGET:
++		ebt_check_option2(flags, OPT_WMM_MARK_TARGET);
++		if (FILL_TARGET(optarg, markinfo->target))
++			ebt_print_error2("Illegal --wmm-mark-target target");
++		break;		
++		
++	case WMM_MARK_POS:
++		ebt_check_option2(flags, OPT_WMM_MARK_POS);
++		markinfo->markpos = strtoul(optarg, &end, 0);
++		if (*end != '\0' || end == optarg)
++			ebt_print_error2("Bad --wmm-markpos value '%s'", optarg);
++			
++		//printf("--wmm-markpos %d\n", markinfo->markpos);
++
++		break;
++
++	case WMM_MARK_SET:
++		ebt_check_option2(flags, OPT_WMM_MARK_SET);
++		markinfo->markset = strtoul(optarg, &end, 0);
++		if (*end != '\0' || end == optarg)
++			ebt_print_error2("Bad --wmm-markset value '%s'", optarg);
++			
++		//printf("--wmm-markset %d\n", markinfo->markset);
++
++		break;
++				
++	case WMM_MARK_TAG:
++		ebt_check_option2(flags, OPT_WMM_MARK_TAG);
++		if (optind > argc)
++			ebt_print_error2("Missing wmm-marktag argument");
++		
++		if(!strcmp(argv[optind - 1], WMM_MARK_DSCP_STR)) {
++			//printf("--wmm-marktag dscp\n");
++			markinfo->mark = WMM_MARK_DSCP;
++			//mark_supplied = 1;
++		} else if(!strcmp(argv[optind - 1], WMM_MARK_8021D_STR)) {
++			//printf("--wmm-marktag vlan\n");
++			markinfo->mark = WMM_MARK_8021D;
++			//mark_supplied = 1;		
++		} else 
++			ebt_print_error2("Bad --wmm-marktagt value '%s'", argv[optind - 1]);
++							
++                break;
++	 default:
++		return 0;
++	}
++	return 1;
++}
++
++static void final_check(const struct ebt_u_entry *entry,
++   const struct ebt_entry_target *target, const char *name,
++   unsigned int hookmask, unsigned int time)
++{
++	struct ebt_wmm_mark_t_info *markinfo =
++	   (struct ebt_wmm_mark_t_info *)target->data;
++		            
++	if(markinfo->mark == WMM_MARK_DSCP) {
++		if ((entry->ethproto != ETH_P_IPV6 && entry->ethproto != ETH_P_IP) || entry->invflags & EBT_IPROTO)
++			ebt_print_error("wmm-mark dscp must be used with -p IPv4/IPv6");
++		
++	} else if (markinfo->mark == WMM_MARK_8021D) {
++		if (entry->ethproto != ETH_P_8021Q || entry->invflags & EBT_IPROTO)
++			ebt_print_error("wmm-mark vlan must be used with -p 802_1Q");	
++	}
++			
++	if (BASE_CHAIN && markinfo->target == EBT_RETURN)
++		ebt_print_error("--wmm-mark-target RETURN not allowed on base chain");
++}
++
++static void print(const struct ebt_u_entry *entry,
++   const struct ebt_entry_target *target)
++{
++	
++	struct ebt_wmm_mark_t_info *markinfo =
++	   (struct ebt_wmm_mark_t_info *)target->data;
++
++	printf(" --wmm-mark ");
++	switch (markinfo->mark){
++		case WMM_MARK_DSCP:
++			printf("dscp");
++			break;
++		case WMM_MARK_8021D:
++			printf("vlan");
++			break;			
++		default:
++			printf("invalid");
++					
++	}
++	
++	printf(" --wmm-markpos %d", markinfo->markpos);	
++	printf(" --wmm-markset %d", markinfo->markset);	
++	printf(" --wmm-mark-target %s", TARGET_NAME(markinfo->target));
++}
++
++static int compare(const struct ebt_entry_target *t1,
++   const struct ebt_entry_target *t2)
++{
++	struct ebt_wmm_mark_t_info *markinfo1 =
++	   (struct ebt_wmm_mark_t_info *)t1->data;
++	struct ebt_wmm_mark_t_info *markinfo2 =
++	   (struct ebt_wmm_mark_t_info *)t2->data;
++
++	return markinfo1->target == markinfo2->target &&
++	   markinfo1->mark == markinfo2->mark &&	
++	   markinfo1->markset == markinfo2->markset && 
++	   markinfo1->markpos == markinfo2->markpos;
++}
++
++static struct ebt_u_target mark_target =
++{
++	.name		= EBT_WMM_MARK_TARGET,
++	.size		= sizeof(struct ebt_wmm_mark_t_info),
++	.help		= print_help,
++	.init		= init,
++	.parse		= parse,
++	.final_check	= final_check,
++	.print		= print,
++	.compare	= compare,
++	.extra_ops	= opts,
++};
++
++void _init(void)
++{
++	ebt_register_target(&mark_target);
++}
+diff -urpN ebtables-v2.0.10-4-origin/extensions/Makefile ebtables-v2.0.10-4/extensions/Makefile
+--- ebtables-v2.0.10-4-origin/extensions/Makefile	2011-12-16 04:02:47.000000000 +0800
++++ ebtables-v2.0.10-4/extensions/Makefile	2014-07-12 07:56:23.000000000 +0800
+@@ -1,7 +1,13 @@
+ #! /usr/bin/make
+ 
+-EXT_FUNC+=802_3 nat arp arpreply ip ip6 standard log redirect vlan mark_m mark \
+-          pkttype stp among limit ulog nflog
++#BRCM begin
++#EXT_FUNC+=802_3 nat arp arpreply ip ip6 standard log redirect vlan mark_m mark \
++#          pkttype stp among limit ulog nflog
++EXT_FUNC+=ip ip6 standard vlan mark_m mark time ftos skiplog
++ifeq ($(strip $(WIRELESS)),1)
++EXT_FUNC+=wmm_mark
++endif
++#BRCM end
+ EXT_TABLES+=filter nat broute
+ EXT_OBJS+=$(foreach T,$(EXT_FUNC), extensions/ebt_$(T).o)
+ EXT_OBJS+=$(foreach T,$(EXT_TABLES), extensions/ebtable_$(T).o)
+@@ -11,13 +17,13 @@ EXT_LIBSI+=$(foreach T,$(EXT_FUNC), -leb
+ EXT_LIBSI+=$(foreach T,$(EXT_TABLES), -lebtable_$(T))
+ 
+ extensions/ebt_%.so: extensions/ebt_%.o
+-	$(CC) $(LDFLAGS) -shared -o $@ -lc $< -nostartfiles
++	$(CC) $(LDFLAGS) -shared -o $@ $< -nostartfiles
+ 
+ extensions/libebt_%.so: extensions/ebt_%.so
+ 	mv $< $@
+ 
+ extensions/ebtable_%.so: extensions/ebtable_%.o
+-	$(CC) $(LDFLAGS) -shared -o $@ -lc $< -nostartfiles
++	$(CC) $(LDFLAGS) -shared -o $@ $< -nostartfiles
+ 
+ extensions/libebtable_%.so: extensions/ebtable_%.so
+ 	mv $< $@
+diff -urpN ebtables-v2.0.10-4-origin/extensions/Makefile.orig ebtables-v2.0.10-4/extensions/Makefile.orig
+--- ebtables-v2.0.10-4-origin/extensions/Makefile.orig	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/extensions/Makefile.orig	2011-12-16 04:02:47.000000000 +0800
+@@ -0,0 +1,30 @@
++#! /usr/bin/make
++
++EXT_FUNC+=802_3 nat arp arpreply ip ip6 standard log redirect vlan mark_m mark \
++          pkttype stp among limit ulog nflog
++EXT_TABLES+=filter nat broute
++EXT_OBJS+=$(foreach T,$(EXT_FUNC), extensions/ebt_$(T).o)
++EXT_OBJS+=$(foreach T,$(EXT_TABLES), extensions/ebtable_$(T).o)
++EXT_LIBS+=$(foreach T,$(EXT_FUNC), extensions/libebt_$(T).so)
++EXT_LIBS+=$(foreach T,$(EXT_TABLES), extensions/libebtable_$(T).so)
++EXT_LIBSI+=$(foreach T,$(EXT_FUNC), -lebt_$(T))
++EXT_LIBSI+=$(foreach T,$(EXT_TABLES), -lebtable_$(T))
++
++extensions/ebt_%.so: extensions/ebt_%.o
++	$(CC) $(LDFLAGS) -shared -o $@ -lc $< -nostartfiles
++
++extensions/libebt_%.so: extensions/ebt_%.so
++	mv $< $@
++
++extensions/ebtable_%.so: extensions/ebtable_%.o
++	$(CC) $(LDFLAGS) -shared -o $@ -lc $< -nostartfiles
++
++extensions/libebtable_%.so: extensions/ebtable_%.so
++	mv $< $@
++
++extensions/ebt_%.o: extensions/ebt_%.c include/ebtables_u.h
++	$(CC) $(CFLAGS) $(CFLAGS_SH_LIB) $(PROGSPECS) -c -o $@ $< -I$(KERNEL_INCLUDES)
++
++extensions/ebtable_%.o: extensions/ebtable_%.c
++	$(CC) $(CFLAGS) $(CFLAGS_SH_LIB) $(PROGSPECS) -c -o $@ $< -I$(KERNEL_INCLUDES)
++
+diff -urpN ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_ftos_t.h ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_ftos_t.h
+--- ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_ftos_t.h	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_ftos_t.h	2014-07-12 07:22:56.000000000 +0800
+@@ -0,0 +1,18 @@
++#ifndef __LINUX_BRIDGE_EBT_FTOS_T_H
++#define __LINUX_BRIDGE_EBT_FTOS_T_H
++
++struct ebt_ftos_t_info
++{
++   int           ftos_set;
++	unsigned char ftos;
++	// EBT_ACCEPT, EBT_DROP or EBT_CONTINUE or EBT_RETURN
++	int target;
++};
++#define EBT_FTOS_TARGET "ftos"
++
++#define FTOS_TARGET       0x01
++#define FTOS_SETFTOS      0x02
++#define FTOS_WMMFTOS      0x04
++#define FTOS_8021QFTOS    0x08
++
++#endif
+diff -urpN ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_ip.h ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_ip.h
+--- ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_ip.h	2011-12-16 04:02:48.000000000 +0800
++++ ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_ip.h	2014-07-12 07:56:23.000000000 +0800
+@@ -23,8 +23,9 @@
+ #define EBT_IP_PROTO 0x08
+ #define EBT_IP_SPORT 0x10
+ #define EBT_IP_DPORT 0x20
++#define EBT_IP_DSCP  0x40  /* brcm */
+ #define EBT_IP_MASK (EBT_IP_SOURCE | EBT_IP_DEST | EBT_IP_TOS | EBT_IP_PROTO |\
+- EBT_IP_SPORT | EBT_IP_DPORT )
++ EBT_IP_SPORT | EBT_IP_DPORT | EBT_IP_DSCP )
+ #define EBT_IP_MATCH "ip"
+ 
+ /* the same values are used for the invflags */
+@@ -34,6 +35,7 @@ struct ebt_ip_info {
+ 	__be32 smsk;
+ 	__be32 dmsk;
+ 	__u8  tos;
++	__u8  dscp; /* brcm */
+ 	__u8  protocol;
+ 	__u8  bitmask;
+ 	__u8  invflags;
+diff -urpN ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_ip.h.orig ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_ip.h.orig
+--- ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_ip.h.orig	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_ip.h.orig	2011-12-16 04:02:48.000000000 +0800
+@@ -0,0 +1,44 @@
++/*
++ *  ebt_ip
++ *
++ *	Authors:
++ *	Bart De Schuymer <bart.de.schuymer@pandora.be>
++ *
++ *  April, 2002
++ *
++ *  Changes:
++ *    added ip-sport and ip-dport
++ *    Innominate Security Technologies AG <mhopf@innominate.com>
++ *    September, 2002
++ */
++
++#ifndef __LINUX_BRIDGE_EBT_IP_H
++#define __LINUX_BRIDGE_EBT_IP_H
++
++#include <linux/types.h>
++
++#define EBT_IP_SOURCE 0x01
++#define EBT_IP_DEST 0x02
++#define EBT_IP_TOS 0x04
++#define EBT_IP_PROTO 0x08
++#define EBT_IP_SPORT 0x10
++#define EBT_IP_DPORT 0x20
++#define EBT_IP_MASK (EBT_IP_SOURCE | EBT_IP_DEST | EBT_IP_TOS | EBT_IP_PROTO |\
++ EBT_IP_SPORT | EBT_IP_DPORT )
++#define EBT_IP_MATCH "ip"
++
++/* the same values are used for the invflags */
++struct ebt_ip_info {
++	__be32 saddr;
++	__be32 daddr;
++	__be32 smsk;
++	__be32 dmsk;
++	__u8  tos;
++	__u8  protocol;
++	__u8  bitmask;
++	__u8  invflags;
++	__u16 sport[2];
++	__u16 dport[2];
++};
++
++#endif
+diff -urpN ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_mark_t.h ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_mark_t.h
+--- ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_mark_t.h	2011-12-16 04:02:48.000000000 +0800
++++ ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_mark_t.h	2014-07-12 07:56:23.000000000 +0800
+@@ -12,6 +12,7 @@
+ #define MARK_OR_VALUE  (0xffffffe0)
+ #define MARK_AND_VALUE (0xffffffd0)
+ #define MARK_XOR_VALUE (0xffffffc0)
++#define VTAG_SET_VALUE (0xffffffb0)
+ 
+ struct ebt_mark_t_info {
+ 	unsigned long mark;
+diff -urpN ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_mark_t.h.orig ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_mark_t.h.orig
+--- ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_mark_t.h.orig	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_mark_t.h.orig	2011-12-16 04:02:48.000000000 +0800
+@@ -0,0 +1,23 @@
++#ifndef __LINUX_BRIDGE_EBT_MARK_T_H
++#define __LINUX_BRIDGE_EBT_MARK_T_H
++
++/* The target member is reused for adding new actions, the
++ * value of the real target is -1 to -NUM_STANDARD_TARGETS.
++ * For backward compatibility, the 4 lsb (2 would be enough,
++ * but let's play it safe) are kept to designate this target.
++ * The remaining bits designate the action. By making the set
++ * action 0xfffffff0, the result will look ok for older
++ * versions. [September 2006] */
++#define MARK_SET_VALUE (0xfffffff0)
++#define MARK_OR_VALUE  (0xffffffe0)
++#define MARK_AND_VALUE (0xffffffd0)
++#define MARK_XOR_VALUE (0xffffffc0)
++
++struct ebt_mark_t_info {
++	unsigned long mark;
++	/* EBT_ACCEPT, EBT_DROP, EBT_CONTINUE or EBT_RETURN */
++	int target;
++};
++#define EBT_MARK_TARGET "mark"
++
++#endif
+diff -urpN ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_time.h ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_time.h
+--- ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_time.h	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_time.h	2014-07-12 07:22:56.000000000 +0800
+@@ -0,0 +1,14 @@
++#ifndef __LINUX_BRIDGE_EBT_TIME_H
++#define __LINUX_BRIDGE_EBT_TIME_H
++
++
++struct ebt_time_info {
++	__u8  days_match;   /* 1 bit per day. -SMTWTFS                      */
++	__u16 time_start;   /* 0 < time_start < 23*60+59 = 1439             */
++	__u16 time_stop;    /* 0:0 < time_stat < 23:59                      */
++	__u8  kerneltime;   /* ignore skb time (and use kerneltime) or not. */
++};
++
++#define EBT_TIME_MATCH "time"
++
++#endif /* __LINUX_BRIDGE_EBT_TIME_H */
+diff -urpN ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_wmm_mark_t.h ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_wmm_mark_t.h
+--- ebtables-v2.0.10-4-origin/include/linux/netfilter_bridge/ebt_wmm_mark_t.h	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/include/linux/netfilter_bridge/ebt_wmm_mark_t.h	2014-07-12 07:22:56.000000000 +0800
+@@ -0,0 +1,27 @@
++#ifndef __LINUX_BRIDGE_EBT_MARK_T_H
++#define __LINUX_BRIDGE_EBT_MARK_T_H
++
++#define WMM_MARK_DSCP		1
++#define WMM_MARK_8021D		2
++
++#define WMM_MARK_DSCP_STR	"dscp"
++#define WMM_MARK_8021D_STR	"vlan"
++
++#define PRIO_LOC_NFMARK		16
++#define PRIO_LOC_NFMASK		7	
++
++#define WMM_DSCP_MASK_SHIFT	5
++#define WMM_MARK_VALUE_NONE	-1
++
++
++struct ebt_wmm_mark_t_info
++{
++	int mark; 
++	int markpos;
++	int markset;
++	/* EBT_ACCEPT, EBT_DROP, EBT_CONTINUE or EBT_RETURN */
++	int target;
++};
++#define EBT_WMM_MARK_TARGET "wmm-mark"
++
++#endif
+diff -urpN ebtables-v2.0.10-4-origin/Makefile ebtables-v2.0.10-4/Makefile
+--- ebtables-v2.0.10-4-origin/Makefile	2011-12-16 04:02:47.000000000 +0800
++++ ebtables-v2.0.10-4/Makefile	2014-07-12 07:56:23.000000000 +0800
+@@ -9,17 +9,38 @@ LOCKFILE?=/var/lib/ebtables/lock
+ LOCKDIR:=$(shell echo $(LOCKFILE) | sed 's/\(.*\)\/.*/\1/')/
+ 
+ # default paths
+-LIBDIR:=/usr/lib
+ MANDIR:=/usr/local/man
+-BINDIR:=/usr/local/sbin
+ ETCDIR:=/etc
+ INITDIR:=/etc/rc.d/init.d
+ SYSCONFIGDIR:=/etc/sysconfig
+-DESTDIR:=
++
++#BRCM begin
++
++#LIBDIR:=/usr/lib
++LIBDIR?=/usr/lib
++
++#BINDIR:=/usr/local/sbin
++BINDIR:=/bin
++
++#DESTDIR:=
++DESTDIR?=
++
++#BRCM_ROOT := -o root -g root
++BRCM_ROOT :=
++
++$(info --------------------------)
++$(info - ebtables            )
++$(info - DESTDIR=$(DESTDIR)     )
++$(info - LIBDIR=$(LIBDIR)       )
++$(info - KERNEL_INCLUDES=$(KERNEL_INCLUDES)       )
++$(info - CC=$(CC)       )
++$(info --------------------------)
++#BRCM end
++
+ 
+ CFLAGS:=-Wall -Wunused -Werror
+ CFLAGS_SH_LIB:=-fPIC -O3
+-CC:=gcc
++CC?=gcc
+ 
+ ifeq ($(shell uname -m),sparc64)
+ CFLAGS+=-DEBT_MIN_ALIGN=8 -DKERNEL_64_USERSPACE_32
+@@ -157,31 +178,31 @@ tmp3:=$(shell printf $(PIPE) | sed 's/\/
+ scripts: ebtables-save ebtables.sysv ebtables-config
+ 	cat ebtables-save | sed 's/__EXEC_PATH__/$(tmp1)/g' > ebtables-save_
+ 	mkdir -p $(DESTDIR)$(BINDIR)
+-	install -m 0755 -o root -g root ebtables-save_ $(DESTDIR)$(BINDIR)/ebtables-save
++	install -m 0755 $(BRCM_ROOT) ebtables-save_ $(DESTDIR)$(BINDIR)/ebtables-save
+ 	cat ebtables.sysv | sed 's/__EXEC_PATH__/$(tmp1)/g' | sed 's/__SYSCONFIG__/$(tmp2)/g' > ebtables.sysv_
+ 	if [ "$(DESTDIR)" != "" ]; then mkdir -p $(DESTDIR)$(INITDIR); fi
+-	if test -d $(DESTDIR)$(INITDIR); then install -m 0755 -o root -g root ebtables.sysv_ $(DESTDIR)$(INITDIR)/ebtables; fi
++	if test -d $(DESTDIR)$(INITDIR); then install -m 0755 $(BRCM_ROOT) ebtables.sysv_ $(DESTDIR)$(INITDIR)/ebtables; fi
+ 	cat ebtables-config | sed 's/__SYSCONFIG__/$(tmp2)/g' > ebtables-config_
+ 	if [ "$(DESTDIR)" != "" ]; then mkdir -p $(DESTDIR)$(SYSCONFIGDIR); fi
+-	if test -d $(DESTDIR)$(SYSCONFIGDIR); then install -m 0600 -o root -g root ebtables-config_ $(DESTDIR)$(SYSCONFIGDIR)/ebtables-config; fi
++	if test -d $(DESTDIR)$(SYSCONFIGDIR); then install -m 0600 $(BRCM_ROOT) ebtables-config_ $(DESTDIR)$(SYSCONFIGDIR)/ebtables-config; fi
+ 	rm -f ebtables-save_ ebtables.sysv_ ebtables-config_
+ 
+ tmp4:=$(shell printf $(LOCKFILE) | sed 's/\//\\\//g')
+ $(MANDIR)/man8/ebtables.8: ebtables.8
+ 	mkdir -p $(DESTDIR)$(@D)
+ 	sed -e 's/$$(VERSION)/$(PROGVERSION)/' -e 's/$$(DATE)/$(PROGDATE)/' -e 's/$$(LOCKFILE)/$(tmp4)/' ebtables.8 > ebtables.8_
+-	install -m 0644 -o root -g root ebtables.8_ $(DESTDIR)$@
++	install -m 0644 $(BRCM_ROOT) ebtables.8_ $(DESTDIR)$@
+ 	rm -f ebtables.8_
+ 
+ $(DESTDIR)$(ETHERTYPESFILE): ethertypes
+ 	mkdir -p $(@D)
+-	install -m 0644 -o root -g root $< $@
++	install -m 0644 $(BRCM_ROOT) $< $@
+ 
+ .PHONY: exec
+ exec: ebtables ebtables-restore
+ 	mkdir -p $(DESTDIR)$(BINDIR)
+-	install -m 0755 -o root -g root $(PROGNAME) $(DESTDIR)$(BINDIR)/$(PROGNAME)
+-	install -m 0755 -o root -g root ebtables-restore $(DESTDIR)$(BINDIR)/ebtables-restore
++	install -m 0755 $(BRCM_ROOT) $(PROGNAME) $(DESTDIR)$(BINDIR)/$(PROGNAME)
++	install -m 0755 $(BRCM_ROOT) ebtables-restore $(DESTDIR)$(BINDIR)/ebtables-restore
+ 
+ .PHONY: install
+ install: $(MANDIR)/man8/ebtables.8 $(DESTDIR)$(ETHERTYPESFILE) exec scripts
+@@ -205,18 +226,18 @@ release:
+ 	rm -f extensions/ebt_inat.c
+ 	rm -rf $(CVSDIRS)
+ 	mkdir -p include/linux/netfilter_bridge
+-	install -m 0644 -o root -g root \
++	install -m 0644 $(BRCM_ROOT) \
+ 		$(KERNEL_INCLUDES)/linux/netfilter_bridge.h include/linux/
+ # To keep possible compile error complaints about undefined ETH_P_8021Q
+ # off my back
+-	install -m 0644 -o root -g root \
++	install -m 0644 $(BRCM_ROOT) \
+ 		$(KERNEL_INCLUDES)/linux/if_ether.h include/linux/
+-	install -m 0644 -o root -g root \
++	install -m 0644 $(BRCM_ROOT) \
+ 		$(KERNEL_INCLUDES)/linux/types.h include/linux/
+-	install -m 0644 -o root -g root \
++	install -m 0644 $(BRCM_ROOT) \
+ 		$(KERNEL_INCLUDES)/linux/netfilter_bridge/*.h \
+ 		include/linux/netfilter_bridge/
+-	install -m 0644 -o root -g root \
++	install -m 0644 $(BRCM_ROOT) \
+ 		include/ebtables.h include/linux/netfilter_bridge/
+ 	make clean
+ 	touch *
+diff -urpN ebtables-v2.0.10-4-origin/Makefile.orig ebtables-v2.0.10-4/Makefile.orig
+--- ebtables-v2.0.10-4-origin/Makefile.orig	1970-01-01 08:00:00.000000000 +0800
++++ ebtables-v2.0.10-4/Makefile.orig	2011-12-16 04:02:47.000000000 +0800
+@@ -0,0 +1,246 @@
++# ebtables Makefile
++
++PROGNAME:=ebtables
++PROGRELEASE:=4
++PROGVERSION_:=2.0.10
++PROGVERSION:=$(PROGVERSION_)-$(PROGRELEASE)
++PROGDATE:=December\ 2011
++LOCKFILE?=/var/lib/ebtables/lock
++LOCKDIR:=$(shell echo $(LOCKFILE) | sed 's/\(.*\)\/.*/\1/')/
++
++# default paths
++LIBDIR:=/usr/lib
++MANDIR:=/usr/local/man
++BINDIR:=/usr/local/sbin
++ETCDIR:=/etc
++INITDIR:=/etc/rc.d/init.d
++SYSCONFIGDIR:=/etc/sysconfig
++DESTDIR:=
++
++CFLAGS:=-Wall -Wunused -Werror
++CFLAGS_SH_LIB:=-fPIC -O3
++CC:=gcc
++
++ifeq ($(shell uname -m),sparc64)
++CFLAGS+=-DEBT_MIN_ALIGN=8 -DKERNEL_64_USERSPACE_32
++endif
++
++include extensions/Makefile
++
++OBJECTS2:=getethertype.o communication.o libebtc.o \
++useful_functions.o ebtables.o
++
++OBJECTS:=$(OBJECTS2) $(EXT_OBJS) $(EXT_LIBS)
++
++KERNEL_INCLUDES?=include/
++
++ETHERTYPESPATH?=$(ETCDIR)
++ETHERTYPESFILE:=$(ETHERTYPESPATH)/ethertypes
++
++PIPE_DIR?=/tmp/$(PROGNAME)-v$(PROGVERSION)
++PIPE=$(PIPE_DIR)/ebtablesd_pipe
++EBTD_CMDLINE_MAXLN?=2048
++EBTD_ARGC_MAX?=50
++
++PROGSPECS:=-DPROGVERSION=\"$(PROGVERSION)\" \
++	-DPROGNAME=\"$(PROGNAME)\" \
++	-DPROGDATE=\"$(PROGDATE)\" \
++	-D_PATH_ETHERTYPES=\"$(ETHERTYPESFILE)\" \
++	-DEBTD_ARGC_MAX=$(EBTD_ARGC_MAX) \
++	-DEBTD_CMDLINE_MAXLN=$(EBTD_CMDLINE_MAXLN) \
++	-DLOCKFILE=\"$(LOCKFILE)\" \
++	-DLOCKDIR=\"$(LOCKDIR)\"
++
++# You can probably ignore this, ebtables{u,d} are normally not used
++PROGSPECSD:=-DPROGVERSION=\"$(PROGVERSION)\" \
++	-DPROGNAME=\"$(PROGNAME)\" \
++	-DPROGDATE=\"$(PROGDATE)\" \
++	-D_PATH_ETHERTYPES=\"$(ETHERTYPESFILE)\" \
++	-DEBTD_CMDLINE_MAXLN=$(EBTD_CMDLINE_MAXLN) \
++	-DEBTD_ARGC_MAX=$(EBTD_ARGC_MAX) \
++	-DEBTD_PIPE=\"$(PIPE)\" \
++	-DEBTD_PIPE_DIR=\"$(PIPE_DIR)\"
++
++# Uncomment for debugging (slower)
++#PROGSPECS+=-DEBT_DEBUG
++#PROGSPECSD+=-DEBT_DEBUG
++#CFLAGS+=-ggdb
++
++all: ebtables ebtables-restore
++
++communication.o: communication.c include/ebtables_u.h
++	$(CC) $(CFLAGS) $(CFLAGS_SH_LIB) $(PROGSPECS) -c -o $@ $< -I$(KERNEL_INCLUDES)
++
++libebtc.o: libebtc.c include/ebtables_u.h
++	$(CC) $(CFLAGS) $(CFLAGS_SH_LIB) $(PROGSPECS) -c -o $@ $< -I$(KERNEL_INCLUDES)
++
++useful_functions.o: useful_functions.c include/ebtables_u.h
++	$(CC) $(CFLAGS) $(CFLAGS_SH_LIB) $(PROGSPECS) -c -o $@ $< -I$(KERNEL_INCLUDES)
++
++getethertype.o: getethertype.c include/ethernetdb.h
++	$(CC) $(CFLAGS) $(CFLAGS_SH_LIB) $(PROGSPECS) -c -o $@ $< -Iinclude/
++
++ebtables.o: ebtables.c include/ebtables_u.h
++	$(CC) $(CFLAGS) $(CFLAGS_SH_LIB) $(PROGSPECS) -c -o $@ $< -I$(KERNEL_INCLUDES)
++
++ebtables-standalone.o: ebtables-standalone.c include/ebtables_u.h
++	$(CC) $(CFLAGS) $(CFLAGS_SH_LIB) $(PROGSPECS) -c $< -o $@ -I$(KERNEL_INCLUDES)
++
++libebtc.so: $(OBJECTS2)
++	$(CC) -shared $(LDFLAGS) -Wl,-soname,libebtc.so -o libebtc.so -lc $(OBJECTS2)
++
++ebtables: $(OBJECTS) ebtables-standalone.o libebtc.so
++	$(CC) $(CFLAGS) $(CFLAGS_SH_LIB) $(LDFLAGS) -o $@ ebtables-standalone.o -I$(KERNEL_INCLUDES) -L. -Lextensions -lebtc $(EXT_LIBSI) \
++	-Wl,-rpath,$(LIBDIR)
++
++ebtablesu: ebtablesu.c
++	$(CC) $(CFLAGS) $(PROGSPECSD) $< -o $@
++
++ebtablesd.o: ebtablesd.c include/ebtables_u.h
++	$(CC) $(CFLAGS) $(PROGSPECSD) -c $< -o $@  -I$(KERNEL_INCLUDES)
++
++ebtablesd: $(OBJECTS) ebtablesd.o libebtc.so
++	$(CC) $(CFLAGS) -o $@ ebtablesd.o -I$(KERNEL_INCLUDES) -L. -Lextensions -lebtc $(EXT_LIBSI) \
++	-Wl,-rpath,$(LIBDIR)
++
++ebtables-restore.o: ebtables-restore.c include/ebtables_u.h
++	$(CC) $(CFLAGS) $(PROGSPECS) -c $< -o $@  -I$(KERNEL_INCLUDES)
++
++ebtables-restore: $(OBJECTS) ebtables-restore.o libebtc.so
++	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ ebtables-restore.o -I$(KERNEL_INCLUDES) -L. -Lextensions -lebtc $(EXT_LIBSI) \
++	-Wl,-rpath,$(LIBDIR)
++
++.PHONY: daemon
++daemon: ebtablesd ebtablesu
++
++# a little scripting for a static binary, making one for ebtables-restore
++# should be completely analogous
++static: extensions/ebt_*.c extensions/ebtable_*.c ebtables.c communication.c ebtables-standalone.c getethertype.c libebtc.c useful_functions.c
++	cp ebtables-standalone.c ebtables-standalone.c_ ; \
++	cp include/ebtables_u.h include/ebtables_u.h_ ; \
++	sed "s/ main(/ pseudomain(/" ebtables-standalone.c > ebtables-standalone.c__ ; \
++	mv ebtables-standalone.c__ ebtables-standalone.c ; \
++	printf "\nint main(int argc, char *argv[])\n{\n "  >> ebtables-standalone.c ; \
++	for arg in $(EXT_FUNC) \
++	; do \
++	sed s/_init/_$${arg}_init/ extensions/ebt_$${arg}.c > extensions/ebt_$${arg}.c_ ; \
++	mv extensions/ebt_$${arg}.c_ extensions/ebt_$${arg}.c ; \
++	printf "\t%s();\n" _$${arg}_init >> ebtables-standalone.c ; \
++	printf "extern void %s();\n" _$${arg}_init >> include/ebtables_u.h ; \
++	done ; \
++	for arg in $(EXT_TABLES) \
++	; do \
++	sed s/_init/_t_$${arg}_init/ extensions/ebtable_$${arg}.c > extensions/ebtable_$${arg}.c_ ; \
++	mv extensions/ebtable_$${arg}.c_ extensions/ebtable_$${arg}.c ; \
++	printf "\t%s();\n" _t_$${arg}_init >> ebtables-standalone.c ; \
++	printf "extern void %s();\n" _t_$${arg}_init >> include/ebtables_u.h ; \
++	done ; \
++	printf "\n\tpseudomain(argc, argv);\n\treturn 0;\n}\n" >> ebtables-standalone.c ;\
++	$(CC) $(CFLAGS) $(LDFLAGS) $(PROGSPECS) -o $@ $^ -I$(KERNEL_INCLUDES) -Iinclude ; \
++	for arg in $(EXT_FUNC) \
++	; do \
++	sed "s/ .*_init/ _init/" extensions/ebt_$${arg}.c > extensions/ebt_$${arg}.c_ ; \
++	mv extensions/ebt_$${arg}.c_ extensions/ebt_$${arg}.c ; \
++	done ; \
++	for arg in $(EXT_TABLES) \
++	; do \
++	sed "s/ .*_init/ _init/" extensions/ebtable_$${arg}.c > extensions/ebtable_$${arg}.c_ ; \
++	mv extensions/ebtable_$${arg}.c_ extensions/ebtable_$${arg}.c ; \
++	done ; \
++	mv ebtables-standalone.c_ ebtables-standalone.c ; \
++	mv include/ebtables_u.h_ include/ebtables_u.h
++
++tmp1:=$(shell printf $(BINDIR) | sed 's/\//\\\//g')
++tmp2:=$(shell printf $(SYSCONFIGDIR) | sed 's/\//\\\//g')
++tmp3:=$(shell printf $(PIPE) | sed 's/\//\\\//g')
++.PHONY: scripts
++scripts: ebtables-save ebtables.sysv ebtables-config
++	cat ebtables-save | sed 's/__EXEC_PATH__/$(tmp1)/g' > ebtables-save_
++	mkdir -p $(DESTDIR)$(BINDIR)
++	install -m 0755 -o root -g root ebtables-save_ $(DESTDIR)$(BINDIR)/ebtables-save
++	cat ebtables.sysv | sed 's/__EXEC_PATH__/$(tmp1)/g' | sed 's/__SYSCONFIG__/$(tmp2)/g' > ebtables.sysv_
++	if [ "$(DESTDIR)" != "" ]; then mkdir -p $(DESTDIR)$(INITDIR); fi
++	if test -d $(DESTDIR)$(INITDIR); then install -m 0755 -o root -g root ebtables.sysv_ $(DESTDIR)$(INITDIR)/ebtables; fi
++	cat ebtables-config | sed 's/__SYSCONFIG__/$(tmp2)/g' > ebtables-config_
++	if [ "$(DESTDIR)" != "" ]; then mkdir -p $(DESTDIR)$(SYSCONFIGDIR); fi
++	if test -d $(DESTDIR)$(SYSCONFIGDIR); then install -m 0600 -o root -g root ebtables-config_ $(DESTDIR)$(SYSCONFIGDIR)/ebtables-config; fi
++	rm -f ebtables-save_ ebtables.sysv_ ebtables-config_
++
++tmp4:=$(shell printf $(LOCKFILE) | sed 's/\//\\\//g')
++$(MANDIR)/man8/ebtables.8: ebtables.8
++	mkdir -p $(DESTDIR)$(@D)
++	sed -e 's/$$(VERSION)/$(PROGVERSION)/' -e 's/$$(DATE)/$(PROGDATE)/' -e 's/$$(LOCKFILE)/$(tmp4)/' ebtables.8 > ebtables.8_
++	install -m 0644 -o root -g root ebtables.8_ $(DESTDIR)$@
++	rm -f ebtables.8_
++
++$(DESTDIR)$(ETHERTYPESFILE): ethertypes
++	mkdir -p $(@D)
++	install -m 0644 -o root -g root $< $@
++
++.PHONY: exec
++exec: ebtables ebtables-restore
++	mkdir -p $(DESTDIR)$(BINDIR)
++	install -m 0755 -o root -g root $(PROGNAME) $(DESTDIR)$(BINDIR)/$(PROGNAME)
++	install -m 0755 -o root -g root ebtables-restore $(DESTDIR)$(BINDIR)/ebtables-restore
++
++.PHONY: install
++install: $(MANDIR)/man8/ebtables.8 $(DESTDIR)$(ETHERTYPESFILE) exec scripts
++	mkdir -p $(DESTDIR)$(LIBDIR)
++	install -m 0755 extensions/*.so $(DESTDIR)$(LIBDIR)
++	install -m 0755 *.so $(DESTDIR)$(LIBDIR)
++
++.PHONY: clean
++clean:
++	rm -f ebtables ebtables-restore ebtablesd ebtablesu static
++	rm -f *.o *~ *.so
++	rm -f extensions/*.o extensions/*.c~ extensions/*.so include/*~
++
++DIR:=$(PROGNAME)-v$(PROGVERSION)
++CVSDIRS:=CVS extensions/CVS examples/CVS examples/perf_test/CVS \
++examples/ulog/CVS include/CVS
++# This is used to make a new userspace release, some files are altered so
++# do this on a temporary version
++.PHONY: release
++release:
++	rm -f extensions/ebt_inat.c
++	rm -rf $(CVSDIRS)
++	mkdir -p include/linux/netfilter_bridge
++	install -m 0644 -o root -g root \
++		$(KERNEL_INCLUDES)/linux/netfilter_bridge.h include/linux/
++# To keep possible compile error complaints about undefined ETH_P_8021Q
++# off my back
++	install -m 0644 -o root -g root \
++		$(KERNEL_INCLUDES)/linux/if_ether.h include/linux/
++	install -m 0644 -o root -g root \
++		$(KERNEL_INCLUDES)/linux/types.h include/linux/
++	install -m 0644 -o root -g root \
++		$(KERNEL_INCLUDES)/linux/netfilter_bridge/*.h \
++		include/linux/netfilter_bridge/
++	install -m 0644 -o root -g root \
++		include/ebtables.h include/linux/netfilter_bridge/
++	make clean
++	touch *
++	touch extensions/*
++	touch include/*
++	touch include/linux/*
++	touch include/linux/netfilter_bridge/*
++	sed -i -e 's/$$(VERSION)/$(PROGVERSION)/' -e 's/$$(DATE)/$(PROGDATE)/' -e 's/$$(LOCKFILE)/$(tmp4)/' ebtables.8
++	sed -i -e 's/$$(VERSION)/$(PROGVERSION_)/' -e 's/$$(RELEASE)/$(PROGRELEASE)/' ebtables.spec
++	cd ..;tar -c $(DIR) | gzip >$(DIR).tar.gz; cd -
++	rm -rf include/linux
++
++# This will make the rpm and put it in /usr/src/redhat/RPMS
++# (do this as root after make release)
++.PHONY: rpmbuild
++rpmbuild:
++	cp ../$(DIR).tar.gz /usr/src/redhat/SOURCES/
++	rpmbuild --buildroot $(shell mktemp -td $(DIR)-XXXXX) -bb ebtables.spec
++
++.PHONY: test_ulog
++test_ulog: examples/ulog/test_ulog.c getethertype.o
++	$(CC) $(CFLAGS)  $< -o test_ulog -I$(KERNEL_INCLUDES) -lc \
++	getethertype.o
++	mv test_ulog examples/ulog/
++
++.PHONY: examples
++examples: test_ulog

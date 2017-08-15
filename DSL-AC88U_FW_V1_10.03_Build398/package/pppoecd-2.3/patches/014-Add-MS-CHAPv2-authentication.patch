@@ -1,0 +1,2671 @@
+diff -urNd pppoecd-2.3/include/openssl/opensslconf.h pppoecd-2.3-new/include/openssl/opensslconf.h
+--- pppoecd-2.3/include/openssl/opensslconf.h	1970-01-01 08:00:00.000000000 +0800
++++ pppoecd-2.3-new/include/openssl/opensslconf.h	2014-04-24 13:57:21.000000000 +0800
+@@ -0,0 +1,167 @@
++/* opensslconf.h */
++/* WARNING: Generated automatically from opensslconf.h.in by Configure. */
++
++/* OpenSSL was configured with the following options: */
++#ifdef OPENSSL_ALGORITHM_DEFINES
++   /* no ciphers excluded */
++#endif
++#ifdef OPENSSL_THREAD_DEFINES
++#endif
++#ifdef OPENSSL_OTHER_DEFINES
++#endif
++
++/* crypto/opensslconf.h.in */
++
++/* Generate 80386 code? */
++#undef I386_ONLY
++
++#if !(defined(VMS) || defined(__VMS)) /* VMS uses logical names instead */
++#if defined(HEADER_CRYPTLIB_H) && !defined(OPENSSLDIR)
++#define OPENSSLDIR "/usr/local/ssl"
++#endif
++#endif
++
++#define OPENSSL_UNISTD <unistd.h>
++
++#if defined(HEADER_IDEA_H) && !defined(IDEA_INT)
++#define IDEA_INT unsigned int
++#endif
++
++#if defined(HEADER_MD2_H) && !defined(MD2_INT)
++#define MD2_INT unsigned int
++#endif
++
++#if defined(HEADER_RC2_H) && !defined(RC2_INT)
++/* I need to put in a mod for the alpha - eay */
++#define RC2_INT unsigned int
++#endif
++
++#if defined(HEADER_RC4_H)
++#if !defined(RC4_INT)
++/* using int types make the structure larger but make the code faster
++ * on most boxes I have tested - up to %20 faster. */
++/*
++ * I don't know what does "most" mean, but declaring "int" is a must on:
++ * - Intel P6 because partial register stalls are very expensive;
++ * - elder Alpha because it lacks byte load/store instructions;
++ */
++#define RC4_INT unsigned int
++#endif
++#if !defined(RC4_CHUNK)
++/*
++ * This enables code handling data aligned at natural CPU word
++ * boundary. See crypto/rc4/rc4_enc.c for further details.
++ */
++#undef RC4_CHUNK
++#endif
++#endif
++
++#if defined(HEADER_DES_H) && !defined(DES_LONG)
++/* If this is set to 'unsigned int' on a DEC Alpha, this gives about a
++ * %20 speed up (longs are 8 bytes, int's are 4). */
++#ifndef DES_LONG
++#define DES_LONG unsigned long
++#endif
++#endif
++
++#if defined(HEADER_BN_H) && !defined(CONFIG_HEADER_BN_H)
++#define CONFIG_HEADER_BN_H
++#undef BN_LLONG
++
++/* Should we define BN_DIV2W here? */
++
++/* Only one for the following should be defined */
++/* The prime number generation stuff may not work when
++ * EIGHT_BIT but I don't care since I've only used this mode
++ * for debuging the bignum libraries */
++#undef SIXTY_FOUR_BIT_LONG
++#undef SIXTY_FOUR_BIT
++#define THIRTY_TWO_BIT
++#undef SIXTEEN_BIT
++#undef EIGHT_BIT
++#endif
++
++#if defined(HEADER_RC4_LOCL_H) && !defined(CONFIG_HEADER_RC4_LOCL_H)
++#define CONFIG_HEADER_RC4_LOCL_H
++/* if this is defined data[i] is used instead of *data, this is a %20
++ * speedup on x86 */
++#undef RC4_INDEX
++#endif
++
++#if defined(HEADER_BF_LOCL_H) && !defined(CONFIG_HEADER_BF_LOCL_H)
++#define CONFIG_HEADER_BF_LOCL_H
++#undef BF_PTR
++#endif /* HEADER_BF_LOCL_H */
++
++#if defined(HEADER_DES_LOCL_H) && !defined(CONFIG_HEADER_DES_LOCL_H)
++#define CONFIG_HEADER_DES_LOCL_H
++#ifndef DES_DEFAULT_OPTIONS
++/* the following is tweaked from a config script, that is why it is a
++ * protected undef/define */
++#ifndef DES_PTR
++#undef DES_PTR
++#endif
++
++/* This helps C compiler generate the correct code for multiple functional
++ * units.  It reduces register dependancies at the expense of 2 more
++ * registers */
++#ifndef DES_RISC1
++#undef DES_RISC1
++#endif
++
++#ifndef DES_RISC2
++#undef DES_RISC2
++#endif
++
++#if defined(DES_RISC1) && defined(DES_RISC2)
++YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
++#endif
++
++/* Unroll the inner loop, this sometimes helps, sometimes hinders.
++ * Very mucy CPU dependant */
++#ifndef DES_UNROLL
++#undef DES_UNROLL
++#endif
++
++/* These default values were supplied by
++ * Peter Gutman <pgut001@cs.auckland.ac.nz>
++ * They are only used if nothing else has been defined */
++#if !defined(DES_PTR) && !defined(DES_RISC1) && !defined(DES_RISC2) && !defined(DES_UNROLL)
++/* Special defines which change the way the code is built depending on the
++   CPU and OS.  For SGI machines you can use _MIPS_SZLONG (32 or 64) to find
++   even newer MIPS CPU's, but at the moment one size fits all for
++   optimization options.  Older Sparc's work better with only UNROLL, but
++   there's no way to tell at compile time what it is you're running on */
++ 
++#if defined( sun )		/* Newer Sparc's */
++#  define DES_PTR
++#  define DES_RISC1
++#  define DES_UNROLL
++#elif defined( __ultrix )	/* Older MIPS */
++#  define DES_PTR
++#  define DES_RISC2
++#  define DES_UNROLL
++#elif defined( __osf1__ )	/* Alpha */
++#  define DES_PTR
++#  define DES_RISC2
++#elif defined ( _AIX )		/* RS6000 */
++  /* Unknown */
++#elif defined( __hpux )		/* HP-PA */
++  /* Unknown */
++#elif defined( __aux )		/* 68K */
++  /* Unknown */
++#elif defined( __dgux )		/* 88K (but P6 in latest boxes) */
++#  define DES_UNROLL
++#elif defined( __sgi )		/* Newer MIPS */
++#  define DES_PTR
++#  define DES_RISC2
++#  define DES_UNROLL
++#elif defined( i386 )		/* x86 boxes, should be gcc */
++#  define DES_PTR
++#  define DES_RISC1
++#  define DES_UNROLL
++#endif /* Systems-specific speed defines */
++#endif
++
++#endif /* DES_DEFAULT_OPTIONS */
++#endif /* HEADER_DES_LOCL_H */
+diff -urNd pppoecd-2.3/include/openssl/opensslv.h pppoecd-2.3-new/include/openssl/opensslv.h
+--- pppoecd-2.3/include/openssl/opensslv.h	1970-01-01 08:00:00.000000000 +0800
++++ pppoecd-2.3-new/include/openssl/opensslv.h	2014-04-24 13:57:21.000000000 +0800
+@@ -0,0 +1,85 @@
++#ifndef HEADER_OPENSSLV_H
++#define HEADER_OPENSSLV_H
++
++/* Numeric release version identifier:
++ * MMNNFFPPS: major minor fix patch status
++ * The status nibble has one of the values 0 for development, 1 to e for betas
++ * 1 to 14, and f for release.  The patch level is exactly that.
++ * For example:
++ * 0.9.3-dev	  0x00903000
++ * 0.9.3-beta1	  0x00903001
++ * 0.9.3-beta2-dev 0x00903002
++ * 0.9.3-beta2    0x00903002 (same as ...beta2-dev)
++ * 0.9.3	  0x0090300f
++ * 0.9.3a	  0x0090301f
++ * 0.9.4 	  0x0090400f
++ * 1.2.3z	  0x102031af
++ *
++ * For continuity reasons (because 0.9.5 is already out, and is coded
++ * 0x00905100), between 0.9.5 and 0.9.6 the coding of the patch level
++ * part is slightly different, by setting the highest bit.  This means
++ * that 0.9.5a looks like this: 0x0090581f.  At 0.9.6, we can start
++ * with 0x0090600S...
++ *
++ * (Prior to 0.9.3-dev a different scheme was used: 0.9.2b is 0x0922.)
++ * (Prior to 0.9.5a beta1, a different scheme was used: MMNNFFRBB for
++ *  major minor fix final patch/beta)
++ */
++#define OPENSSL_VERSION_NUMBER	0x0090600fL
++#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.6 24 Sep 2000"
++#define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
++
++
++/* The macros below are to be used for shared library (.so, .dll, ...)
++ * versioning.  That kind of versioning works a bit differently between
++ * operating systems.  The most usual scheme is to set a major and a minor
++ * number, and have the runtime loader check that the major number is equal
++ * to what it was at application link time, while the minor number has to
++ * be greater or equal to what it was at application link time.  With this
++ * scheme, the version number is usually part of the file name, like this:
++ *
++ *	libcrypto.so.0.9
++ *
++ * Some unixen also make a softlink with the major verson number only:
++ *
++ *	libcrypto.so.0
++ *
++ * On True64 it works a little bit differently.  There, the shared library
++ * version is stored in the file, and is actually a series of versions,
++ * separated by colons.  The rightmost version present in the library when
++ * linking an application is stored in the application to be matched at
++ * run time.  When the application is run, a check is done to see if the
++ * library version stored in the application matches any of the versions
++ * in the version string of the library itself.
++ * This version string can be constructed in any way, depending on what
++ * kind of matching is desired.  However, to implement the same scheme as
++ * the one used in the other unixen, all compatible versions, from lowest
++ * to highest, should be part of the string.  Consecutive builds would
++ * give the following versions strings:
++ *
++ *	3.0
++ *	3.0:3.1
++ *	3.0:3.1:3.2
++ *	4.0
++ *	4.0:4.1
++ *
++ * Notice how version 4 is completely incompatible with version, and
++ * therefore give the breach you can see.
++ *
++ * There may be other schemes as well that I haven't yet discovered.
++ *
++ * So, here's the way it works here: first of all, the library version
++ * number doesn't need at all to match the overall OpenSSL version.
++ * However, it's nice and more understandable if it actually does.
++ * The current library version is stored in the macro SHLIB_VERSION_NUMBER,
++ * which is just a piece of text in the format "M.m.e" (Major, minor, edit).
++ * For the sake of True64 and any other OS that behaves in similar ways,
++ * we need to keep a history of version numbers, which is done in the
++ * macro SHLIB_VERSION_HISTORY.  The numbers are separated by colons and
++ * should only keep the versions that are binary compatible with the current.
++ */
++#define SHLIB_VERSION_HISTORY ""
++#define SHLIB_VERSION_NUMBER "0.9.6"
++
++
++#endif /* HEADER_OPENSSLV_H */
+diff -urNd pppoecd-2.3/include/openssl/sha.h pppoecd-2.3-new/include/openssl/sha.h
+--- pppoecd-2.3/include/openssl/sha.h	1970-01-01 08:00:00.000000000 +0800
++++ pppoecd-2.3-new/include/openssl/sha.h	2014-04-24 13:57:21.000000000 +0800
+@@ -0,0 +1,119 @@
++/* crypto/sha/sha.h */
++/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
++ * All rights reserved.
++ *
++ * This package is an SSL implementation written
++ * by Eric Young (eay@cryptsoft.com).
++ * The implementation was written so as to conform with Netscapes SSL.
++ * 
++ * This library is free for commercial and non-commercial use as long as
++ * the following conditions are aheared to.  The following conditions
++ * apply to all code found in this distribution, be it the RC4, RSA,
++ * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
++ * included with this distribution is covered by the same copyright terms
++ * except that the holder is Tim Hudson (tjh@cryptsoft.com).
++ * 
++ * Copyright remains Eric Young's, and as such any Copyright notices in
++ * the code are not to be removed.
++ * If this package is used in a product, Eric Young should be given attribution
++ * as the author of the parts of the library used.
++ * This can be in the form of a textual message at program startup or
++ * in documentation (online or textual) provided with the package.
++ * 
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. All advertising materials mentioning features or use of this software
++ *    must display the following acknowledgement:
++ *    "This product includes cryptographic software written by
++ *     Eric Young (eay@cryptsoft.com)"
++ *    The word 'cryptographic' can be left out if the rouines from the library
++ *    being used are not cryptographic related :-).
++ * 4. If you include any Windows specific code (or a derivative thereof) from 
++ *    the apps directory (application code) you must include an acknowledgement:
++ *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
++ * 
++ * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
++ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
++ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
++ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
++ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGE.
++ * 
++ * The licence and distribution terms for any publically available version or
++ * derivative of this code cannot be changed.  i.e. this code cannot simply be
++ * copied and put under another distribution licence
++ * [including the GNU Public Licence.]
++ */
++
++#ifndef HEADER_SHA_H
++#define HEADER_SHA_H
++
++#ifdef  __cplusplus
++extern "C" {
++#endif
++
++#if defined(NO_SHA) || (defined(NO_SHA0) && defined(NO_SHA1))
++#error SHA is disabled.
++#endif
++
++/*
++ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
++ * ! SHA_LONG has to be at least 32 bits wide. If it's wider, then !
++ * ! SHA_LONG_LOG2 has to be defined along.                        !
++ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
++ */
++
++#if defined(WIN16) || defined(__LP32__)
++#define SHA_LONG unsigned long
++#elif defined(_CRAY) || defined(__ILP64__)
++#define SHA_LONG unsigned long
++#define SHA_LONG_LOG2 3
++#else
++#define SHA_LONG unsigned int
++#endif
++
++#define SHA_LBLOCK	16
++#define SHA_CBLOCK	(SHA_LBLOCK*4)	/* SHA treats input data as a
++					 * contiguous array of 32 bit
++					 * wide big-endian values. */
++#define SHA_LAST_BLOCK  (SHA_CBLOCK-8)
++#define SHA_DIGEST_LENGTH 20
++
++typedef struct SHAstate_st
++	{
++	SHA_LONG h0,h1,h2,h3,h4;
++	SHA_LONG Nl,Nh;
++	SHA_LONG data[SHA_LBLOCK];
++	int num;
++	} SHA_CTX;
++
++#ifndef NO_SHA0
++void SHA_Init(SHA_CTX *c);
++void SHA_Update(SHA_CTX *c, const void *data, unsigned long len);
++void SHA_Final(unsigned char *md, SHA_CTX *c);
++unsigned char *SHA(const unsigned char *d, unsigned long n,unsigned char *md);
++void SHA_Transform(SHA_CTX *c, const unsigned char *data);
++#endif
++#ifndef NO_SHA1
++void SHA1_Init(SHA_CTX *c);
++void SHA1_Update(SHA_CTX *c, const void *data, unsigned long len);
++void SHA1_Final(unsigned char *md, SHA_CTX *c);
++unsigned char *SHA1(const unsigned char *d, unsigned long n,unsigned char *md);
++void SHA1_Transform(SHA_CTX *c, const unsigned char *data);
++#endif
++#ifdef  __cplusplus
++}
++#endif
++
++#endif
+diff -urNd pppoecd-2.3/pppd/chap.c pppoecd-2.3-new/pppd/chap.c
+--- pppoecd-2.3/pppd/chap.c	2016-05-31 16:25:27.939475672 +0800
++++ pppoecd-2.3-new/pppd/chap.c	2016-05-31 23:33:03.000000000 +0800
+@@ -114,7 +114,7 @@
+ static void ChapSendStatus __P((chap_state *, int));
+ static void ChapSendChallenge __P((chap_state *));
+ static void ChapSendResponse __P((chap_state *));
+-static void ChapGenChallenge __P((chap_state *));
++void ChapGenChallenge __P((chap_state *));
+ 
+ extern double drand48 __P((void));
+ extern void srand48 __P((long));
+@@ -473,8 +473,15 @@
+ 
+ #ifdef CHAPMS
+     case CHAP_MICROSOFT:
++	if(rchallenge_len != 8)
++	    return;
+ 	ChapMS(cstate, rchallenge, rchallenge_len, secret, secret_len);
+ 	break;
++    case CHAP_MICROSOFT_V2:
++	if(rchallenge_len != 16)
++	    return;
++	ChapMS_v2(cstate, rchallenge, rchallenge_len, secret, secret_len);
++	break;
+ #endif
+ 
+     default:
+@@ -520,7 +527,7 @@
+      * as we did for the first Response we saw.
+      */
+     if (cstate->serverstate == CHAPSS_OPEN) {
+-	ChapSendStatus(cstate, CHAP_SUCCESS);
++	ChapSendStatus(cstate, cstate->chal_type == CHAP_MICROSOFT_V2 ? CHAP_SUCCESS_R : CHAP_SUCCESS);	
+ 	return;
+     }
+     if (cstate->serverstate == CHAPSS_BADAUTH) {
+@@ -576,6 +583,24 @@
+ 		code = CHAP_SUCCESS;	/* they are the same! */
+ 	    break;
+ 
++#ifdef CHAPMS
++	case CHAP_MICROSOFT:
++	    if(remmd_len != MS_CHAP_RESPONSE_LEN)
++		break;
++	    if(ChapMS_Resp(cstate, secret, secret_len, remmd) == 0)
++		code = CHAP_SUCCESS;
++	    break;
++	case CHAP_MICROSOFT_V2:
++	    if(remmd_len != MS_CHAP_RESPONSE_LEN)
++		break;
++	    if(ChapMS_v2_Resp(cstate,secret,secret_len,remmd,rhostname) == 0)
++	    {
++		code = CHAP_SUCCESS_R;
++		ChapMS_v2_Auth(cstate, secret, secret_len, remmd, rhostname);
++	    }
++	    break;
++#endif
++
+ 	default:
+ 	    CHAPDEBUG(("unknown digest type %d", cstate->chal_type));
+ 	}
+@@ -584,7 +609,7 @@
+     BZERO(secret, sizeof(secret));
+     ChapSendStatus(cstate, code);
+ 
+-    if (code == CHAP_SUCCESS) {
++    if ((code == CHAP_SUCCESS) || (code == CHAP_SUCCESS_R)) {
+ 	old_state = cstate->serverstate;
+ 	cstate->serverstate = CHAPSS_OPEN;
+ 	if (old_state == CHAPSS_INITIAL_CHAL) {
+@@ -592,8 +617,23 @@
+ 	}
+ 	if (cstate->chal_interval != 0)
+ 	    TIMEOUT(ChapRechallenge, cstate, cstate->chal_interval);
+-	notice("CHAP peer authentication succeeded for %q", rhostname);
+-
++	switch (cstate->chal_type) { 
++	  case CHAP_DIGEST_MD5:
++	    notice("CHAP peer authentication succeeded for %q", rhostname);
++	    break;
++#ifdef CHAPMS
++	  case CHAP_MICROSOFT:
++	    notice("MSCHAP peer authentication succeeded for %q", rhostname);
++	    break;
++	  case CHAP_MICROSOFT_V2:
++	    notice("MSCHAP-v2 peer authentication succeeded for %q", rhostname);
++	    break;
++#endif
++	  default:
++	    notice("CHAP (unknown) peer authentication succeeded for %q", 
++		   rhostname);
++	    break;
++	}
+     } else {
+ 	error("CHAP peer authentication failed for remote host %q", rhostname);
+ 	cstate->serverstate = CHAPSS_BADAUTH;
+@@ -722,6 +762,8 @@
+ 
+     if (code == CHAP_SUCCESS)
+ 	slprintf(msg, sizeof(msg), "Welcome to %s.", hostname);
++    else if(code == CHAP_SUCCESS_R)
++	strcpy(msg, cstate->response);
+     else
+ 	slprintf(msg, sizeof(msg), "I don't like you.  Go 'way.");
+     msglen = strlen(msg);
+@@ -731,7 +773,7 @@
+ 
+     MAKEHEADER(outp, PPP_CHAP);	/* paste in a header */
+   
+-    PUTCHAR(code, outp);
++    PUTCHAR(code == CHAP_SUCCESS_R ? CHAP_SUCCESS : code, outp);
+     PUTCHAR(cstate->chal_id, outp);
+     PUTSHORT(outlen, outp);
+     BCOPY(msg, outp, msglen);
+@@ -745,7 +787,7 @@
+  * *cstate are initialized.
+  */
+ 
+-static void
++void
+ ChapGenChallenge(cstate)
+     chap_state *cstate;
+ {
+@@ -753,6 +795,14 @@
+     u_char *ptr = cstate->challenge;
+     int i;
+ 
++#ifdef CHAPMS
++    if(cstate->chal_type == CHAP_MICROSOFT)
++	chal_len = 8;
++    else if(cstate->chal_type == CHAP_MICROSOFT_V2)
++	chal_len = 16;
++    else
++#endif
++
+     /* pick a random challenge length between MIN_CHALLENGE_LENGTH and 
+        MAX_CHALLENGE_LENGTH */  
+     chal_len =  (unsigned) ((drand48() *
+diff -urNd pppoecd-2.3/pppd/chap.h pppoecd-2.3-new/pppd/chap.h
+--- pppoecd-2.3/pppd/chap.h	2011-06-23 17:28:10.000000000 +0800
++++ pppoecd-2.3-new/pppd/chap.h	2016-05-31 23:31:07.000000000 +0800
+@@ -46,11 +46,13 @@
+ #define MD5_SIGNATURE_SIZE	16	/* 16 bytes in a MD5 message digest */
+ #define CHAP_MICROSOFT		0x80	/* use Microsoft-compatible alg. */
+ #define MS_CHAP_RESPONSE_LEN	49	/* Response length for MS-CHAP */
++#define CHAP_MICROSOFT_V2   0x81    /* use MS-CHAP v2 */
+ 
+ #define CHAP_CHALLENGE		1
+ #define CHAP_RESPONSE		2
+ #define CHAP_SUCCESS		3
+ #define CHAP_FAILURE    	4
++#define CHAP_SUCCESS_R		13	/* Send response, not text message */
+ 
+ /*
+  *  Challenge lengths (for challenges we send) and other limits.
+@@ -117,6 +119,7 @@
+ 
+ void ChapAuthWithPeer __P((int, char *, int));
+ void ChapAuthPeer __P((int, char *, int));
++void ChapGenChallenge __P((chap_state *));
+ 
+ extern struct protent chap_protent;
+ 
+diff -urNd pppoecd-2.3/pppd/chap_ms.c pppoecd-2.3-new/pppd/chap_ms.c
+--- pppoecd-2.3/pppd/chap_ms.c	2011-06-23 17:28:10.000000000 +0800
++++ pppoecd-2.3-new/pppd/chap_ms.c	2016-05-31 23:11:21.000000000 +0800
+@@ -50,7 +50,9 @@
+ #include "chap.h"
+ #include "chap_ms.h"
+ #include "md4.h"
+-
++#include <openssl/sha.h>
++#include "fsm.h"
++#include "lcp.h"
+ #ifndef USE_CRYPT
+ #include <des.h>
+ #endif
+@@ -65,6 +67,12 @@
+ /* We use MS_CHAP_RESPONSE_LEN, rather than sizeof(MS_ChapResponse),
+    in case this struct gets padded. */
+ 
++typedef struct {
++    u_char PeerChallenge[16];
++    u_char Reserved[8];
++    u_char NTResp[24];
++    u_char Flags;
++} MS_ChapResponse_v2;
+ 
+ static void	ChallengeResponse __P((u_char *, u_char *, u_char *));
+ static void	DesEncrypt __P((u_char *, u_char *, u_char *));
+@@ -309,4 +317,204 @@
+     cstate->resp_length = MS_CHAP_RESPONSE_LEN;
+ }
+ 
++int
++ChapMS_Resp(cstate, secret, secret_len, remmd)
++    chap_state *cstate;
++    char *secret;
++    int secret_len;
++    u_char *remmd;
++{
++    MS_ChapResponse local;
++    MS_ChapResponse *response = (MS_ChapResponse *)remmd;
++    int i;
++
++    BZERO(&local, sizeof(response));
++
++    if(response->UseNT)
++    {
++      ChapMS_NT(cstate->challenge,cstate->chal_len, secret, secret_len, &local);
++      i = memcmp(local.NTResp, response->NTResp, sizeof(local.NTResp));
++
++#ifdef MPPE
++      if(i == 0)
++        mppe_gen_master_key(secret, secret_len, cstate->challenge);
++#endif
++      return(i);
++    }
++
++#ifdef MSLANMAN
++    ChapMS_LANMan(cstate->challenge, cstate->chal_len, secret, secret_len, 
++		&local);
++    if(memcmp(local.LANManResp, response->LANManResp, 
++	sizeof(local.LANManResp)) == 0) {
++#ifdef MPPE
++      mppe_gen_master_key(secret, secret_len, cstate->challenge);
++#endif
++      return(0);
++    }
++#endif /* MSLANMAN */
++    return(1);
++}
++
++void
++ChallengeHash(PeerChallenge, AuthenticatorChallenge, UserName, Challenge)
++    char *PeerChallenge;
++    char *AuthenticatorChallenge;
++    char *UserName;
++    char *Challenge;
++{
++    SHA_CTX Context;
++    u_char Digest[SHA_DIGEST_LENGTH];
++    char *username;
++    
++    if((username = strrchr(UserName, '\\')) != (char *)NULL)
++      ++username;
++    else
++      username = UserName;
++    SHA1_Init(&Context);
++    SHA1_Update(&Context, PeerChallenge, 16);
++    SHA1_Update(&Context, AuthenticatorChallenge, 16);
++    SHA1_Update(&Context, username, strlen(username));
++    SHA1_Final(Digest, &Context);
++    BCOPY(Digest, Challenge, 8);
++}
++
++void
++ChapMS_v2(cstate, AuthenticatorChallenge, AuthenticatorChallengeLen, Password, PasswordLen)
++    chap_state *cstate;
++    char *AuthenticatorChallenge;
++    int AuthenticatorChallengeLen;
++    char *Password;
++    int PasswordLen;
++{
++    u_char Challenge[8];
++    u_char PasswordHash[MD4_SIGNATURE_SIZE];
++    MS_ChapResponse_v2 response;
++  
++    BZERO(&response, sizeof(response));
++    ChapGenChallenge(cstate);
++    BCOPY(cstate->challenge, response.PeerChallenge, 
++		sizeof(response.PeerChallenge));
++    ChallengeHash(response.PeerChallenge, AuthenticatorChallenge, 
++		cstate->resp_name, Challenge);
++    NtPasswordHash(Password, PasswordLen, PasswordHash);
++    ChallengeResponse(Challenge, PasswordHash, response.NTResp);
++    BCOPY(&response, cstate->response, MS_CHAP_RESPONSE_LEN);
++    cstate->resp_length = MS_CHAP_RESPONSE_LEN;
++#ifdef MPPE
++    mppe_gen_master_key_v2(Password, PasswordLen, response.NTResp, 0);
++#endif
++}
++
++int
++ChapMS_v2_Resp(cstate, Password, PasswordLen, remmd, UserName)
++    chap_state *cstate;
++    char *Password;
++    int PasswordLen;
++    u_char *remmd;
++    char *UserName;
++{
++    u_char Challenge[8];
++    u_char PasswordHash[MD4_SIGNATURE_SIZE];
++    MS_ChapResponse_v2 response, response1;
++    int i;
++  
++    BCOPY(remmd, &response, MS_CHAP_RESPONSE_LEN);
++    ChallengeHash(response.PeerChallenge,cstate->challenge,UserName,Challenge);
++    NtPasswordHash(Password, PasswordLen, PasswordHash);
++    ChallengeResponse(Challenge, PasswordHash, response1.NTResp);
++    i = memcmp(response.NTResp, response1.NTResp, sizeof(response.NTResp));
++#ifdef MPPE
++    if(i == 0)
++      mppe_gen_master_key_v2(Password, PasswordLen, response1.NTResp, 1);
++#endif
++    return(i);
++}
++
++void
++ChapMS_v2_Auth(cstate, Password, PasswordLen, remmd, UserName)
++    chap_state *cstate;
++    char *Password;
++    int  PasswordLen;
++    u_char *remmd;
++    char *UserName;
++{
++    u_char PasswordHash[MD4_SIGNATURE_SIZE];
++    u_char PasswordHashHash[MD4_SIGNATURE_SIZE];
++    u_char Challenge[8];
++    static char Magic1[] = "Magic server to client signing constant";
++    static char Magic2[] = "Pad to make it do more than one iteration";
++
++    SHA_CTX Context;
++    u_char Digest[SHA_DIGEST_LENGTH];
++    MS_ChapResponse_v2 *response = (MS_ChapResponse_v2 *)remmd;
++    char   StrResponse[SHA_DIGEST_LENGTH * 2 + 3], *s;
++    int i;
++    static char HexDigs[] = "0123456789ABCDEF";
++    
++    NtPasswordHash(Password, PasswordLen, PasswordHash);
++    md4(PasswordHash, sizeof(PasswordHash), PasswordHashHash);
++
++    SHA1_Init(&Context);
++    SHA1_Update(&Context, PasswordHashHash, 16);
++    SHA1_Update(&Context, response->NTResp, 24);
++    SHA1_Update(&Context, Magic1, sizeof(Magic1) - 1);
++    SHA1_Final(Digest, &Context);
++
++    ChallengeHash(response->PeerChallenge,cstate->challenge,UserName,Challenge);
++    
++    SHA1_Init(&Context);
++    SHA1_Update(&Context, Digest, SHA_DIGEST_LENGTH);
++    SHA1_Update(&Context, Challenge, 8);
++    SHA1_Update(&Context, Magic2, sizeof(Magic2) - 1);
++    SHA1_Final(Digest, &Context);
++    s = (char *)stpcpy(StrResponse, "S=");
++    for(i = 0; i < SHA_DIGEST_LENGTH; ++i) {
++      *s++ = HexDigs[Digest[i] >> 4];
++      *s++ = HexDigs[Digest[i] & 0x0F];
++    }
++    *s = '\0';
++    BCOPY(StrResponse, cstate->response, sizeof(StrResponse));
++    cstate->resp_length = sizeof(StrResponse) - 1;
++}
++
++/*
++ * functions called from config options
++ */
++int 
++reqchapms(char **argv)
++{
++    lcp_wantoptions[0].neg_chap = 1;
++    lcp_wantoptions[0].use_chapms = 1;
++    auth_required = 1;
++
++    return 1;
++}
++
++int 
++nochapms(char **argv)
++{
++    lcp_wantoptions[0].use_chapms = 0;
++    lcp_allowoptions[0].use_chapms = 0;
++    return 1;
++}
++
++int 
++reqchapms_v2(char **argv)
++{
++    lcp_wantoptions[0].neg_chap = 1;
++    lcp_wantoptions[0].use_chapms_v2 = 1;
++    auth_required = 1;
++
++    return 1;
++}
++
++int 
++nochapms_v2(char **argv)
++{
++    lcp_wantoptions[0].use_chapms_v2 = 0;
++    lcp_allowoptions[0].use_chapms_v2 = 0;
++    return 1;
++}
++
+ #endif /* CHAPMS */
+diff -urNd pppoecd-2.3/pppd/chap_ms.h pppoecd-2.3-new/pppd/chap_ms.h
+--- pppoecd-2.3/pppd/chap_ms.h	2011-06-23 17:28:10.000000000 +0800
++++ pppoecd-2.3-new/pppd/chap_ms.h	2016-05-31 19:18:06.000000000 +0800
+@@ -28,6 +28,15 @@
+ #define MAX_NT_PASSWORD	256	/* Maximum number of (Unicode) chars in an NT password */
+ 
+ void ChapMS __P((chap_state *, char *, int, char *, int));
++int  ChapMS_Resp __P((chap_state *, char *, int, u_char *));
++void ChapMS_v2 __P((chap_state *, char *, int, char *, int));
++int  ChapMS_v2_Resp __P((chap_state *, char *, int, u_char *, char *));
++void ChapMS_v2_Auth __P((chap_state *, char *, int, u_char *, char *));
++
++int reqchapms(char **);
++int nochapms(char **);
++int reqchapms_v2(char **);
++int nochapms_v2(char **);
+ 
+ #define __CHAPMS_INCLUDE__
+ #endif /* __CHAPMS_INCLUDE__ */
+diff -urNd pppoecd-2.3/pppd/extra_crypto.c pppoecd-2.3-new/pppd/extra_crypto.c
+--- pppoecd-2.3/pppd/extra_crypto.c	1970-01-01 08:00:00.000000000 +0800
++++ pppoecd-2.3-new/pppd/extra_crypto.c	2016-05-31 15:16:16.857350389 +0800
+@@ -0,0 +1,162 @@
++/*
++ * Copyright (c) Tim Hockin, Cobalt Networks Inc. and others
++ *
++ * crypto routines used by multiple c files 
++ */
++#include <stdio.h>
++#include <ctype.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <string.h>
++#include "extra_crypto.h"
++#include "pppd.h"
++#include "md4.h"
++#ifndef USE_CRYPT
++#include <des.h>
++#endif
++
++/* quick wrapper for easy md4 */
++void
++md4(unsigned char *from, int from_len, unsigned char *to)
++{
++  MD4_CTX Context;
++
++#ifndef __NetBSD__
++  from_len <<= 3; /* bytes->bits */
++#endif
++
++  MD4Init(&Context);
++  MD4Update(&Context, from, from_len);
++  MD4Final(to, &Context);
++}
++
++
++/* Microsoft LANMAN Password hashing */
++static u_char *MSStdText = (u_char *)"KGS!@#$%"; /* key from rasapi32.dll */
++
++void
++LmPasswordHash(char *password, int len, char *hash)
++{
++    int	i;
++    u_char up_pass[MAX_NT_PASSWORD]; /* max is actually 14 */
++
++    /* LANMan password is case insensitive */
++    BZERO(up_pass, sizeof(up_pass));
++    for (i = 0; i < len; i++)
++       up_pass[i] = (u_char)toupper(up_pass[i]);
++    DesEncrypt(MSStdText, up_pass + 0, hash + 0);
++    DesEncrypt(MSStdText, up_pass + 7, hash + 8);
++}
++
++void
++NtPasswordHash(char *secret, int secret_len, unsigned char *hash)
++{
++    int	i;
++    u_char unicodePassword[MAX_NT_PASSWORD * 2];
++
++    /* Initialize the Unicode version of the secret (== password). */
++    /* This implicitly supports 8-bit ISO8859/1 characters. */
++    BZERO(unicodePassword, sizeof(unicodePassword));
++    for (i = 0; i < secret_len; i++)
++	unicodePassword[i * 2] = (u_char)secret[i];
++
++    /* Unicode is 2 bytes per char */
++    md4(unicodePassword, secret_len * 2, hash);
++}
++
++
++static u_char Get7Bits(unsigned char *input, int startBit)
++{
++    register unsigned int       word;
++
++    word  = (unsigned)input[startBit / 8] << 8;
++    word |= (unsigned)input[startBit / 8 + 1];
++
++    word >>= 15 - (startBit % 8 + 7);
++
++    return word & 0xFE;
++}
++
++
++static void MakeKey(unsigned char *key, unsigned char *des_key)
++{
++    des_key[0] = Get7Bits(key,  0);
++    des_key[1] = Get7Bits(key,  7);
++    des_key[2] = Get7Bits(key, 14);
++    des_key[3] = Get7Bits(key, 21);
++    des_key[4] = Get7Bits(key, 28);
++    des_key[5] = Get7Bits(key, 35);
++    des_key[6] = Get7Bits(key, 42);
++    des_key[7] = Get7Bits(key, 49);
++
++#ifndef USE_CRYPT
++    des_set_odd_parity((des_cblock *)des_key);
++#endif
++}
++
++
++#ifdef USE_CRYPT
++/* in == 8-byte string (expanded version of the 56-bit key)
++ * out == 64-byte string where each byte is either 1 or 0
++ * Note that the low-order "bit" is always ignored by by setkey()
++ */
++static void Expand(unsigned char *in, unsigned char *out)
++{
++        int j, c;
++        int i;
++
++        for(i = 0; i < 64; in++){
++		c = *in;
++                for(j = 7; j >= 0; j--)
++                        *out++ = (c >> j) & 01;
++                i += 8;
++        }
++}
++
++/* The inverse of Expand
++ */
++static void Collapse(unsigned char *in, unsigned char *out)
++{
++        int j;
++        int i;
++	unsigned int c;
++
++	for (i = 0; i < 64; i += 8, out++) {
++	    c = 0;
++	    for (j = 7; j >= 0; j--, in++)
++		c |= *in << j;
++	    *out = c & 0xff;
++	}
++}
++void
++DesEncrypt(unsigned char *clear, unsigned char *key, unsigned char *cipher)
++{
++    u_char des_key[8];
++    u_char crypt_key[66];
++    u_char des_input[66];
++
++    MakeKey(key, des_key);
++
++    Expand(des_key, crypt_key);
++    setkey(crypt_key);
++
++    Expand(clear, des_input);
++    encrypt(des_input, 0);
++    Collapse(des_input, cipher);
++}
++#else /* don't USE_CRYPT */
++void
++DesEncrypt(unsigned char *clear, unsigned char *key, unsigned char *cipher)
++{
++    des_cblock		des_key;
++    des_key_schedule	key_schedule;
++
++    MakeKey(key, des_key);
++
++    des_set_key(&des_key, key_schedule);
++
++    des_ecb_encrypt((des_cblock *)clear, (des_cblock *)cipher, key_schedule, 1);
++}
++#endif /* USE_CRYPT */
++
++
+diff -urNd pppoecd-2.3/pppd/extra_crypto.h pppoecd-2.3-new/pppd/extra_crypto.h
+--- pppoecd-2.3/pppd/extra_crypto.h	1970-01-01 08:00:00.000000000 +0800
++++ pppoecd-2.3-new/pppd/extra_crypto.h	2016-05-31 15:16:16.857350389 +0800
+@@ -0,0 +1,16 @@
++#ifndef __EXTRA_CRYPTO_INCLUDE__
++/* 
++ * This is just a bunch of crypto routines that are needed by more than one 
++ * piece of functionality, so they were broken out 
++ */
++
++void md4 __P((unsigned char *, int, unsigned char *));
++void LmPasswordHash __P((char *, int, char *));
++void NtPasswordHash __P((char *, int, unsigned char *));
++void DesEncrypt __P((unsigned char *, unsigned char *, unsigned char *));
++
++#define MAX_NT_PASSWORD		256	/* Max len of a (Unicode) NT passwd */
++#define MD4_SIGNATURE_SIZE	16	/* 16 bytes in a MD4 message digest */
++
++#define __EXTRA_CRYPTO_INCLUDE__
++#endif /* __EXTRA_CRYPTO_INCLUDE__ */
+diff -urNd pppoecd-2.3/pppd/lcp.c pppoecd-2.3-new/pppd/lcp.c
+--- pppoecd-2.3/pppd/lcp.c	2016-05-31 16:25:27.940475389 +0800
++++ pppoecd-2.3-new/pppd/lcp.c	2016-05-31 20:21:27.000000000 +0800
+@@ -49,6 +49,7 @@
+ //end by michael
+ 
+ static const char rcsid[] = RCSID;
++extern bool refuse_chap;
+ 
+ /*
+  * When the link comes up we want to be able to wait for a short while,
+@@ -362,7 +363,18 @@
+     wo->neg_mru = 1;
+     wo->mru = DEFMRU;
+     wo->neg_asyncmap = 1;
+-    wo->chap_mdtype = CHAP_DIGEST_MD5;
++    wo->use_digest = 1;
++#ifdef CHAPMS
++    if(wo->use_chapms_v2)
++	wo->chap_mdtype = CHAP_MICROSOFT_V2;
++    else if(wo->use_chapms)
++	wo->chap_mdtype = CHAP_MICROSOFT;
++    else
++#endif
++    if(wo->use_digest)
++	wo->chap_mdtype = CHAP_DIGEST_MD5;
++    else
++	refuse_chap = 1;
+     wo->neg_magicnumber = 1;
+     wo->neg_pcompression = 1;
+     wo->neg_accompression = 1;
+@@ -372,7 +384,20 @@
+     ao->mru = MAXMRU;
+     ao->neg_asyncmap = 1;
+     ao->neg_chap = 1;
+-    ao->chap_mdtype = CHAP_DIGEST_MD5;
++    ao->use_digest = 1;
++#ifdef CHAPMS
++    ao->use_chapms_v2 = ao->use_chapms = 1;
++    if(ao->use_chapms_v2)
++	ao->chap_mdtype = CHAP_MICROSOFT_V2;
++    else if(ao->use_chapms)
++	ao->chap_mdtype = CHAP_MICROSOFT;
++    else
++#else
++    if(ao->use_digest)
++	ao->chap_mdtype = CHAP_DIGEST_MD5;
++    else
++	refuse_chap = 1;
++#endif
+     ao->neg_upap = 1;
+     ao->neg_magicnumber = 1;
+     ao->neg_pcompression = 1;
+@@ -695,6 +720,18 @@
+      * NB: we only ask for one of CHAP and UPAP, even if we will
+      * accept either.
+      */
++#ifdef CHAPMS
++    if(go->use_chapms_v2)
++	go->chap_mdtype = CHAP_MICROSOFT_V2;
++    else if(go->use_chapms)
++	go->chap_mdtype = CHAP_MICROSOFT;
++    else
++#endif
++    if(go->use_digest)
++	go->chap_mdtype = CHAP_DIGEST_MD5;
++    else
++	go->neg_chap = 0;
++
+     return (LENCISHORT(go->neg_mru && go->mru != DEFMRU) +
+ 	    LENCILONG(go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF) +
+ 	    LENCICHAP(go->neg_chap) +
+@@ -1135,14 +1172,35 @@
+ 		 * if we support it, otherwise we'll have to stop
+ 		 * asking for CHAP.
+ 		 */
+-		if (cichar != go->chap_mdtype) {
+-#ifdef CHAPMS
+-		    if (cichar == CHAP_MICROSOFT)
+-			go->chap_mdtype = CHAP_MICROSOFT;
+-		    else
+-#endif /* CHAPMS */
++ 		if (go->chap_mdtype == CHAP_MICROSOFT_V2)
++ 		{
++ 		    try.use_chapms_v2 = 0;
++ 		    if(try.use_chapms)
++ 			try.chap_mdtype = CHAP_MICROSOFT;
++ 		    else if(try.use_digest)
++ 			try.chap_mdtype = CHAP_DIGEST_MD5;
++ 		    else
++ 			try.neg_chap = 0;
++ 		}
++ 		else if(go->chap_mdtype == CHAP_MICROSOFT)
++ 		{
++ 		    try.use_chapms = 0;
++ 		    if(try.use_digest)
++ 			try.chap_mdtype = CHAP_DIGEST_MD5;
++ 		    else
++ 			try.neg_chap = 0;
++ 		}
++ 		else if(go->chap_mdtype == CHAP_DIGEST_MD5)
++ 		{
++ 		    try.use_digest = 0;
++ 		    try.neg_chap = 0;
++ 		}
++ 		else
++ 		    try.neg_chap = 0;
++ 		if ((cichar != CHAP_MICROSOFT_V2) &&
++ 		    (cichar != CHAP_MICROSOFT) &&
++ 		    (cichar != CHAP_DIGEST_MD5))
+ 			try.neg_chap = 0;
+-		}
+ 	    } else {
+ 		/*
+ 		 * Stop asking for PAP if we were asking for it.
+@@ -1385,8 +1443,22 @@
+ 	/* Check rejected value. */ \
+ 	if (cishort != val || cichar != digest) \
+ 	    goto bad; \
+-	try.neg = 0; \
+-	try.neg_upap = 0; \
++	switch(digest) \
++	{ \
++	    case CHAP_MICROSOFT_V2: \
++		try.use_chapms_v2 = 0; \
++		break; \
++	    case CHAP_MICROSOFT: \
++		try.use_chapms = 0; \
++		break; \
++	    case CHAP_DIGEST_MD5: \
++		try.use_digest = 0; \
++	} \
++	if(!try.use_chapms_v2 && !try.use_chapms && !try.use_digest) \
++	{ \
++	    try.neg = 0; \
++	    try.neg_upap = 0; \
++	} \
+     }
+ #define REJCILONG(opt, neg, val) \
+     if (go->neg && \
+@@ -1674,16 +1746,35 @@
+ 		    break;
+ 		}
+ 		GETCHAR(cichar, p);	/* get digest type*/
+-		if (cichar != CHAP_DIGEST_MD5
++//		if (cichar != CHAP_DIGEST_MD5
+ #ifdef CHAPMS
+-		    && cichar != CHAP_MICROSOFT
++#define CHAP_CANDIGEST(opt, digest) \
++    ((digest) == CHAP_MICROSOFT_V2) ? opt->use_chapms_v2: \
++    ((digest) == CHAP_MICROSOFT)    ? opt->use_chapms: \
++    ((digest) == CHAP_DIGEST_MD5)   ? opt->use_digest: \
++    0
++		if (!(CHAP_CANDIGEST(ao, cichar))) 
++#else
++		if (cichar != CHAP_DIGEST_MD5) 
+ #endif
+-		    ) {
+-		    orc = CONFNAK;
++		{
+ 		    PUTCHAR(CI_AUTHTYPE, nakp);
+ 		    PUTCHAR(CILEN_CHAP, nakp);
+ 		    PUTSHORT(PPP_CHAP, nakp);
++		    if(ao->use_chapms_v2 ||
++		       ao->use_chapms    ||
++		       ao->use_digest    ) {
++		    	orc = CONFNAK;
++			PUTCHAR((ao->use_chapms_v2) ? CHAP_MICROSOFT_V2 : 
++				    (ao->use_chapms)    ? CHAP_MICROSOFT    :
++				    (ao->use_digest)    ? CHAP_DIGEST_MD5   :
++				    0
++	    		  , nakp);
++		    } else 
++			{
++		    	orc = CONFREJ; /* !!! CONFNAK !!! */
+ 		    PUTCHAR(ao->chap_mdtype, nakp);
++		    }
+ 		    break;
+ 		}
+ 		ho->chap_mdtype = cichar; /* save md type */
+diff -urNd pppoecd-2.3/pppd/lcp.h pppoecd-2.3-new/pppd/lcp.h
+--- pppoecd-2.3/pppd/lcp.h	2011-06-23 17:28:10.000000000 +0800
++++ pppoecd-2.3-new/pppd/lcp.h	2016-05-31 20:19:24.000000000 +0800
+@@ -59,6 +59,9 @@
+     bool neg_accompression;	/* HDLC Address/Control Field Compression? */
+     bool neg_lqr;		/* Negotiate use of Link Quality Reports */
+     bool neg_cbcp;		/* Negotiate use of CBCP */
++    bool use_digest;
++    bool use_chapms;
++    bool use_chapms_v2;
+     bool neg_mrru;		/* negotiate multilink MRRU */
+     bool neg_ssnhf;		/* negotiate short sequence numbers */
+     bool neg_endpoint;		/* negotiate endpoint discriminator */
+diff -urNd pppoecd-2.3/pppd/md32_common.h pppoecd-2.3-new/pppd/md32_common.h
+--- pppoecd-2.3/pppd/md32_common.h	1970-01-01 08:00:00.000000000 +0800
++++ pppoecd-2.3-new/pppd/md32_common.h	2016-05-31 15:22:19.948351434 +0800
+@@ -0,0 +1,607 @@
++/* crypto/md32_common.h */
++/* ====================================================================
++ * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer. 
++ *
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in
++ *    the documentation and/or other materials provided with the
++ *    distribution.
++ *
++ * 3. All advertising materials mentioning features or use of this
++ *    software must display the following acknowledgment:
++ *    "This product includes software developed by the OpenSSL Project
++ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
++ *
++ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
++ *    endorse or promote products derived from this software without
++ *    prior written permission. For written permission, please contact
++ *    licensing@OpenSSL.org.
++ *
++ * 5. Products derived from this software may not be called "OpenSSL"
++ *    nor may "OpenSSL" appear in their names without prior written
++ *    permission of the OpenSSL Project.
++ *
++ * 6. Redistributions of any form whatsoever must retain the following
++ *    acknowledgment:
++ *    "This product includes software developed by the OpenSSL Project
++ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
++ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
++ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
++ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
++ * OF THE POSSIBILITY OF SUCH DAMAGE.
++ * ====================================================================
++ *
++ * This product includes cryptographic software written by Eric Young
++ * (eay@cryptsoft.com).  This product includes software written by Tim
++ * Hudson (tjh@cryptsoft.com).
++ *
++ */
++
++/*
++ * This is a generic 32 bit "collector" for message digest algorithms.
++ * Whenever needed it collects input character stream into chunks of
++ * 32 bit values and invokes a block function that performs actual hash
++ * calculations.
++ *
++ * Porting guide.
++ *
++ * Obligatory macros:
++ *
++ * DATA_ORDER_IS_BIG_ENDIAN or DATA_ORDER_IS_LITTLE_ENDIAN
++ *	this macro defines byte order of input stream.
++ * HASH_CBLOCK
++ *	size of a unit chunk HASH_BLOCK operates on.
++ * HASH_LONG
++ *	has to be at lest 32 bit wide, if it's wider, then
++ *	HASH_LONG_LOG2 *has to* be defined along
++ * HASH_CTX
++ *	context structure that at least contains following
++ *	members:
++ *		typedef struct {
++ *			...
++ *			HASH_LONG	Nl,Nh;
++ *			HASH_LONG	data[HASH_LBLOCK];
++ *			int		num;
++ *			...
++ *			} HASH_CTX;
++ * HASH_UPDATE
++ *	name of "Update" function, implemented here.
++ * HASH_TRANSFORM
++ *	name of "Transform" function, implemented here.
++ * HASH_FINAL
++ *	name of "Final" function, implemented here.
++ * HASH_BLOCK_HOST_ORDER
++ *	name of "block" function treating *aligned* input message
++ *	in host byte order, implemented externally.
++ * HASH_BLOCK_DATA_ORDER
++ *	name of "block" function treating *unaligned* input message
++ *	in original (data) byte order, implemented externally (it
++ *	actually is optional if data and host are of the same
++ *	"endianess").
++ * HASH_MAKE_STRING
++ *	macro convering context variables to an ASCII hash string.
++ *
++ * Optional macros:
++ *
++ * B_ENDIAN or L_ENDIAN
++ *	defines host byte-order.
++ * HASH_LONG_LOG2
++ *	defaults to 2 if not states otherwise.
++ * HASH_LBLOCK
++ *	assumed to be HASH_CBLOCK/4 if not stated otherwise.
++ * HASH_BLOCK_DATA_ORDER_ALIGNED
++ *	alternative "block" function capable of treating
++ *	aligned input message in original (data) order,
++ *	implemented externally.
++ *
++ * MD5 example:
++ *
++ *	#define DATA_ORDER_IS_LITTLE_ENDIAN
++ *
++ *	#define HASH_LONG		MD5_LONG
++ *	#define HASH_LONG_LOG2		MD5_LONG_LOG2
++ *	#define HASH_CTX		MD5_CTX
++ *	#define HASH_CBLOCK		MD5_CBLOCK
++ *	#define HASH_LBLOCK		MD5_LBLOCK
++ *	#define HASH_UPDATE		MD5_Update
++ *	#define HASH_TRANSFORM		MD5_Transform
++ *	#define HASH_FINAL		MD5_Final
++ *	#define HASH_BLOCK_HOST_ORDER	md5_block_host_order
++ *	#define HASH_BLOCK_DATA_ORDER	md5_block_data_order
++ *
++ *					<appro@fy.chalmers.se>
++ */
++
++#if !defined(DATA_ORDER_IS_BIG_ENDIAN) && !defined(DATA_ORDER_IS_LITTLE_ENDIAN)
++#error "DATA_ORDER must be defined!"
++#endif
++
++#ifndef HASH_CBLOCK
++#error "HASH_CBLOCK must be defined!"
++#endif
++#ifndef HASH_LONG
++#error "HASH_LONG must be defined!"
++#endif
++#ifndef HASH_CTX
++#error "HASH_CTX must be defined!"
++#endif
++
++#ifndef HASH_UPDATE
++#error "HASH_UPDATE must be defined!"
++#endif
++#ifndef HASH_TRANSFORM
++#error "HASH_TRANSFORM must be defined!"
++#endif
++#ifndef HASH_FINAL
++#error "HASH_FINAL must be defined!"
++#endif
++
++#ifndef HASH_BLOCK_HOST_ORDER
++#error "HASH_BLOCK_HOST_ORDER must be defined!"
++#endif
++
++#if 0
++/*
++ * Moved below as it's required only if HASH_BLOCK_DATA_ORDER_ALIGNED
++ * isn't defined.
++ */
++#ifndef HASH_BLOCK_DATA_ORDER
++#error "HASH_BLOCK_DATA_ORDER must be defined!"
++#endif
++#endif
++
++#ifndef HASH_LBLOCK
++#define HASH_LBLOCK	(HASH_CBLOCK/4)
++#endif
++
++#ifndef HASH_LONG_LOG2
++#define HASH_LONG_LOG2	2
++#endif
++
++/*
++ * Engage compiler specific rotate intrinsic function if available.
++ */
++#undef ROTATE
++#ifndef PEDANTIC
++# if defined(_MSC_VER)
++#  define ROTATE(a,n)	_lrotl(a,n)
++# elif defined(__MWERKS__)
++#  if defined(__POWERPC__)
++#   define ROTATE(a,n)	__rlwinm(a,n,0,31)
++#  elif defined(__MC68K__)
++    /* Motorola specific tweak. <appro@fy.chalmers.se> */
++#   define ROTATE(a,n)	( n<24 ? __rol(a,n) : __ror(a,32-n) )
++#  else
++#   define ROTATE(a,n)	__rol(a,n)
++#  endif
++# elif defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM) && !defined(NO_INLINE_ASM)
++  /*
++   * Some GNU C inline assembler templates. Note that these are
++   * rotates by *constant* number of bits! But that's exactly
++   * what we need here...
++   *
++   * 					<appro@fy.chalmers.se>
++   */
++#  if defined(__i386)
++#   define ROTATE(a,n)	({ register unsigned int ret;	\
++				asm (			\
++				"roll %1,%0"		\
++				: "=r"(ret)		\
++				: "I"(n), "0"(a)	\
++				: "cc");		\
++			   ret;				\
++			})
++#  elif defined(__powerpc) || defined(__ppc)
++#   define ROTATE(a,n)	({ register unsigned int ret;	\
++				asm (			\
++				"rlwinm %0,%1,%2,0,31"	\
++				: "=r"(ret)		\
++				: "r"(a), "I"(n));	\
++			   ret;				\
++			})
++#  endif
++# endif
++
++/*
++ * Engage compiler specific "fetch in reverse byte order"
++ * intrinsic function if available.
++ */
++# if defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM) && !defined(NO_INLINE_ASM)
++  /* some GNU C inline assembler templates by <appro@fy.chalmers.se> */
++#  if defined(__i386) && !defined(I386_ONLY)
++#   define BE_FETCH32(a)	({ register unsigned int l=(a);\
++				asm (			\
++				"bswapl %0"		\
++				: "=r"(l) : "0"(l));	\
++			  l;				\
++			})
++#  elif defined(__powerpc)
++#   define LE_FETCH32(a)	({ register unsigned int l;	\
++				asm (			\
++				"lwbrx %0,0,%1"		\
++				: "=r"(l)		\
++				: "r"(a));		\
++			   l;				\
++			})
++
++#  elif defined(__sparc) && defined(ULTRASPARC)
++#  define LE_FETCH32(a)	({ register unsigned int l;		\
++				asm (				\
++				"lda [%1]#ASI_PRIMARY_LITTLE,%0"\
++				: "=r"(l)			\
++				: "r"(a));			\
++			   l;					\
++			})
++#  endif
++# endif
++#endif /* PEDANTIC */
++
++#if HASH_LONG_LOG2==2	/* Engage only if sizeof(HASH_LONG)== 4 */
++/* A nice byte order reversal from Wei Dai <weidai@eskimo.com> */
++#ifdef ROTATE
++/* 5 instructions with rotate instruction, else 9 */
++#define REVERSE_FETCH32(a,l)	(					\
++		l=*(const HASH_LONG *)(a),				\
++		((ROTATE(l,8)&0x00FF00FF)|(ROTATE((l&0x00FF00FF),24)))	\
++				)
++#else
++/* 6 instructions with rotate instruction, else 8 */
++#define REVERSE_FETCH32(a,l)	(				\
++		l=*(const HASH_LONG *)(a),			\
++		l=(((l>>8)&0x00FF00FF)|((l&0x00FF00FF)<<8)),	\
++		ROTATE(l,16)					\
++				)
++/*
++ * Originally the middle line started with l=(((l&0xFF00FF00)>>8)|...
++ * It's rewritten as above for two reasons:
++ *	- RISCs aren't good at long constants and have to explicitely
++ *	  compose 'em with several (well, usually 2) instructions in a
++ *	  register before performing the actual operation and (as you
++ *	  already realized:-) having same constant should inspire the
++ *	  compiler to permanently allocate the only register for it;
++ *	- most modern CPUs have two ALUs, but usually only one has
++ *	  circuitry for shifts:-( this minor tweak inspires compiler
++ *	  to schedule shift instructions in a better way...
++ *
++ *				<appro@fy.chalmers.se>
++ */
++#endif
++#endif
++
++#ifndef ROTATE
++#define ROTATE(a,n)     (((a)<<(n))|(((a)&0xffffffff)>>(32-(n))))
++#endif
++
++/*
++ * Make some obvious choices. E.g., HASH_BLOCK_DATA_ORDER_ALIGNED
++ * and HASH_BLOCK_HOST_ORDER ought to be the same if input data
++ * and host are of the same "endianess". It's possible to mask
++ * this with blank #define HASH_BLOCK_DATA_ORDER though...
++ *
++ *				<appro@fy.chalmers.se>
++ */
++#if defined(B_ENDIAN)
++#  if defined(DATA_ORDER_IS_BIG_ENDIAN)
++#    if !defined(HASH_BLOCK_DATA_ORDER_ALIGNED) && HASH_LONG_LOG2==2
++#      define HASH_BLOCK_DATA_ORDER_ALIGNED	HASH_BLOCK_HOST_ORDER
++#    endif
++#  elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
++#    ifndef HOST_FETCH32
++#      ifdef LE_FETCH32
++#        define HOST_FETCH32(p,l)	LE_FETCH32(p)
++#      elif defined(REVERSE_FETCH32)
++#        define HOST_FETCH32(p,l)	REVERSE_FETCH32(p,l)
++#      endif
++#    endif
++#  endif
++#elif defined(L_ENDIAN)
++#  if defined(DATA_ORDER_IS_LITTLE_ENDIAN)
++#    if !defined(HASH_BLOCK_DATA_ORDER_ALIGNED) && HASH_LONG_LOG2==2
++#      define HASH_BLOCK_DATA_ORDER_ALIGNED	HASH_BLOCK_HOST_ORDER
++#    endif
++#  elif defined(DATA_ORDER_IS_BIG_ENDIAN)
++#    ifndef HOST_FETCH32
++#      ifdef BE_FETCH32
++#        define HOST_FETCH32(p,l)	BE_FETCH32(p)
++#      elif defined(REVERSE_FETCH32)
++#        define HOST_FETCH32(p,l)	REVERSE_FETCH32(p,l)
++#      endif
++#    endif
++#  endif
++#endif
++
++#if !defined(HASH_BLOCK_DATA_ORDER_ALIGNED)
++#ifndef HASH_BLOCK_DATA_ORDER
++#error "HASH_BLOCK_DATA_ORDER must be defined!"
++#endif
++#endif
++
++#if defined(DATA_ORDER_IS_BIG_ENDIAN)
++
++#define HOST_c2l(c,l)	(l =(((unsigned long)(*((c)++)))<<24),		\
++			 l|=(((unsigned long)(*((c)++)))<<16),		\
++			 l|=(((unsigned long)(*((c)++)))<< 8),		\
++			 l|=(((unsigned long)(*((c)++)))    ),		\
++			 l)
++#define HOST_p_c2l(c,l,n)	{					\
++			switch (n) {					\
++			case 0: l =((unsigned long)(*((c)++)))<<24;	\
++			case 1: l|=((unsigned long)(*((c)++)))<<16;	\
++			case 2: l|=((unsigned long)(*((c)++)))<< 8;	\
++			case 3: l|=((unsigned long)(*((c)++)));		\
++				} }
++#define HOST_p_c2l_p(c,l,sc,len) {					\
++			switch (sc) {					\
++			case 0: l =((unsigned long)(*((c)++)))<<24;	\
++				if (--len == 0) break;			\
++			case 1: l|=((unsigned long)(*((c)++)))<<16;	\
++				if (--len == 0) break;			\
++			case 2: l|=((unsigned long)(*((c)++)))<< 8;	\
++				} }
++/* NOTE the pointer is not incremented at the end of this */
++#define HOST_c2l_p(c,l,n)	{					\
++			l=0; (c)+=n;					\
++			switch (n) {					\
++			case 3: l =((unsigned long)(*(--(c))))<< 8;	\
++			case 2: l|=((unsigned long)(*(--(c))))<<16;	\
++			case 1: l|=((unsigned long)(*(--(c))))<<24;	\
++				} }
++#define HOST_l2c(l,c)	(*((c)++)=(unsigned char)(((l)>>24)&0xff),	\
++			 *((c)++)=(unsigned char)(((l)>>16)&0xff),	\
++			 *((c)++)=(unsigned char)(((l)>> 8)&0xff),	\
++			 *((c)++)=(unsigned char)(((l)    )&0xff),	\
++			 l)
++
++#elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
++
++#define HOST_c2l(c,l)	(l =(((unsigned long)(*((c)++)))    ),		\
++			 l|=(((unsigned long)(*((c)++)))<< 8),		\
++			 l|=(((unsigned long)(*((c)++)))<<16),		\
++			 l|=(((unsigned long)(*((c)++)))<<24),		\
++			 l)
++#define HOST_p_c2l(c,l,n)	{					\
++			switch (n) {					\
++			case 0: l =((unsigned long)(*((c)++)));		\
++			case 1: l|=((unsigned long)(*((c)++)))<< 8;	\
++			case 2: l|=((unsigned long)(*((c)++)))<<16;	\
++			case 3: l|=((unsigned long)(*((c)++)))<<24;	\
++				} }
++#define HOST_p_c2l_p(c,l,sc,len) {					\
++			switch (sc) {					\
++			case 0: l =((unsigned long)(*((c)++)));		\
++				if (--len == 0) break;			\
++			case 1: l|=((unsigned long)(*((c)++)))<< 8;	\
++				if (--len == 0) break;			\
++			case 2: l|=((unsigned long)(*((c)++)))<<16;	\
++				} }
++/* NOTE the pointer is not incremented at the end of this */
++#define HOST_c2l_p(c,l,n)	{					\
++			l=0; (c)+=n;					\
++			switch (n) {					\
++			case 3: l =((unsigned long)(*(--(c))))<<16;	\
++			case 2: l|=((unsigned long)(*(--(c))))<< 8;	\
++			case 1: l|=((unsigned long)(*(--(c))));		\
++				} }
++#define HOST_l2c(l,c)	(*((c)++)=(unsigned char)(((l)    )&0xff),	\
++			 *((c)++)=(unsigned char)(((l)>> 8)&0xff),	\
++			 *((c)++)=(unsigned char)(((l)>>16)&0xff),	\
++			 *((c)++)=(unsigned char)(((l)>>24)&0xff),	\
++			 l)
++
++#endif
++
++/*
++ * Time for some action:-)
++ */
++
++void HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
++	{
++	const unsigned char *data=data_;
++	register HASH_LONG * p;
++	register unsigned long l;
++	int sw,sc,ew,ec;
++
++	if (len==0) return;
++
++	l=(c->Nl+(len<<3))&0xffffffffL;
++	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
++	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
++	if (l < c->Nl) /* overflow */
++		c->Nh++;
++	c->Nh+=(len>>29);
++	c->Nl=l;
++
++	if (c->num != 0)
++		{
++		p=c->data;
++		sw=c->num>>2;
++		sc=c->num&0x03;
++
++		if ((c->num+len) >= HASH_CBLOCK)
++			{
++			l=p[sw]; HOST_p_c2l(data,l,sc); p[sw++]=l;
++			for (; sw<HASH_LBLOCK; sw++)
++				{
++				HOST_c2l(data,l); p[sw]=l;
++				}
++			HASH_BLOCK_HOST_ORDER (c,p,1);
++			len-=(HASH_CBLOCK-c->num);
++			c->num=0;
++			/* drop through and do the rest */
++			}
++		else
++			{
++			c->num+=len;
++			if ((sc+len) < 4) /* ugly, add char's to a word */
++				{
++				l=p[sw]; HOST_p_c2l_p(data,l,sc,len); p[sw]=l;
++				}
++			else
++				{
++				ew=(c->num>>2);
++				ec=(c->num&0x03);
++				l=p[sw]; HOST_p_c2l(data,l,sc); p[sw++]=l;
++				for (; sw < ew; sw++)
++					{
++					HOST_c2l(data,l); p[sw]=l;
++					}
++				if (ec)
++					{
++					HOST_c2l_p(data,l,ec); p[sw]=l;
++					}
++				}
++			return;
++			}
++		}
++
++	sw=len/HASH_CBLOCK;
++	if (sw > 0)
++		{
++#if defined(HASH_BLOCK_DATA_ORDER_ALIGNED)
++		/*
++		 * Note that HASH_BLOCK_DATA_ORDER_ALIGNED gets defined
++		 * only if sizeof(HASH_LONG)==4.
++		 */
++		if ((((unsigned long)data)%4) == 0)
++			{
++			/* data is properly aligned so that we can cast it: */
++			HASH_BLOCK_DATA_ORDER_ALIGNED (c,(HASH_LONG *)data,sw);
++			sw*=HASH_CBLOCK;
++			data+=sw;
++			len-=sw;
++			}
++		else
++#if !defined(HASH_BLOCK_DATA_ORDER)
++			while (sw--)
++				{
++				memcpy (p=c->data,data,HASH_CBLOCK);
++				HASH_BLOCK_DATA_ORDER_ALIGNED(c,p,1);
++				data+=HASH_CBLOCK;
++				len-=HASH_CBLOCK;
++				}
++#endif
++#endif
++#if defined(HASH_BLOCK_DATA_ORDER)
++			{
++			HASH_BLOCK_DATA_ORDER(c,data,sw);
++			sw*=HASH_CBLOCK;
++			data+=sw;
++			len-=sw;
++			}
++#endif
++		}
++
++	if (len!=0)
++		{
++		p = c->data;
++		c->num = len;
++		ew=len>>2;	/* words to copy */
++		ec=len&0x03;
++		for (; ew; ew--,p++)
++			{
++			HOST_c2l(data,l); *p=l;
++			}
++		HOST_c2l_p(data,l,ec);
++		*p=l;
++		}
++	}
++
++
++void HASH_TRANSFORM (HASH_CTX *c, const unsigned char *data)
++	{
++#if defined(HASH_BLOCK_DATA_ORDER_ALIGNED)
++	if ((((unsigned long)data)%4) == 0)
++		/* data is properly aligned so that we can cast it: */
++		HASH_BLOCK_DATA_ORDER_ALIGNED (c,(HASH_LONG *)data,1);
++	else
++#if !defined(HASH_BLOCK_DATA_ORDER)
++		{
++		memcpy (c->data,data,HASH_CBLOCK);
++		HASH_BLOCK_DATA_ORDER_ALIGNED (c,c->data,1);
++		}
++#endif
++#endif
++#if defined(HASH_BLOCK_DATA_ORDER)
++	HASH_BLOCK_DATA_ORDER (c,data,1);
++#endif
++	}
++
++
++void HASH_FINAL (unsigned char *md, HASH_CTX *c)
++	{
++	register HASH_LONG *p;
++	register unsigned long l;
++	register int i,j;
++	static const unsigned char end[4]={0x80,0x00,0x00,0x00};
++	const unsigned char *cp=end;
++
++	/* c->num should definitly have room for at least one more byte. */
++	p=c->data;
++	i=c->num>>2;
++	j=c->num&0x03;
++
++#if 0
++	/* purify often complains about the following line as an
++	 * Uninitialized Memory Read.  While this can be true, the
++	 * following p_c2l macro will reset l when that case is true.
++	 * This is because j&0x03 contains the number of 'valid' bytes
++	 * already in p[i].  If and only if j&0x03 == 0, the UMR will
++	 * occur but this is also the only time p_c2l will do
++	 * l= *(cp++) instead of l|= *(cp++)
++	 * Many thanks to Alex Tang <altitude@cic.net> for pickup this
++	 * 'potential bug' */
++#ifdef PURIFY
++	if (j==0) p[i]=0; /* Yeah, but that's not the way to fix it:-) */
++#endif
++	l=p[i];
++#else
++	l = (j==0) ? 0 : p[i];
++#endif
++	HOST_p_c2l(cp,l,j); p[i++]=l; /* i is the next 'undefined word' */
++
++	if (i>(HASH_LBLOCK-2)) /* save room for Nl and Nh */
++		{
++		if (i<HASH_LBLOCK) p[i]=0;
++		HASH_BLOCK_HOST_ORDER (c,p,1);
++		i=0;
++		}
++	for (; i<(HASH_LBLOCK-2); i++)
++		p[i]=0;
++
++#if   defined(DATA_ORDER_IS_BIG_ENDIAN)
++	p[HASH_LBLOCK-2]=c->Nh;
++	p[HASH_LBLOCK-1]=c->Nl;
++#elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
++	p[HASH_LBLOCK-2]=c->Nl;
++	p[HASH_LBLOCK-1]=c->Nh;
++#endif
++	HASH_BLOCK_HOST_ORDER (c,p,1);
++
++#ifndef HASH_MAKE_STRING
++#error "HASH_MAKE_STRING must be defined!"
++#else
++	HASH_MAKE_STRING(c,md);
++#endif
++
++	c->num=0;
++	/* clear stuff, HASH_BLOCK may be leaving some stuff on the stack
++	 * but I'm not worried :-)
++	memset((void *)c,0,sizeof(HASH_CTX));
++	 */
++	}
+diff -urNd pppoecd-2.3/pppd/mppe.c pppoecd-2.3-new/pppd/mppe.c
+--- pppoecd-2.3/pppd/mppe.c	1970-01-01 08:00:00.000000000 +0800
++++ pppoecd-2.3-new/pppd/mppe.c	2016-05-31 15:15:34.880350608 +0800
+@@ -0,0 +1,251 @@
++/*
++ * mppe - Mucking with PpP Encription
++ *
++ * Copyright (c) 1995 ¡Úp·‰ Magoss·Óyi
++ * All rights reserved.
++ *
++ * Copyright (c) 1999 Tim Hockin, Cobalt Networks Inc.
++ *
++ * Redistribution and use in source and binary forms are permitted
++ * provided that the above copyright notice and this paragraph are
++ * duplicated in all such forms and that any documentation,
++ * advertising materials, and other materials related to such
++ * distribution and use acknowledge that the software was developed
++ * by Pedro Roque Marques.  The name of the author may not be used to
++ * endorse or promote products derived from this software without
++ * specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++#ifdef MPPE
++
++#include <stdio.h>
++#include <sys/types.h>
++#include <string.h>
++#include <ctype.h>
++#ifndef NO_SYSLOG // by mfujisawa (2007/02/27)
++#include <syslog.h>
++#endif // NO_SYSLOG }
++#include <stdlib.h>
++#include <unistd.h>
++#include "pppd.h"
++#include "chap.h"
++#include "fsm.h"
++#include "ccp.h"
++#include "md4.h" 
++#include <openssl/sha.h>
++#include "chap_ms.h"
++#include "extra_crypto.h"
++
++static void
++mppe_get_start_key __P((unsigned char *, unsigned char *, unsigned char *));
++static void
++mppe_get_master_key __P((unsigned char *, unsigned char *, unsigned char *));
++static void
++GetAsymetricStartKey __P((unsigned char *, unsigned char *, int, int, int));
++
++unsigned char mppe_master_send_key_40[8];
++unsigned char mppe_master_recv_key_40[8];
++unsigned char mppe_master_send_key_128[16];
++unsigned char mppe_master_recv_key_128[16];
++unsigned int mppe_allowed = 0;
++
++/*
++ * Pads used in key derivation - from sha1dgst.c
++ */
++static unsigned char  SHApad1[40] =
++  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
++   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
++   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
++   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
++static unsigned char  SHApad2[40] =
++  {0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2,
++   0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2,
++   0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2,
++   0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2};
++
++
++/* This is used with chap-ms (v1) */
++void
++mppe_gen_master_key(char *secret, int secret_len, unsigned char *challenge)
++{
++    unsigned char PasswordHash[MD4_SIGNATURE_SIZE];
++    unsigned char PasswordHashHash[MD4_SIGNATURE_SIZE];
++
++    /* 40 bit */
++    LmPasswordHash(secret, secret_len, PasswordHash);
++    BCOPY(PasswordHash, mppe_master_send_key_40, 8);
++    BCOPY(mppe_master_send_key_40, mppe_master_recv_key_40, 8);
++
++    /* 128 bit */
++    NtPasswordHash(secret, secret_len, PasswordHash);
++    md4(PasswordHash, sizeof(PasswordHash), PasswordHashHash);
++    mppe_get_start_key(challenge, PasswordHashHash, mppe_master_send_key_128);
++    BCOPY(mppe_master_send_key_128, mppe_master_recv_key_128, 16);
++
++    //mppe_allowed = 1;
++    mppe_allowed = 0; // Can't encode MPPE in M$ Windows..
++}
++
++
++/* This is used with chap-ms-v2 (per MS' draft RFC) - 2 different keys */
++void
++mppe_gen_master_key_v2(char *secret, int secret_len, unsigned char *response, 
++			int is_server)
++{
++    unsigned char PasswordHash[MD4_SIGNATURE_SIZE];
++    unsigned char PasswordHashHash[MD4_SIGNATURE_SIZE];
++    unsigned char MasterKey[MD4_SIGNATURE_SIZE];
++
++    /* 128 bit - 2 keys */
++    NtPasswordHash(secret, secret_len, PasswordHash);
++    md4(PasswordHash, sizeof(PasswordHash), PasswordHashHash);
++    mppe_get_master_key(PasswordHashHash, response, MasterKey);
++    GetAsymetricStartKey(MasterKey, mppe_master_send_key_128, 16,1, is_server);
++    GetAsymetricStartKey(MasterKey, mppe_master_recv_key_128, 16,0, is_server);
++
++    /* 40 bit - 2 keys */
++    BCOPY(mppe_master_send_key_128, mppe_master_send_key_40, 8);
++    BCOPY(mppe_master_recv_key_128, mppe_master_recv_key_40, 8);
++
++    mppe_allowed = 1;
++}
++
++
++static void
++mppe_get_start_key(unsigned char *Challenge, unsigned char *NtPasswordHashHash,
++			unsigned char *InitialSessionKey)
++{
++    unsigned char Digest[SHA_DIGEST_LENGTH];
++    SHA_CTX Context;
++    
++    SHA1_Init(&Context);
++    SHA1_Update(&Context, NtPasswordHashHash, 16);
++    SHA1_Update(&Context, NtPasswordHashHash, 16);
++    SHA1_Update(&Context, Challenge, 8);
++    SHA1_Final(Digest, &Context);
++    BCOPY(Digest, InitialSessionKey, 16);
++}
++
++static void
++mppe_get_master_key(unsigned char *PasswordHashHash, unsigned char *NtResponse,
++			unsigned char *MasterKey)
++{
++    unsigned char Digest[SHA_DIGEST_LENGTH];
++    SHA_CTX Context;
++    static char Magic1[] = "This is the MPPE Master Key";
++    
++    BZERO(Digest, sizeof(Digest));
++    
++    SHA1_Init(&Context);
++    SHA1_Update(&Context, PasswordHashHash, 16);
++    SHA1_Update(&Context, NtResponse, 24);
++    SHA1_Update(&Context, Magic1, sizeof(Magic1) - 1);
++    SHA1_Final(Digest, &Context);
++    
++    BCOPY(Digest, MasterKey, 16);
++}
++
++static void
++GetAsymetricStartKey(unsigned char *MasterKey, unsigned char *SessionKey, 
++			int SessionKeyLength, int IsSend, int IsServer)
++{
++    unsigned char Digest[SHA_DIGEST_LENGTH];
++    SHA_CTX Context;
++    char *s;
++    static char Magic2[] = "On the client side, this is the send key; on the server side, it is the receive key.";
++    static char Magic3[] = "On the client side, this is the receive key; on the server side, it is the send key.";
++    
++    BZERO(Digest, sizeof(Digest));
++    if(IsSend)
++    {
++      if(IsServer)
++        s = Magic3;
++      else
++        s = Magic2;
++    }
++    else
++    {
++      if(IsServer)
++        s = Magic2;
++      else
++        s = Magic3;
++    }
++    
++    SHA1_Init(&Context);
++    SHA1_Update(&Context, MasterKey, 16);
++    SHA1_Update(&Context, SHApad1, 40);
++    SHA1_Update(&Context, s, 84);
++    SHA1_Update(&Context, SHApad2, 40);
++    SHA1_Final(Digest, &Context);
++    BCOPY(Digest, SessionKey, SessionKeyLength);
++}
++
++/*
++ * Functions called from config options
++ */
++int
++setmppe_40(char **argv)
++{   
++    ccp_allowoptions[0].mppe = ccp_wantoptions[0].mppe = 1;
++    ccp_allowoptions[0].mppe_40 = ccp_wantoptions[0].mppe_40 = 1;
++    return 1;
++}
++
++int
++setnomppe_40(char **argv)
++{   
++    ccp_allowoptions[0].mppe_40 = ccp_wantoptions[0].mppe_40 = 0;
++    return 1;
++}
++
++int
++setmppe_128(char **argv)
++{   
++    ccp_allowoptions[0].mppe = ccp_wantoptions[0].mppe = 1;
++    ccp_allowoptions[0].mppe_128 = ccp_wantoptions[0].mppe_128 = 1;
++    return 1;
++}
++
++int
++setnomppe_128(char **argv)
++{   
++    ccp_allowoptions[0].mppe_128 = ccp_wantoptions[0].mppe_128 = 0;
++    return 1;
++}
++
++int
++setmppe_stateless(char **argv)
++{
++    ccp_allowoptions[0].mppe_stateless = ccp_wantoptions[0].mppe_stateless = 1;
++    return 1;
++}
++
++int
++setnomppe_stateless(char **argv)
++{
++    ccp_allowoptions[0].mppe_stateless = ccp_wantoptions[0].mppe_stateless = 0;
++    return 1;
++}
++
++/* Not supported actually */
++int
++setallow_mppe_stateful(char **argv)
++{
++    ccp_wantoptions[0].mppe_stateless = 0;
++	ccp_allowoptions[0].mppe_stateless = 1;
++    return 1;
++}
++
++/* Not supported actually */
++int
++setrefuse_mppe_stateful(char **argv)
++{
++    ccp_wantoptions[0].mppe_stateless = 1;
++	ccp_allowoptions[0].mppe_stateless = 1;
++    return 1;
++}
++#endif /* MPPE */
+diff -urNd pppoecd-2.3/pppd/mppe.h pppoecd-2.3-new/pppd/mppe.h
+--- pppoecd-2.3/pppd/mppe.h	1970-01-01 08:00:00.000000000 +0800
++++ pppoecd-2.3-new/pppd/mppe.h	2016-05-31 15:15:34.880350608 +0800
+@@ -0,0 +1,58 @@
++#ifndef __MPPE_INCLUDE__
++
++typedef struct mppe_state {
++    int    us_unit;	/* Interface unit number */
++    u_char us_id;		/* Current id */
++    u_char us_allowed;
++    int    us_type;
++    char   *us_number;    /* Telefone Number */
++} mppe_state;
++
++
++extern struct protent mppe_protent;
++
++#define MPPE_CONFOPTION 18		/* p[0] */
++#define MPPE_STATELESS  0x01		/* p[2] */
++#define MPPE_40BIT	0x20		/* p[5] */
++#define MPPE_128BIT	0x40		/* p[5] */
++
++#define PPP_MPPE	0x00FD
++
++#define MPPE_BIT_A	0x80
++#define MPPE_BIT_B	0x40
++#define MPPE_BIT_C	0x20
++#define MPPE_BIT_D	0x10
++#define MPPE_BIT_FLUSHED MPPE_BIT_A
++#define MPPE_BIT_ENCRYPTED MPPE_BIT_D
++#define MPPE_CCOUNT	0x0FFF
++
++#define MPPE_40_SALT0	0xD1
++#define MPPE_40_SALT1	0x26
++#define MPPE_40_SALT2	0x9E
++
++#define MPPE_MINLEN 4
++
++#define MPPE_REQ    1
++#define MPPE_RESP   2
++#define MPPE_ACK    3
++
++extern char mppe_master_send_key_40[8];
++extern char mppe_master_send_key_128[16];
++extern char mppe_master_recv_key_40[8];
++extern char mppe_master_recv_key_128[16];
++extern unsigned int mppe_allowed;
++
++void mppe_gen_master_key __P((char *, int, unsigned char *));
++void mppe_gen_master_key_v2 __P((char *, int, unsigned char *, int));
++
++int setmppe_40(char **);
++int setnomppe_40(char **);
++int setmppe_128(char **);
++int setnomppe_128(char **);
++int setmppe_stateless(char **);
++int setnomppe_stateless(char **);
++int setallow_mppe_stateful(char **);
++int setrefuse_mppe_stateful(char **);
++
++#define __MPPE_INCLUDE__
++#endif /* __MPPE_INCLUDE__ */
+diff -urNd pppoecd-2.3/pppd/sha1dgst.c pppoecd-2.3-new/pppd/sha1dgst.c
+--- pppoecd-2.3/pppd/sha1dgst.c	1970-01-01 08:00:00.000000000 +0800
++++ pppoecd-2.3-new/pppd/sha1dgst.c	2016-05-31 15:15:58.532351262 +0800
+@@ -0,0 +1,73 @@
++/* crypto/sha/sha1dgst.c */
++/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
++ * All rights reserved.
++ *
++ * This package is an SSL implementation written
++ * by Eric Young (eay@cryptsoft.com).
++ * The implementation was written so as to conform with Netscapes SSL.
++ * 
++ * This library is free for commercial and non-commercial use as long as
++ * the following conditions are aheared to.  The following conditions
++ * apply to all code found in this distribution, be it the RC4, RSA,
++ * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
++ * included with this distribution is covered by the same copyright terms
++ * except that the holder is Tim Hudson (tjh@cryptsoft.com).
++ * 
++ * Copyright remains Eric Young's, and as such any Copyright notices in
++ * the code are not to be removed.
++ * If this package is used in a product, Eric Young should be given attribution
++ * as the author of the parts of the library used.
++ * This can be in the form of a textual message at program startup or
++ * in documentation (online or textual) provided with the package.
++ * 
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. All advertising materials mentioning features or use of this software
++ *    must display the following acknowledgement:
++ *    "This product includes cryptographic software written by
++ *     Eric Young (eay@cryptsoft.com)"
++ *    The word 'cryptographic' can be left out if the rouines from the library
++ *    being used are not cryptographic related :-).
++ * 4. If you include any Windows specific code (or a derivative thereof) from 
++ *    the apps directory (application code) you must include an acknowledgement:
++ *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
++ * 
++ * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
++ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
++ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
++ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
++ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGE.
++ * 
++ * The licence and distribution terms for any publically available version or
++ * derivative of this code cannot be changed.  i.e. this code cannot simply be
++ * copied and put under another distribution licence
++ * [including the GNU Public Licence.]
++ */
++
++#if !defined(NO_SHA1) && !defined(NO_SHA)
++
++#undef  SHA_0
++#define SHA_1
++
++#include <openssl/opensslv.h>
++
++const char *SHA1_version="SHA1" OPENSSL_VERSION_PTEXT;
++
++/* The implementation is in ../md32_common.h */
++
++#include "sha_locl.h"
++
++#endif
++
+diff -urNd pppoecd-2.3/pppd/sha_locl.h pppoecd-2.3-new/pppd/sha_locl.h
+--- pppoecd-2.3/pppd/sha_locl.h	1970-01-01 08:00:00.000000000 +0800
++++ pppoecd-2.3-new/pppd/sha_locl.h	2016-05-31 15:16:44.956351070 +0800
+@@ -0,0 +1,473 @@
++/* crypto/sha/sha_locl.h */
++/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
++ * All rights reserved.
++ *
++ * This package is an SSL implementation written
++ * by Eric Young (eay@cryptsoft.com).
++ * The implementation was written so as to conform with Netscapes SSL.
++ * 
++ * This library is free for commercial and non-commercial use as long as
++ * the following conditions are aheared to.  The following conditions
++ * apply to all code found in this distribution, be it the RC4, RSA,
++ * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
++ * included with this distribution is covered by the same copyright terms
++ * except that the holder is Tim Hudson (tjh@cryptsoft.com).
++ * 
++ * Copyright remains Eric Young's, and as such any Copyright notices in
++ * the code are not to be removed.
++ * If this package is used in a product, Eric Young should be given attribution
++ * as the author of the parts of the library used.
++ * This can be in the form of a textual message at program startup or
++ * in documentation (online or textual) provided with the package.
++ * 
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. All advertising materials mentioning features or use of this software
++ *    must display the following acknowledgement:
++ *    "This product includes cryptographic software written by
++ *     Eric Young (eay@cryptsoft.com)"
++ *    The word 'cryptographic' can be left out if the rouines from the library
++ *    being used are not cryptographic related :-).
++ * 4. If you include any Windows specific code (or a derivative thereof) from 
++ *    the apps directory (application code) you must include an acknowledgement:
++ *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
++ * 
++ * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
++ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
++ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
++ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
++ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGE.
++ * 
++ * The licence and distribution terms for any publically available version or
++ * derivative of this code cannot be changed.  i.e. this code cannot simply be
++ * copied and put under another distribution licence
++ * [including the GNU Public Licence.]
++ */
++
++#ifndef __KERNEL__
++#include <stdlib.h>
++#include <string.h>
++#endif
++
++#include <openssl/opensslconf.h>
++#include <openssl/sha.h>
++
++#ifndef SHA_LONG_LOG2
++#define SHA_LONG_LOG2	2	/* default to 32 bits */
++#endif
++
++#define DATA_ORDER_IS_BIG_ENDIAN
++
++#define HASH_LONG               SHA_LONG
++#define HASH_LONG_LOG2          SHA_LONG_LOG2
++#define HASH_CTX                SHA_CTX
++#define HASH_CBLOCK             SHA_CBLOCK
++#define HASH_LBLOCK             SHA_LBLOCK
++#define HASH_MAKE_STRING(c,s)   do {	\
++	unsigned long ll;		\
++	ll=(c)->h0; HOST_l2c(ll,(s));	\
++	ll=(c)->h1; HOST_l2c(ll,(s));	\
++	ll=(c)->h2; HOST_l2c(ll,(s));	\
++	ll=(c)->h3; HOST_l2c(ll,(s));	\
++	ll=(c)->h4; HOST_l2c(ll,(s));	\
++	} while (0)
++
++#if defined(SHA_0)
++
++# define HASH_UPDATE             	SHA_Update
++# define HASH_TRANSFORM          	SHA_Transform
++# define HASH_FINAL              	SHA_Final
++# define HASH_INIT			SHA_Init
++# define HASH_BLOCK_HOST_ORDER   	sha_block_host_order
++# define HASH_BLOCK_DATA_ORDER   	sha_block_data_order
++# define Xupdate(a,ix,ia,ib,ic,id)	(ix=(a)=(ia^ib^ic^id))
++
++  void sha_block_host_order (SHA_CTX *c, const void *p,int num);
++  void sha_block_data_order (SHA_CTX *c, const void *p,int num);
++
++#elif defined(SHA_1)
++
++# define HASH_UPDATE             	SHA1_Update
++# define HASH_TRANSFORM          	SHA1_Transform
++# define HASH_FINAL              	SHA1_Final
++# define HASH_INIT			SHA1_Init
++# define HASH_BLOCK_HOST_ORDER   	sha1_block_host_order
++# define HASH_BLOCK_DATA_ORDER   	sha1_block_data_order
++# if defined(__MWERKS__) && defined(__MC68K__)
++   /* Metrowerks for Motorola fails otherwise:-( <appro@fy.chalmers.se> */
++#  define Xupdate(a,ix,ia,ib,ic,id)	do { (a)=(ia^ib^ic^id);		\
++					     ix=(a)=ROTATE((a),1);	\
++					} while (0)
++# else
++#  define Xupdate(a,ix,ia,ib,ic,id)	( (a)=(ia^ib^ic^id),	\
++					  ix=(a)=ROTATE((a),1)	\
++					)
++# endif
++
++# ifdef SHA1_ASM
++#  if defined(__i386) || defined(_M_IX86) || defined(__INTEL__)
++#   define sha1_block_host_order		sha1_block_asm_host_order
++#   define DONT_IMPLEMENT_BLOCK_HOST_ORDER
++#   define sha1_block_data_order		sha1_block_asm_data_order
++#   define DONT_IMPLEMENT_BLOCK_DATA_ORDER
++#   define HASH_BLOCK_DATA_ORDER_ALIGNED	sha1_block_asm_data_order
++#  endif
++# endif
++  void sha1_block_host_order (SHA_CTX *c, const void *p,int num);
++  void sha1_block_data_order (SHA_CTX *c, const void *p,int num);
++
++#else
++# error "Either SHA_0 or SHA_1 must be defined."
++#endif
++
++#include "md32_common.h"
++
++#define INIT_DATA_h0 0x67452301UL
++#define INIT_DATA_h1 0xefcdab89UL
++#define INIT_DATA_h2 0x98badcfeUL
++#define INIT_DATA_h3 0x10325476UL
++#define INIT_DATA_h4 0xc3d2e1f0UL
++
++void HASH_INIT (SHA_CTX *c)
++	{
++	c->h0=INIT_DATA_h0;
++	c->h1=INIT_DATA_h1;
++	c->h2=INIT_DATA_h2;
++	c->h3=INIT_DATA_h3;
++	c->h4=INIT_DATA_h4;
++	c->Nl=0;
++	c->Nh=0;
++	c->num=0;
++	}
++
++#define K_00_19	0x5a827999UL
++#define K_20_39 0x6ed9eba1UL
++#define K_40_59 0x8f1bbcdcUL
++#define K_60_79 0xca62c1d6UL
++
++/* As  pointed out by Wei Dai <weidai@eskimo.com>, F() below can be
++ * simplified to the code in F_00_19.  Wei attributes these optimisations
++ * to Peter Gutmann's SHS code, and he attributes it to Rich Schroeppel.
++ * #define F(x,y,z) (((x) & (y))  |  ((~(x)) & (z)))
++ * I've just become aware of another tweak to be made, again from Wei Dai,
++ * in F_40_59, (x&a)|(y&a) -> (x|y)&a
++ */
++#define	F_00_19(b,c,d)	((((c) ^ (d)) & (b)) ^ (d)) 
++#define	F_20_39(b,c,d)	((b) ^ (c) ^ (d))
++#define F_40_59(b,c,d)	(((b) & (c)) | (((b)|(c)) & (d))) 
++#define	F_60_79(b,c,d)	F_20_39(b,c,d)
++
++#define BODY_00_15(i,a,b,c,d,e,f,xi) \
++	(f)=xi+(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
++	(b)=ROTATE((b),30);
++
++#define BODY_16_19(i,a,b,c,d,e,f,xi,xa,xb,xc,xd) \
++	Xupdate(f,xi,xa,xb,xc,xd); \
++	(f)+=(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
++	(b)=ROTATE((b),30);
++
++#define BODY_20_31(i,a,b,c,d,e,f,xi,xa,xb,xc,xd) \
++	Xupdate(f,xi,xa,xb,xc,xd); \
++	(f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
++	(b)=ROTATE((b),30);
++
++#define BODY_32_39(i,a,b,c,d,e,f,xa,xb,xc,xd) \
++	Xupdate(f,xa,xa,xb,xc,xd); \
++	(f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
++	(b)=ROTATE((b),30);
++
++#define BODY_40_59(i,a,b,c,d,e,f,xa,xb,xc,xd) \
++	Xupdate(f,xa,xa,xb,xc,xd); \
++	(f)+=(e)+K_40_59+ROTATE((a),5)+F_40_59((b),(c),(d)); \
++	(b)=ROTATE((b),30);
++
++#define BODY_60_79(i,a,b,c,d,e,f,xa,xb,xc,xd) \
++	Xupdate(f,xa,xa,xb,xc,xd); \
++	(f)=xa+(e)+K_60_79+ROTATE((a),5)+F_60_79((b),(c),(d)); \
++	(b)=ROTATE((b),30);
++
++#ifdef X
++#undef X
++#endif
++#ifndef MD32_XARRAY
++  /*
++   * Originally X was an array. As it's automatic it's natural
++   * to expect RISC compiler to accomodate at least part of it in
++   * the register bank, isn't it? Unfortunately not all compilers
++   * "find" this expectation reasonable:-( On order to make such
++   * compilers generate better code I replace X[] with a bunch of
++   * X0, X1, etc. See the function body below...
++   *					<appro@fy.chalmers.se>
++   */
++# define X(i)	XX##i
++#else
++  /*
++   * However! Some compilers (most notably HP C) get overwhelmed by
++   * that many local variables so that we have to have the way to
++   * fall down to the original behavior.
++   */
++# define X(i)	XX[i]
++#endif
++
++#ifndef DONT_IMPLEMENT_BLOCK_HOST_ORDER
++void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, int num)
++	{
++	const SHA_LONG *W=d;
++	register unsigned long A,B,C,D,E,T;
++#ifndef MD32_XARRAY
++	unsigned long	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
++			XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
++#else
++	SHA_LONG	XX[16];
++#endif
++
++	A=c->h0;
++	B=c->h1;
++	C=c->h2;
++	D=c->h3;
++	E=c->h4;
++
++	for (;;)
++		{
++	BODY_00_15( 0,A,B,C,D,E,T,W[ 0]);
++	BODY_00_15( 1,T,A,B,C,D,E,W[ 1]);
++	BODY_00_15( 2,E,T,A,B,C,D,W[ 2]);
++	BODY_00_15( 3,D,E,T,A,B,C,W[ 3]);
++	BODY_00_15( 4,C,D,E,T,A,B,W[ 4]);
++	BODY_00_15( 5,B,C,D,E,T,A,W[ 5]);
++	BODY_00_15( 6,A,B,C,D,E,T,W[ 6]);
++	BODY_00_15( 7,T,A,B,C,D,E,W[ 7]);
++	BODY_00_15( 8,E,T,A,B,C,D,W[ 8]);
++	BODY_00_15( 9,D,E,T,A,B,C,W[ 9]);
++	BODY_00_15(10,C,D,E,T,A,B,W[10]);
++	BODY_00_15(11,B,C,D,E,T,A,W[11]);
++	BODY_00_15(12,A,B,C,D,E,T,W[12]);
++	BODY_00_15(13,T,A,B,C,D,E,W[13]);
++	BODY_00_15(14,E,T,A,B,C,D,W[14]);
++	BODY_00_15(15,D,E,T,A,B,C,W[15]);
++
++	BODY_16_19(16,C,D,E,T,A,B,X( 0),W[ 0],W[ 2],W[ 8],W[13]);
++	BODY_16_19(17,B,C,D,E,T,A,X( 1),W[ 1],W[ 3],W[ 9],W[14]);
++	BODY_16_19(18,A,B,C,D,E,T,X( 2),W[ 2],W[ 4],W[10],W[15]);
++	BODY_16_19(19,T,A,B,C,D,E,X( 3),W[ 3],W[ 5],W[11],X( 0));
++
++	BODY_20_31(20,E,T,A,B,C,D,X( 4),W[ 4],W[ 6],W[12],X( 1));
++	BODY_20_31(21,D,E,T,A,B,C,X( 5),W[ 5],W[ 7],W[13],X( 2));
++	BODY_20_31(22,C,D,E,T,A,B,X( 6),W[ 6],W[ 8],W[14],X( 3));
++	BODY_20_31(23,B,C,D,E,T,A,X( 7),W[ 7],W[ 9],W[15],X( 4));
++	BODY_20_31(24,A,B,C,D,E,T,X( 8),W[ 8],W[10],X( 0),X( 5));
++	BODY_20_31(25,T,A,B,C,D,E,X( 9),W[ 9],W[11],X( 1),X( 6));
++	BODY_20_31(26,E,T,A,B,C,D,X(10),W[10],W[12],X( 2),X( 7));
++	BODY_20_31(27,D,E,T,A,B,C,X(11),W[11],W[13],X( 3),X( 8));
++	BODY_20_31(28,C,D,E,T,A,B,X(12),W[12],W[14],X( 4),X( 9));
++	BODY_20_31(29,B,C,D,E,T,A,X(13),W[13],W[15],X( 5),X(10));
++	BODY_20_31(30,A,B,C,D,E,T,X(14),W[14],X( 0),X( 6),X(11));
++	BODY_20_31(31,T,A,B,C,D,E,X(15),W[15],X( 1),X( 7),X(12));
++
++	BODY_32_39(32,E,T,A,B,C,D,X( 0),X( 2),X( 8),X(13));
++	BODY_32_39(33,D,E,T,A,B,C,X( 1),X( 3),X( 9),X(14));
++	BODY_32_39(34,C,D,E,T,A,B,X( 2),X( 4),X(10),X(15));
++	BODY_32_39(35,B,C,D,E,T,A,X( 3),X( 5),X(11),X( 0));
++	BODY_32_39(36,A,B,C,D,E,T,X( 4),X( 6),X(12),X( 1));
++	BODY_32_39(37,T,A,B,C,D,E,X( 5),X( 7),X(13),X( 2));
++	BODY_32_39(38,E,T,A,B,C,D,X( 6),X( 8),X(14),X( 3));
++	BODY_32_39(39,D,E,T,A,B,C,X( 7),X( 9),X(15),X( 4));
++
++	BODY_40_59(40,C,D,E,T,A,B,X( 8),X(10),X( 0),X( 5));
++	BODY_40_59(41,B,C,D,E,T,A,X( 9),X(11),X( 1),X( 6));
++	BODY_40_59(42,A,B,C,D,E,T,X(10),X(12),X( 2),X( 7));
++	BODY_40_59(43,T,A,B,C,D,E,X(11),X(13),X( 3),X( 8));
++	BODY_40_59(44,E,T,A,B,C,D,X(12),X(14),X( 4),X( 9));
++	BODY_40_59(45,D,E,T,A,B,C,X(13),X(15),X( 5),X(10));
++	BODY_40_59(46,C,D,E,T,A,B,X(14),X( 0),X( 6),X(11));
++	BODY_40_59(47,B,C,D,E,T,A,X(15),X( 1),X( 7),X(12));
++	BODY_40_59(48,A,B,C,D,E,T,X( 0),X( 2),X( 8),X(13));
++	BODY_40_59(49,T,A,B,C,D,E,X( 1),X( 3),X( 9),X(14));
++	BODY_40_59(50,E,T,A,B,C,D,X( 2),X( 4),X(10),X(15));
++	BODY_40_59(51,D,E,T,A,B,C,X( 3),X( 5),X(11),X( 0));
++	BODY_40_59(52,C,D,E,T,A,B,X( 4),X( 6),X(12),X( 1));
++	BODY_40_59(53,B,C,D,E,T,A,X( 5),X( 7),X(13),X( 2));
++	BODY_40_59(54,A,B,C,D,E,T,X( 6),X( 8),X(14),X( 3));
++	BODY_40_59(55,T,A,B,C,D,E,X( 7),X( 9),X(15),X( 4));
++	BODY_40_59(56,E,T,A,B,C,D,X( 8),X(10),X( 0),X( 5));
++	BODY_40_59(57,D,E,T,A,B,C,X( 9),X(11),X( 1),X( 6));
++	BODY_40_59(58,C,D,E,T,A,B,X(10),X(12),X( 2),X( 7));
++	BODY_40_59(59,B,C,D,E,T,A,X(11),X(13),X( 3),X( 8));
++
++	BODY_60_79(60,A,B,C,D,E,T,X(12),X(14),X( 4),X( 9));
++	BODY_60_79(61,T,A,B,C,D,E,X(13),X(15),X( 5),X(10));
++	BODY_60_79(62,E,T,A,B,C,D,X(14),X( 0),X( 6),X(11));
++	BODY_60_79(63,D,E,T,A,B,C,X(15),X( 1),X( 7),X(12));
++	BODY_60_79(64,C,D,E,T,A,B,X( 0),X( 2),X( 8),X(13));
++	BODY_60_79(65,B,C,D,E,T,A,X( 1),X( 3),X( 9),X(14));
++	BODY_60_79(66,A,B,C,D,E,T,X( 2),X( 4),X(10),X(15));
++	BODY_60_79(67,T,A,B,C,D,E,X( 3),X( 5),X(11),X( 0));
++	BODY_60_79(68,E,T,A,B,C,D,X( 4),X( 6),X(12),X( 1));
++	BODY_60_79(69,D,E,T,A,B,C,X( 5),X( 7),X(13),X( 2));
++	BODY_60_79(70,C,D,E,T,A,B,X( 6),X( 8),X(14),X( 3));
++	BODY_60_79(71,B,C,D,E,T,A,X( 7),X( 9),X(15),X( 4));
++	BODY_60_79(72,A,B,C,D,E,T,X( 8),X(10),X( 0),X( 5));
++	BODY_60_79(73,T,A,B,C,D,E,X( 9),X(11),X( 1),X( 6));
++	BODY_60_79(74,E,T,A,B,C,D,X(10),X(12),X( 2),X( 7));
++	BODY_60_79(75,D,E,T,A,B,C,X(11),X(13),X( 3),X( 8));
++	BODY_60_79(76,C,D,E,T,A,B,X(12),X(14),X( 4),X( 9));
++	BODY_60_79(77,B,C,D,E,T,A,X(13),X(15),X( 5),X(10));
++	BODY_60_79(78,A,B,C,D,E,T,X(14),X( 0),X( 6),X(11));
++	BODY_60_79(79,T,A,B,C,D,E,X(15),X( 1),X( 7),X(12));
++	
++	c->h0=(c->h0+E)&0xffffffffL; 
++	c->h1=(c->h1+T)&0xffffffffL;
++	c->h2=(c->h2+A)&0xffffffffL;
++	c->h3=(c->h3+B)&0xffffffffL;
++	c->h4=(c->h4+C)&0xffffffffL;
++
++	if (--num <= 0) break;
++
++	A=c->h0;
++	B=c->h1;
++	C=c->h2;
++	D=c->h3;
++	E=c->h4;
++
++	W+=SHA_LBLOCK;
++		}
++	}
++#endif
++
++#ifndef DONT_IMPLEMENT_BLOCK_DATA_ORDER
++void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, int num)
++	{
++	const unsigned char *data=p;
++	register unsigned long A,B,C,D,E,T,l;
++#ifndef MD32_XARRAY
++	unsigned long	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
++			XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
++#else
++	SHA_LONG	XX[16];
++#endif
++
++	A=c->h0;
++	B=c->h1;
++	C=c->h2;
++	D=c->h3;
++	E=c->h4;
++
++	for (;;)
++		{
++
++	HOST_c2l(data,l); X( 0)=l;		HOST_c2l(data,l); X( 1)=l;
++	BODY_00_15( 0,A,B,C,D,E,T,X( 0));	HOST_c2l(data,l); X( 2)=l;
++	BODY_00_15( 1,T,A,B,C,D,E,X( 1));	HOST_c2l(data,l); X( 3)=l;
++	BODY_00_15( 2,E,T,A,B,C,D,X( 2));	HOST_c2l(data,l); X( 4)=l;
++	BODY_00_15( 3,D,E,T,A,B,C,X( 3));	HOST_c2l(data,l); X( 5)=l;
++	BODY_00_15( 4,C,D,E,T,A,B,X( 4));	HOST_c2l(data,l); X( 6)=l;
++	BODY_00_15( 5,B,C,D,E,T,A,X( 5));	HOST_c2l(data,l); X( 7)=l;
++	BODY_00_15( 6,A,B,C,D,E,T,X( 6));	HOST_c2l(data,l); X( 8)=l;
++	BODY_00_15( 7,T,A,B,C,D,E,X( 7));	HOST_c2l(data,l); X( 9)=l;
++	BODY_00_15( 8,E,T,A,B,C,D,X( 8));	HOST_c2l(data,l); X(10)=l;
++	BODY_00_15( 9,D,E,T,A,B,C,X( 9));	HOST_c2l(data,l); X(11)=l;
++	BODY_00_15(10,C,D,E,T,A,B,X(10));	HOST_c2l(data,l); X(12)=l;
++	BODY_00_15(11,B,C,D,E,T,A,X(11));	HOST_c2l(data,l); X(13)=l;
++	BODY_00_15(12,A,B,C,D,E,T,X(12));	HOST_c2l(data,l); X(14)=l;
++	BODY_00_15(13,T,A,B,C,D,E,X(13));	HOST_c2l(data,l); X(15)=l;
++	BODY_00_15(14,E,T,A,B,C,D,X(14));
++	BODY_00_15(15,D,E,T,A,B,C,X(15));
++
++	BODY_16_19(16,C,D,E,T,A,B,X( 0),X( 0),X( 2),X( 8),X(13));
++	BODY_16_19(17,B,C,D,E,T,A,X( 1),X( 1),X( 3),X( 9),X(14));
++	BODY_16_19(18,A,B,C,D,E,T,X( 2),X( 2),X( 4),X(10),X(15));
++	BODY_16_19(19,T,A,B,C,D,E,X( 3),X( 3),X( 5),X(11),X( 0));
++
++	BODY_20_31(20,E,T,A,B,C,D,X( 4),X( 4),X( 6),X(12),X( 1));
++	BODY_20_31(21,D,E,T,A,B,C,X( 5),X( 5),X( 7),X(13),X( 2));
++	BODY_20_31(22,C,D,E,T,A,B,X( 6),X( 6),X( 8),X(14),X( 3));
++	BODY_20_31(23,B,C,D,E,T,A,X( 7),X( 7),X( 9),X(15),X( 4));
++	BODY_20_31(24,A,B,C,D,E,T,X( 8),X( 8),X(10),X( 0),X( 5));
++	BODY_20_31(25,T,A,B,C,D,E,X( 9),X( 9),X(11),X( 1),X( 6));
++	BODY_20_31(26,E,T,A,B,C,D,X(10),X(10),X(12),X( 2),X( 7));
++	BODY_20_31(27,D,E,T,A,B,C,X(11),X(11),X(13),X( 3),X( 8));
++	BODY_20_31(28,C,D,E,T,A,B,X(12),X(12),X(14),X( 4),X( 9));
++	BODY_20_31(29,B,C,D,E,T,A,X(13),X(13),X(15),X( 5),X(10));
++	BODY_20_31(30,A,B,C,D,E,T,X(14),X(14),X( 0),X( 6),X(11));
++	BODY_20_31(31,T,A,B,C,D,E,X(15),X(15),X( 1),X( 7),X(12));
++
++	BODY_32_39(32,E,T,A,B,C,D,X( 0),X( 2),X( 8),X(13));
++	BODY_32_39(33,D,E,T,A,B,C,X( 1),X( 3),X( 9),X(14));
++	BODY_32_39(34,C,D,E,T,A,B,X( 2),X( 4),X(10),X(15));
++	BODY_32_39(35,B,C,D,E,T,A,X( 3),X( 5),X(11),X( 0));
++	BODY_32_39(36,A,B,C,D,E,T,X( 4),X( 6),X(12),X( 1));
++	BODY_32_39(37,T,A,B,C,D,E,X( 5),X( 7),X(13),X( 2));
++	BODY_32_39(38,E,T,A,B,C,D,X( 6),X( 8),X(14),X( 3));
++	BODY_32_39(39,D,E,T,A,B,C,X( 7),X( 9),X(15),X( 4));
++
++	BODY_40_59(40,C,D,E,T,A,B,X( 8),X(10),X( 0),X( 5));
++	BODY_40_59(41,B,C,D,E,T,A,X( 9),X(11),X( 1),X( 6));
++	BODY_40_59(42,A,B,C,D,E,T,X(10),X(12),X( 2),X( 7));
++	BODY_40_59(43,T,A,B,C,D,E,X(11),X(13),X( 3),X( 8));
++	BODY_40_59(44,E,T,A,B,C,D,X(12),X(14),X( 4),X( 9));
++	BODY_40_59(45,D,E,T,A,B,C,X(13),X(15),X( 5),X(10));
++	BODY_40_59(46,C,D,E,T,A,B,X(14),X( 0),X( 6),X(11));
++	BODY_40_59(47,B,C,D,E,T,A,X(15),X( 1),X( 7),X(12));
++	BODY_40_59(48,A,B,C,D,E,T,X( 0),X( 2),X( 8),X(13));
++	BODY_40_59(49,T,A,B,C,D,E,X( 1),X( 3),X( 9),X(14));
++	BODY_40_59(50,E,T,A,B,C,D,X( 2),X( 4),X(10),X(15));
++	BODY_40_59(51,D,E,T,A,B,C,X( 3),X( 5),X(11),X( 0));
++	BODY_40_59(52,C,D,E,T,A,B,X( 4),X( 6),X(12),X( 1));
++	BODY_40_59(53,B,C,D,E,T,A,X( 5),X( 7),X(13),X( 2));
++	BODY_40_59(54,A,B,C,D,E,T,X( 6),X( 8),X(14),X( 3));
++	BODY_40_59(55,T,A,B,C,D,E,X( 7),X( 9),X(15),X( 4));
++	BODY_40_59(56,E,T,A,B,C,D,X( 8),X(10),X( 0),X( 5));
++	BODY_40_59(57,D,E,T,A,B,C,X( 9),X(11),X( 1),X( 6));
++	BODY_40_59(58,C,D,E,T,A,B,X(10),X(12),X( 2),X( 7));
++	BODY_40_59(59,B,C,D,E,T,A,X(11),X(13),X( 3),X( 8));
++
++	BODY_60_79(60,A,B,C,D,E,T,X(12),X(14),X( 4),X( 9));
++	BODY_60_79(61,T,A,B,C,D,E,X(13),X(15),X( 5),X(10));
++	BODY_60_79(62,E,T,A,B,C,D,X(14),X( 0),X( 6),X(11));
++	BODY_60_79(63,D,E,T,A,B,C,X(15),X( 1),X( 7),X(12));
++	BODY_60_79(64,C,D,E,T,A,B,X( 0),X( 2),X( 8),X(13));
++	BODY_60_79(65,B,C,D,E,T,A,X( 1),X( 3),X( 9),X(14));
++	BODY_60_79(66,A,B,C,D,E,T,X( 2),X( 4),X(10),X(15));
++	BODY_60_79(67,T,A,B,C,D,E,X( 3),X( 5),X(11),X( 0));
++	BODY_60_79(68,E,T,A,B,C,D,X( 4),X( 6),X(12),X( 1));
++	BODY_60_79(69,D,E,T,A,B,C,X( 5),X( 7),X(13),X( 2));
++	BODY_60_79(70,C,D,E,T,A,B,X( 6),X( 8),X(14),X( 3));
++	BODY_60_79(71,B,C,D,E,T,A,X( 7),X( 9),X(15),X( 4));
++	BODY_60_79(72,A,B,C,D,E,T,X( 8),X(10),X( 0),X( 5));
++	BODY_60_79(73,T,A,B,C,D,E,X( 9),X(11),X( 1),X( 6));
++	BODY_60_79(74,E,T,A,B,C,D,X(10),X(12),X( 2),X( 7));
++	BODY_60_79(75,D,E,T,A,B,C,X(11),X(13),X( 3),X( 8));
++	BODY_60_79(76,C,D,E,T,A,B,X(12),X(14),X( 4),X( 9));
++	BODY_60_79(77,B,C,D,E,T,A,X(13),X(15),X( 5),X(10));
++	BODY_60_79(78,A,B,C,D,E,T,X(14),X( 0),X( 6),X(11));
++	BODY_60_79(79,T,A,B,C,D,E,X(15),X( 1),X( 7),X(12));
++	
++	c->h0=(c->h0+E)&0xffffffffL; 
++	c->h1=(c->h1+T)&0xffffffffL;
++	c->h2=(c->h2+A)&0xffffffffL;
++	c->h3=(c->h3+B)&0xffffffffL;
++	c->h4=(c->h4+C)&0xffffffffL;
++
++	if (--num <= 0) break;
++
++	A=c->h0;
++	B=c->h1;
++	C=c->h2;
++	D=c->h3;
++	E=c->h4;
++
++		}
++	}
++#endif
+diff -urNd pppoecd-2.3/pppoecd/Makefile pppoecd-2.3-new/pppoecd/Makefile
+--- pppoecd-2.3/pppoecd/Makefile	2011-12-29 12:28:49.000000000 +0800
++++ pppoecd-2.3-new/pppoecd/Makefile	2016-05-31 15:15:03.465664217 +0800
+@@ -60,7 +60,7 @@
+ 
+ ifdef CHAPMS_SUPPORT
+ CFLAGS	+= -DCHAPMS=1 -DUSE_CRYPT=1 -DHAVE_CRYPT_H=1
+-OBJS	+= md4.o chap_ms.o
++OBJS	+= md4.o chap_ms.o sha1dgst.o mppe.o extra_crypto.o
+ endif
+ 
+ ifdef HAVE_INET6

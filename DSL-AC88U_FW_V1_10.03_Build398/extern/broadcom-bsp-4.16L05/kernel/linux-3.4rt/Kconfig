@@ -1,0 +1,20 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+mainmenu "Linux/$ARCH $KERNELVERSION Kernel Configuration"
+
+config SRCARCH
+	string
+	option env="SRCARCH"
+
+source "arch/$SRCARCH/Kconfig"
+
+#IGNORE_BCM_KF_EXCEPTION
+source "Kconfig.bcm_kf"
+
+source "Kconfig.bcm"
+
+config BCM_IN_KERNEL
+	bool
+	default y

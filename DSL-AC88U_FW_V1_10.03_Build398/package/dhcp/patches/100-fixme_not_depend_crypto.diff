@@ -1,0 +1,14 @@
+diff --git a/configure b/configure
+index 974f285..b0f3fdf 100755
+--- a/configure
++++ b/configure
+@@ -6820,7 +6820,8 @@ for ac_lib in '' crypto; do
+     ac_res="none required"
+   else
+     ac_res=-l$ac_lib
+-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
++#    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"  # FIXME: do not depend on libcrypto.so (jingwei 2015/01)
++    LIBS=$ac_func_search_save_LIBS
+   fi
+   rm -f conftest.$ac_objext conftest$ac_exeext
+ if { (ac_try="$ac_link"

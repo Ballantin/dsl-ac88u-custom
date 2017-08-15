@@ -1,0 +1,1 @@
+cmd_drivers/misc/built-in.o :=  /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/bin/arm-unknown-linux-uclibcgnueabi-ld -EL    -r -o drivers/misc/built-in.o drivers/misc/eeprom/built-in.o drivers/misc/cb710/built-in.o drivers/misc/ti-st/built-in.o drivers/misc/lis3lv02d/built-in.o drivers/misc/carma/built-in.o 

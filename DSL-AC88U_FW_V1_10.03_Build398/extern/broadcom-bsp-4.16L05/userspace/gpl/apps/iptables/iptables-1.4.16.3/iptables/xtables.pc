@@ -1,0 +1,13 @@
+
+prefix=/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install
+exec_prefix=${prefix}
+libdir=/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/gpl
+xtlibdir=/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/gpl/xtables
+includedir=${prefix}/include
+
+Name:		xtables
+Description:	Shared Xtables code for extensions and iproute2
+Version:	1.4.16.3
+Cflags:		-I${includedir}
+Libs:		-L${libdir} -lxtables
+Libs.private:	-ldl

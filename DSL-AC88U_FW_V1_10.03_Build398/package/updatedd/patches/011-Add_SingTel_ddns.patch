@@ -1,0 +1,536 @@
+	o Jingwei Liang 2015/07
+	Add SingTel ddns server support 
+
+diff --git a/src/plugins/Makefile.am b/src/plugins/Makefile.am
+index f72200e..f146485 100644
+--- a/src/plugins/Makefile.am
++++ b/src/plugins/Makefile.am
+@@ -5,6 +5,7 @@ AM_CFLAGS = -Wall -Wwrite-strings -Wstrict-prototypes -Wno-trigraphs
+ 
+ ## libraries
+ pkglib_LTLIBRARIES = libchangeip.la libdnsdynamic.la libdyndns.la libeurodyndns.la libhn.la libnoip.la libods.la libovh.la libregfish.la libtzo.la libzoneedit.la
++pkglib_LTLIBRARIES += libSingTel.la
+ 
+ libchangeip_la_SOURCES = libchangeip.c libchangeip.h
+ libchangeip_la_LIBADD  = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+@@ -28,9 +29,14 @@ libtzo_la_SOURCES = libtzo.c libtzo.h
+ libtzo_la_LIBADD  = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+ libzoneedit_la_SOURCES = libzoneedit.c libzoneedit.h
+ libzoneedit_la_LIBADD  = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
++libSingTel_la_SOURCES = libSingTel.c libSingTel.h
++SSL_LIB_DIR  = $(STAGING_DIR)/usr/lib
++SSL_LIB_FILE = $(SSL_LIB_DIR)/libssl.a $(SSL_LIB_DIR)/libcrypto.a
++libSingTel_la_LIBADD  = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la $(SSL_LIB_FILE)
+ 
+ ## include dir
+ INCLUDES = -I$(top_srcdir)/include
+ 
+ ## install headers
+ include_HEADERS = libchangeip.h libdnsdynamic.h libdyndns.h libeurodyndns.h libhn.h libnoip.h libods.h libovh.h libregfish.h libtzo.h libzoneedit.h
++include_HEADERS += libSingTel.h
+diff --git a/src/plugins/Makefile.in b/src/plugins/Makefile.in
+index 51bc8b5..00d79a3 100644
+--- a/src/plugins/Makefile.in
++++ b/src/plugins/Makefile.in
+@@ -93,6 +93,9 @@ am_libtzo_la_OBJECTS = libtzo.lo
+ libtzo_la_OBJECTS = $(am_libtzo_la_OBJECTS)
+ am_libzoneedit_la_OBJECTS = libzoneedit.lo
+ libzoneedit_la_OBJECTS = $(am_libzoneedit_la_OBJECTS)
++libSingTel_la_DEPENDENCIES = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
++am_libSingTel_la_OBJECTS = libSingTel.lo
++libSingTel_la_OBJECTS = $(am_libSingTel_la_OBJECTS)
+ DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
+ depcomp = $(SHELL) $(top_srcdir)/depcomp
+ am__depfiles_maybe = depfiles
+@@ -110,12 +113,14 @@ SOURCES = $(libchangeip_la_SOURCES) $(libdyndns_la_SOURCES) \
+ 	$(libovh_la_SOURCES) $(libregfish_la_SOURCES) \
+ 	$(libtzo_la_SOURCES) $(libzoneedit_la_SOURCES) \
+ 	$(libdnsdynamic_la_SOURCES)
++SOURCES += $(libSingTel_la_SOURCES)
+ DIST_SOURCES = $(libchangeip_la_SOURCES) $(libdyndns_la_SOURCES) \
+ 	$(libeurodyndns_la_SOURCES) $(libhn_la_SOURCES) \
+ 	$(libnoip_la_SOURCES) $(libods_la_SOURCES) \
+ 	$(libovh_la_SOURCES) $(libregfish_la_SOURCES) \
+ 	$(libtzo_la_SOURCES) $(libzoneedit_la_SOURCES) \
+ 	$(libdnsdynamic_la_SOURCES)
++DIST_SOURCES += $(libSingTel_la_SOURCES)
+ 
+ includeHEADERS_INSTALL = $(INSTALL_HEADER)
+ HEADERS = $(include_HEADERS)
+@@ -238,6 +243,7 @@ target_os = @target_os@
+ target_vendor = @target_vendor@
+ AM_CFLAGS = -Wall -Wwrite-strings -Wstrict-prototypes -Wno-trigraphs
+ pkglib_LTLIBRARIES = libchangeip.la libdnsdynamic.la libdyndns.la libeurodyndns.la libhn.la libnoip.la libods.la libovh.la libregfish.la libtzo.la libzoneedit.la
++pkglib_LTLIBRARIES += libSingTel.la
+ libchangeip_la_SOURCES = libchangeip.c libchangeip.h
+ libchangeip_la_LIBADD = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+ libdnsdynamic_la_SOURCES = libdnsdynamic.c libdnsdynamic.h
+@@ -260,8 +266,13 @@ libtzo_la_SOURCES = libtzo.c libtzo.h
+ libtzo_la_LIBADD = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+ libtzo_la_SOURCES = libzoneedit.c libzoneedit.h
+ libtzo_la_LIBADD = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
++libSingTel_la_SOURCES = libSingTel.c libSingTel.h
++SSL_LIB_DIR  = $(STAGING_DIR)/usr/lib
++SSL_LIB_FILE = $(SSL_LIB_DIR)/libssl.a $(SSL_LIB_DIR)/libcrypto.a
++libSingTel_la_LIBADD = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la $(SSL_LIB_FILE)
+ INCLUDES = -I$(top_srcdir)/include
+ include_HEADERS = libdnsdynamic.h libdnsdynamic.h libdyndns.h libeurodyndns.h libhn.h libnoip.h libods.h libovh.h libregfish.h libtzo.h libzoneedit.h
++include_HEADERS += libSingTel.h
+ all: all-am
+ 
+ .SUFFIXES:
+@@ -344,6 +355,8 @@ libtzo.la: $(libtzo_la_OBJECTS) $(libtzo_la_DEPENDENCIES)
+ 	$(LINK) -rpath $(pkglibdir) $(libtzo_la_LDFLAGS) $(libtzo_la_OBJECTS) $(libtzo_la_LIBADD) $(LIBS)
+ libzoneedit.la: $(libzoneedit_la_OBJECTS) $(libzoneedit_la_DEPENDENCIES) 
+ 	$(LINK) -rpath $(pkglibdir) $(libzoneedit_la_LDFLAGS) $(libzoneedit_la_OBJECTS) $(libzoneedit_la_LIBADD) $(LIBS)
++libSingTel.la: $(libSingTel_la_OBJECTS) $(libSingTel_la_DEPENDENCIES)
++	$(LINK) -rpath $(pkglibdir) $(libSingTel_la_LDFLAGS) $(libSingTel_la_OBJECTS) $(libSingTel_la_LIBADD) $(LIBS)
+ 
+ mostlyclean-compile:
+ 	-rm -f *.$(OBJEXT)
+@@ -362,6 +375,7 @@ distclean-compile:
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libregfish.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtzo.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libzoneedit.Plo@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libSingTel.Plo@am__quote@
+ 
+ .c.o:
+ @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+diff --git a/src/plugins/libSingTel.c b/src/plugins/libSingTel.c
+new file mode 100644
+index 0000000..4369567
+--- /dev/null
++++ b/src/plugins/libSingTel.c
+@@ -0,0 +1,347 @@
++/* -- updatedd: libSingTel.c --
++ *
++ * Copyright (C) 2002, 2003, 2004, 2005 Philipp Benner
++ *
++ * This file is part of UpdateDD - http://updatedd.philipp-benner.de.
++ *
++ * UpdateDD is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * any later version.
++ *
++ * UpdateDD is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with UpdateDD; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++ */
++
++/*
++ * Arcadyan Corp. Jingwei Liang 2015/07
++ * More informations please refer http://info.singtel.com/
++ * 
++ */
++
++#include <config.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <stdarg.h>
++#include <ctype.h>
++#include <unistd.h>
++#include <getopt.h>
++
++#include <base64encode.h>
++#include <get_connection.h>
++#include <updatedd-exception.h>
++#include <ret_codes.h>
++#include <version.h>
++
++#include "libSingTel.h"
++
++/* openssl head files */
++#include <openssl/ssl.h>
++#include <openssl/x509.h>
++#include <openssl/err.h>
++#include <openssl/rand.h>
++
++SSL *ssl;
++SSL_CTX *ctx;
++
++static void
++print_usage(char *pname, FILE *fp)
++{
++	(void)fprintf(fp,
++		      "\nUsage: %s [...] %s -- [OPTION]... [USERNAME:PASSWORD] HOSTNAME\n\n",
++		      pname, COLORED("SingTel"));
++	(void)fprintf(fp,
++		      "For security reasons use the environment variable LOGIN instead of\n"
++		      "passing the login information directly.\n\n"
++		      "Options:\n"
++		      "   -4    --ipv4 <address>        ip address version 4\n"
++		      "   -6    --ipv6 <address>        ip address version 6\n"
++		      "         --help                  print help and exit\n"
++		      "         --version               display version information and exit\n\n"
++		      "Report bugs to <"EMAIL">.\n\n");
++        
++	return;
++}
++
++static void
++print_version(FILE *fp)
++{
++        
++	(void)fprintf(fp,
++		      "\n" PNAME " plugin for www.singtel.com, version 1.0,\n"
++		      "Copyright (C) 2015 Arcadyan Corp.\n\n"
++
++		      "This is free software, and you are welcome to redistribute it\n"
++		      "under certain conditions; see the source for copying conditions.\n"
++		      "There is NO warranty; not even for MERCHANTABILITY or FITNESS\n"
++		      "FOR A PARTICULAR PURPOSE.\n\n");
++
++	return;
++        
++}
++
++static void
++ret_msg(int mode, const char *fmt, ...)
++{
++        
++	va_list az;
++        
++	va_start(az, fmt);
++	(void)vs_warn(ret_msg_buf, BUFSIZE, mode, fmt, az);
++	va_end(az);
++        
++	return;
++        
++}
++
++int
++dyndns(int argc, char *argv[])
++{
++        
++	struct arguments args;
++	int s, ret;
++	const char *ptr;
++
++	(void)memset(&args, 0, sizeof(struct arguments));
++	
++	if(get_flags(&args, argc, argv) != RET_OK) {
++		return RET_WRONG_USAGE;
++	}
++        
++	s = get_connection(DYNDNSHOST, PORT, &ptr);
++	if(s == -1) {
++		ret_msg(HERR, "%s: %s", ptr, DYNDNSHOST);
++		ret = RET_WARNING;
++	} else {
++		
++		/* -- SSL init -- */
++		SSL_library_init();
++		SSL_load_error_strings();
++		
++		if ((ctx = SSL_CTX_new(SSLv23_client_method())) == NULL) {
++			ret_msg(PERR, "SingTel ddns: SSL_CTX_new fail");
++			return  RET_WARNING;
++		}
++		
++		if ((ssl = SSL_new(ctx)) == NULL) {
++			ret_msg(PERR, "SingTel ddns: SSL_new fail ");
++			return RET_WARNING;
++		}
++		
++		if ((ret = SSL_set_fd(ssl, s)) == 0) {
++			ret_msg(PERR, "SingTel ddns: SSL_set_fd fail");
++			return RET_WARNING;
++		}
++
++		RAND_poll();
++
++		while (RAND_status() == 0) {
++			unsigned short rand_ret = rand() % 65536;
++			RAND_seed(&rand_ret, sizeof(rand_ret));
++		}
++		
++		if ((ret = SSL_connect(ssl)) != 1) {
++			ret_msg(PERR, "SingTel ddns: SSL_connect fail");
++			return RET_WARNING;
++		}
++		/* -- SSL init -- */
++
++		ret = update_dyndns(s, &args);
++		if(ret == RET_OK) {
++			ret = check_server_msg(s, args.hostname);
++		}
++		
++		/* -- SSL end -- */
++		SSL_shutdown(ssl);
++		(void)close(s);
++		SSL_free(ssl);
++		SSL_CTX_free(ctx);
++		ERR_free_strings();
++	}
++        
++	return ret;
++}
++
++static int
++get_flags(struct arguments *args, int argc, char *argv[])
++{
++        
++	int c;
++
++	for(;;) {
++                
++		int option_index = 0;
++		static struct option long_options[] = {
++			{ "ipv4",		1, 0, '4' },
++			{ "ipv6",		1, 0, '6' },
++			{ "help",		0, 0, 'h' },
++			{ "version",		0, 0, 'v' },
++			{ NULL,			0, 0, 0   }
++		};
++                
++		c = getopt_long(argc, argv, "4:6:",
++				long_options, &option_index);
++                
++		if(c == -1) break;
++                
++		switch(c) {
++		case '4':
++			args->ipv4 = optarg;
++			break;
++		case '6':
++			args->ipv6 = optarg;
++			break;
++		case 'h':
++			print_usage(argv[ARGV_PNAME], stdout);
++			exit(EXIT_SUCCESS);
++		case 'v':
++			print_version(stdout);
++			exit(EXIT_SUCCESS);
++		}
++	}
++
++	switch(argc-optind) {
++        default:
++		ret_msg(NONE, "wrong usage");
++		return RET_WRONG_USAGE;
++                
++        case 2:
++		args->login = getenv("LOGIN");
++		if(args->login == NULL) {
++			ret_msg(NONE,
++				"environment variable LOGIN is empty");
++			return RET_WRONG_USAGE;
++		}
++		break;
++        case 3:
++		args->login = argv[ARGV_LOGIN];
++	}
++	args->hostname = argv[ARGV_HOSTNAME];
++        
++	return RET_OK;
++        
++}
++
++#define BUFLEN		4096
++#define BUFFREE(name)	BUFLEN - strlen(name)
++
++static int
++update_dyndns(const int s, struct arguments *args)
++{
++
++	char *b64user;
++	char message[BUFLEN];
++        
++	if(strlen(args->login) > 128) {
++		ret_msg(NONE, "username is too long");
++		return RET_ERROR;
++	}
++	b64user = (char *)malloc((2 * strlen(args->login) + 1));
++	if(b64user == NULL) {
++		ret_msg(PERR, "malloc() failed");
++		return RET_WARNING;
++	}
++	(void)memset(b64user, 0, 2 * strlen(args->login) + 1);
++        
++	base64encode(args->login, b64user);
++	(void)snprintf(message, BUFLEN,
++                       "GET /nic/update?hostname=%s&myip=%s"
++                       ,args->hostname, args->ipv4);
++        
++	if(args->ipv6) {
++		(void)strncat(message, "&myip6=", BUFFREE(message));
++		(void)strncat(message, args->ipv6, BUFFREE(message));
++	}
++        
++	{
++		char buffer[1024];
++                
++		(void)snprintf(buffer, 1024,
++                               " HTTP/1.1\r\n"
++                               "Host: %s\r\n"
++                               "Authorization: Basic %s\r\n"    //username:pass
++                               "User-Agent: %s %s - %s\r\n"
++                               "Connection: close\r\n"
++                               "Pragma: no-cache\r\n\r\n",
++                               DYNDNSHOST, b64user, PNAME, VERSION, HOMEPAGE);
++		(void)strncat(message, buffer, BUFLEN - 1 - strlen(message));
++	}
++	print_debug("\n\nMessage:"
++		    "\n--------------------------------------\n"
++		    "%s--------------------------------------\n\n",
++                    message);
++	
++	/* --------- SSL write --------- */
++	if (SSL_write(ssl, message, strlen(message)) == -1) {
++		ret_msg(PERR, "SingTel ddns: SSL_write() failed");
++		return RET_WARNING;
++	}
++
++	free(b64user);
++	return RET_OK;
++}
++
++static int
++check_server_msg(int s, const char *hostname)
++{
++        
++	int n;
++	char server_msg[BUFSIZE], *ptr;
++	char rtn_msg[BUFSIZE];
++        
++	(void)memset(server_msg, 0, sizeof(server_msg));
++	(void)memset(rtn_msg, 0, sizeof(rtn_msg));
++        
++	/* --------- SSL read --------- */
++	if(SSL_read(ssl, server_msg, sizeof(server_msg) - 1) < 0) {
++		ret_msg(PERR, "SingTel ddns: SSL_read failed");
++		return RET_WARNING;
++	}
++
++	//Workaroud to fix can not read Content field
++	if(SSL_read(ssl, rtn_msg, sizeof(rtn_msg) - 1) < 0) {
++		ret_msg(PERR, "SingTel ddns: SSL_read Content field failed");
++		return RET_WARNING;
++	}
++	if(strlen(rtn_msg) > 0)
++		strcat(server_msg, rtn_msg);
++
++	print_debug("\n\nServer message:"
++		    "\n--------------------------------------\n"
++		    "%s--------------------------------------\n\n",
++		    server_msg);
++
++	if(strstr(server_msg, "HTTP/1.1 200 OK") ||
++	   strstr(server_msg, "HTTP/1.0 200 OK")) {
++                
++		(void)strtok(server_msg, "\n");
++		while((ptr = strtok(NULL, "\n")) != NULL) {
++			for(n=0; return_codes[n].code != NULL; n++) {
++				if(strstr(ptr, return_codes[n].code)) {
++					ret_msg(NONE, "%s: %s",
++						DYNDNSHOST, return_codes[n].message);
++					if(return_codes[n].error == 1) {
++						return RET_ERROR;
++					} else {
++						return RET_OK;
++					}
++				}
++			}
++		}
++	} else if(strstr(server_msg, "401 Authorization Required")) {
++		ret_msg(NONE, "SingTel.com: wrong username or password");
++	} else {
++		(void)memset(rtn_msg, 0, sizeof(rtn_msg));
++		sscanf(server_msg, " HTTP/1.%*c %*3d %255[^\r\n]", rtn_msg);
++		ret_msg(NONE, "unknown return code: %s", rtn_msg);
++	}
++        
++	return RET_ERROR;
++}
+diff --git a/src/plugins/libSingTel.h b/src/plugins/libSingTel.h
+new file mode 100644
+index 0000000..747c43e
+--- /dev/null
++++ b/src/plugins/libSingTel.h
+@@ -0,0 +1,79 @@
++/* -- updatedd: libSingTel.h --
++ *
++ * Copyright (C) 2002, 2003, 2004, 2005 Philipp Benner
++ *
++ * This file is part of UpdateDD - http://updatedd.philipp-benner.de.
++ *
++ * UpdateDD is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * any later version.
++ *
++ * UpdateDD is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with UpdateDD; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++ */
++
++/*
++ * Arcadyan Corp. Jingwei Liang 2015/07
++ * More informations please refer http://info.singtel.com/
++ * 
++ */
++
++#include <ret_codes.h>
++
++#define DYNDNSHOST	"ddnsapi.singnethome.com"
++#define PORT		443
++
++#define BUFSIZE		1024
++
++#define ARGV_PNAME	0
++#define ARGV_LOGIN	argc-2
++#define ARGV_HOSTNAME	argc-1
++
++#define COLORED(x)	"\033[0;31;1m"x"\033[0m"
++
++static char ret_msg_buf[BUFSIZE];
++
++struct arguments {
++	const char *hostname;
++	char *ipv4;
++	char *ipv6;
++	char *login;
++};
++
++static struct dyndns_return_codes {
++	const char *code;
++	const char *message;
++	const int  error;
++} return_codes[] = {
++	{ "good",		"Update good and successful, IP updated.",		0 },
++	{ "nochg",		"No changes, update considered abusive.",		0 },
++	{ "badauth",	"The username or password specified are incorrect",		1 },
++	{ "badagent",	"The user agent that was sent has been blocked for not following specifications,"
++						" or no user agent was specified.",					1 },
++	{ "notfqdn",	"A Fully-Qualified Domain Name was not provided.",		1 },
++	{ "nohost",		"The hostname specified does not exist.",				1 },
++	{ "!yours",		"The hostname specified exists,"
++						" but not under the username specified.",			1 },
++	{ "abuse",		"The hostname specified is blocked for abuse",	  		1 },
++	{ "dnserr",		"DNS error encountered.",								1 },
++	{ "servererr",	"There is a serious problem on server side,"
++						" such as a database or DNS server failure.",		1 },
++	{ NULL,		NULL,							0 }
++};
++
++static int get_flags(struct arguments *args, int argc, char *argv[]);
++static int update_dyndns(const int s, struct arguments *args);
++static int check_server_msg(const int s, const char *hostnames);
++
++char *
++get_retmsg(void)
++{
++	return ret_msg_buf;
++}

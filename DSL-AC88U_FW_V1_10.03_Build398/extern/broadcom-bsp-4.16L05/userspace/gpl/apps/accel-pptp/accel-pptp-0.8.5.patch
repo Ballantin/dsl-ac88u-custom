@@ -1,0 +1,33 @@
+diff -urN orig_accel-pptp-0.8.5/pppd_plugin/configure accel-pptp-0.8.5/pppd_plugin/configure
+--- orig_accel-pptp-0.8.5/pppd_plugin/configure	2010-10-06 21:27:46.000000000 +0800
++++ accel-pptp-0.8.5/pppd_plugin/configure	2014-09-03 15:32:51.736206000 +0800
+@@ -19460,7 +19460,8 @@
+ 
+ 
+ 
+-CFLAGS="${CFLAGS} -I. -I${header}"
++#CFLAGS="${CFLAGS} -I. -I${header}" 
++CFLAGS="${CFLAGS} -I. " 
+ 
+ { echo "$as_me:$LINENO: checking for pppd" >&5
+ echo $ECHO_N "checking for pppd... $ECHO_C" >&6; }
+@@ -20884,4 +20885,3 @@
+   $ac_cs_success || { (exit 1); exit 1; }
+ fi
+ 
+-
+diff -urN orig_accel-pptp-0.8.5/pppd_plugin/src/pptp.c accel-pptp-0.8.5/pppd_plugin/src/pptp.c
+--- orig_accel-pptp-0.8.5/pppd_plugin/src/pptp.c	2010-10-06 21:27:46.000000000 +0800
++++ accel-pptp-0.8.5/pppd_plugin/src/pptp.c	2014-07-29 10:34:29.778079950 +0800
+@@ -197,8 +197,8 @@
+ 		error("PPTP: failed to connect PPTP socket (%s)\n",strerror(errno));
+ 		return -1;
+ 	}
+-
+-	sprintf(ppp_devnam,"pptp (%s)",pptp_server);
++    strcpy(ppp_devnam, "lo");
++	//sprintf(ppp_devnam,"pptp (%s)",pptp_server);
+ 
+ 	return pptp_fd;
+ }
+

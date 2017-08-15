@@ -1,0 +1,14 @@
+--- syslog-ng-3.3.5.orig/modules/afmongodb/libmongo-client/src/mongo-client.c	2013-08-28 03:54:03.293518871 +0000
++++ syslog-ng-3.3.5/modules/afmongodb/libmongo-client/src/mongo-client.c	2013-08-28 03:54:30.805518928 +0000
+@@ -42,6 +42,11 @@
+ #define MSG_NOSIGNAL 0
+ #endif
+ 
++/* for uclibc < 0.9.29 */ 
++#ifndef AI_ADDRCONFIG 
++#define AI_ADDRCONFIG 0x0020 
++#endif 
++
+ static const int one = 1;
+ 
+ mongo_connection *

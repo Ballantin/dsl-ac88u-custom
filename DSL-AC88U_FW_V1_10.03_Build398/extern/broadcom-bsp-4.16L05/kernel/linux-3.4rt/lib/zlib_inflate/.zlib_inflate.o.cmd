@@ -1,0 +1,1 @@
+cmd_lib/zlib_inflate/zlib_inflate.o := /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/bin/arm-unknown-linux-uclibcgnueabi-ld -EL    -r -o lib/zlib_inflate/zlib_inflate.o lib/zlib_inflate/inffast.o lib/zlib_inflate/inflate.o lib/zlib_inflate/infutil.o lib/zlib_inflate/inftrees.o lib/zlib_inflate/inflate_syms.o 

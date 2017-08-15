@@ -1,0 +1,24 @@
+diff --git a/libxtables/xtoptions.c b/libxtables/xtoptions.c
+index 452e0fe..76e49c0 100644
+--- a/libxtables/xtoptions.c
++++ b/libxtables/xtoptions.c
+@@ -600,7 +600,8 @@ static void xtopt_parse_port(struct xt_option_call *cb)
+ 	const struct xt_option_entry *entry = cb->entry;
+ 	int ret;
+ 
+-	ret = xtables_getportbyname(cb->arg);
++	//ret = xtables_getportbyname(cb->arg);
++	ret = atoi(cb->arg);
+ 	if (ret < 0)
+ 		xt_params->exit_err(PARAMETER_PROBLEM,
+ 			"Port \"%s\" does not resolve to anything.\n",
+@@ -645,7 +646,8 @@ static void xtopt_parse_mport(struct xt_option_call *cb)
+ 			continue;
+ 		}
+ 
+-		value = xtables_getportbyname(arg);
++		//value = xtables_getportbyname(arg);
++		value = atoi(arg);
+ 		if (value < 0)
+ 			xt_params->exit_err(PARAMETER_PROBLEM,
+ 				"Port \"%s\" does not resolve to "

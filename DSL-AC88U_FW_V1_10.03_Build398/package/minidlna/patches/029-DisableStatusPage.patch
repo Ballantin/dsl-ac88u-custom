@@ -1,0 +1,40 @@
+diff --git a/upnphttp.c b/upnphttp.c
+index 4436dce..1e6051c 100644
+--- a/upnphttp.c
++++ b/upnphttp.c
+@@ -585,7 +585,7 @@ SendResp_readynas_admin(struct upnphttp * h)
+ 	CloseSocket_upnphttp(h);
+ }
+ #endif
+-
++#if 0
+ static void
+ SendResp_presentation(struct upnphttp * h)
+ {
+@@ -639,7 +639,7 @@ SendResp_presentation(struct upnphttp * h)
+ 	SendResp_upnphttp(h);
+ 	CloseSocket_upnphttp(h);
+ }
+-
++#endif
+ /* ProcessHTTPPOST_upnphttp()
+  * executes the SOAP query if it is possible */
+ static void
+@@ -995,7 +995,8 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
+ 		{
+ 			SendResp_caption(h, HttpUrl+10);
+ 		}
+-		else if(strncmp(HttpUrl, "/status", 7) == 0)
++#if 0
++        else if(strncmp(HttpUrl, "/status", 7) == 0)
+ 		{
+ 			SendResp_presentation(h);
+ 		}
+@@ -1007,6 +1008,7 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
+ 			SendResp_presentation(h);
+ 			#endif
+ 		}
++#endif
+ 		else
+ 		{
+ 			DPRINTF(E_WARN, L_HTTP, "%s not found, responding ERROR 404\n", HttpUrl);

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NightlyBuildTestSuite>
+  <TestCase TestName="VQT" AbacusEnv="2ModemOTPESQ3wav.env" Duration_MIN="5" report_template="VQT_report_template.tcl" repeat="N">
+    <TestInitSetup>
+      <DutConfig>
+        <IP>192.168.1.1</IP>
+        <PROFILE>SMP</PROFILE>
+      </DutConfig>
+      <DutConfig>
+        <IP>192.168.1.2</IP>
+        <PROFILE>SMP</PROFILE>
+      </DutConfig>
+    </TestInitSetup>
+    <TestExecution TCLSCRIPT="abacus_ctrl.tcl">
+      <Dut DutNum='0'>
+          <Filename>board1_cli.xml</Filename>
+          <FROM>1</FROM>
+          <TO>1</TO>
+		</Dut>
+      <Dut DutNum='1'>
+          <Filename>board2_cli.xml</Filename>
+          <FROM>1</FROM>
+          <TO>1</TO>
+		</Dut>
+    </TestExecution>
+  </TestCase>
+</NightlyBuildTestSuite>

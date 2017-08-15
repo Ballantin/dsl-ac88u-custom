@@ -1,0 +1,1 @@
+#define CONFIG_CROSS_COMPILER_PREFIX "crosscompile_does_not_matter_here"

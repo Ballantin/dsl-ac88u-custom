@@ -1,0 +1,46 @@
+#ifndef IDC_STATIC
+#define IDC_STATIC (-1)
+#endif
+
+#define IDD_DLGMAIN                     104
+#define IDM_ABOUT                       104
+#define IDM_EXIT                        105
+#define IDC_APP                         109
+#define IDD_DLGCFGSIP                   145
+#define IDI_ICON1                       157
+#define IDC_IMPU                        1000
+#define IDC_LOGGER                      1008
+#define IDC_BUTTON1                     1009
+#define IDC_BUTTON2                     1010
+#define IDC_BUTTON3                     1011
+#define IDC_BUTTON4                     1016
+#define IDC_BUTTON5                     1017
+#define IDC_BUTTON6                     1018
+#define IDC_BUTTON7                     1019
+#define IDC_BUTTON8                     1020
+#define IDC_BUTTON9                     1021
+#define IDC_BUTTON0                     1022
+#define IDC_BUTTON_ASTER                1023
+#define IDC_BUTTON_HASH                 1024
+#define IDC_DISPLAY                     1030
+#define IDC_PASSWORD                    1052
+#define IDC_LOCALADDR                   1073
+#define IDM_LOGFILE                     32776
+#define IDM_PKTS                        32786
+#define IDM_LOGFREEZE                   32788
+#define IDM_LOGCLEAR                    32789
+#define IDM_SETUP                       32793
+#define IDM_PKTHDR                      32794
+#define IDM_START                       40000
+#define IDS_APP_TITLE                   40000
+#define IDC_BUTTON_SEND                 40089
+#define IDC_BUTTON_END                  40091
+#define IDC_BUTTON_UP                   40093
+#define IDC_BUTTON_OK                   40095
+#define IDC_BUTTON_RIGHT                40098
+#define IDC_BUTTON_LEFT                 40100
+#define IDC_BUTTON_DOWN                 40102
+#define IDC_IMPI                        40104
+#define IDC_PCSCFADDR                   40105
+#define IDC_PCSCFPORT                   40106
+#define IDC_LOCALPORT                   40107

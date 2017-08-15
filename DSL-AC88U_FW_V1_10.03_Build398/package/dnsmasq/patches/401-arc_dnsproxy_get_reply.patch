@@ -1,0 +1,254 @@
+--- a/src/dnsmasq.h	2016-04-21 20:11:46.653896103 +0800
++++ b/src/dnsmasq.h	2016-04-21 14:44:35.723298621 +0800
+@@ -40,6 +40,7 @@
+ #include <sys/types.h> 
+ #include <sys/socket.h>
+ #include <netinet/in.h>
++#include <net/route.h>
+ 
+ /* and this. */
+ #include <getopt.h>
+@@ -214,6 +215,9 @@
+ #ifdef DIRECT_DOMAIN_TO_LANIP
+ #define	LOCAL_IPV6_ADDR "fe80::1"
+ #define INET_ADDRSTRLEN	16
++char lan_ip4addr[INET_ADDRSTRLEN];
++#endif
++
+ #define cprintf(fmt, args...) do { \
+         FILE *fp = fopen("/dev/console", "w"); \
+         if (fp) { \
+@@ -221,8 +225,7 @@
+                 fclose(fp); \
+         } \
+ } while (0)
+-char lan_ip4addr[INET_ADDRSTRLEN];
+-#endif
++
+ 
+ struct all_addr {
+   union {
+--- a/src/rfc1035.c	2016-04-22 14:02:50.571431471 +0800
++++ b/src/rfc1035.c	2016-04-22 14:02:03.933798539 +0800
+@@ -775,6 +775,122 @@
+   return minttl;
+ }
+ 
++int arc_hit_iptv_dns_domain(char *name){
++	FILE *fp = NULL;
++	char cmd[256] = "";
++	char domain[64] = "";
++	char *renewCh = NULL;
++	int len1 = 0, len2 = 0;
++	len1 = strlen(name);
++	//cprintf("####ADAM####, dns name: %s, %d.", name, len1);
++	
++	snprintf(cmd, sizeof(cmd), "cat /tmp/iptv_unc_domain");
++	fp = popen(cmd, "r");
++	if( fp != NULL ){
++		fgets(domain, sizeof(domain), fp);
++		pclose(fp);
++		renewCh = strstr(domain,"\n");
++		if(renewCh) *renewCh = '\0';
++		len2 = strlen(domain);
++		//cprintf(" @@ dns domain: %s, %d.", domain, len2);
++	}
++	else{
++		return 0;
++	}
++		
++	if( (len1 > 0) && (len2 > 0) && strstr(name, domain) != NULL ){
++		cprintf(" ####ADAM####, name: %s hit domain: %s.\n", name, domain);
++		return 1;
++	}
++	else{
++		//cprintf(" @@ dns judge: 0\n");
++		return 0;
++	}
++
++}
++
++int arc_add_iptv_route(struct in_addr addr_4){
++	FILE *fp = NULL;
++	char cmd[256] = "";
++	char ifname[64] = "";
++	char gateway[64] = "";
++	char *ip_addr = NULL;
++	char *renewCh = NULL;
++
++	cprintf("####ADAM####, Add route Begin.\n");
++	
++	/* Get domain ip address in dns reply. */
++	ip_addr = inet_ntoa(addr_4);
++
++	/* Get IPTV upstream interface name. */
++	snprintf(cmd, sizeof(cmd), "grep -sr \"igmp-proxy-interfaces\" var/mcpd.conf | awk '{print $2}'");
++	fp = popen(cmd, "r");
++	if( fp != NULL ){
++		fgets(ifname, sizeof(ifname), fp);
++		pclose(fp);
++		renewCh = strstr(ifname,"\n");
++		if(renewCh) *renewCh = '\0';
++	}
++	else{
++		return 0;
++	}
++
++	/* Get interface default gateway. */
++	if( strcmp(gateway, "") == 0 && strcmp(ifname, "") ){
++		snprintf(cmd, sizeof(cmd), "grep \"routers\" /etc/iptv_unicast/dhcpc.lease | tail -n 1 | awk '{print $3}' | sed 's/.$//' | awk 'BEGIN {FS=\",\"}; {print $1}'");
++		fp = popen(cmd, "r");
++		if( fp != NULL ){
++			fgets(gateway, sizeof(gateway), fp);
++			pclose(fp);
++			renewCh = strstr(gateway,"\n");
++			if(renewCh) *renewCh = '\0';
++		}
++		else{
++			return 0;
++		}
++	}
++
++	/* Set static route to the default gateway. */
++	//cprintf("####ADAM####, Add route as: route add -net %s netmask % gw %s dev %s.\n", ip_addr, gateway, ifname);
++	if( ip_addr != NULL && strcmp(ifname, "") != 0 && strcmp(gateway, "") != 0){
++		int fd = socket(AF_INET, SOCK_DGRAM, 0);
++		if( fd < 0){
++			cprintf("####ADAM####, %s():line%d, fd: %d\n", __FUNCTION__, __LINE__, fd);	
++		    return -1;
++		}
++			
++		int err = 0;
++		struct rtentry route;
++		struct sockaddr_in *addr;
++		memset( &route, 0, sizeof( route ) );
++		
++		addr = (struct sockaddr_in*) &route.rt_gateway;
++		addr->sin_family = AF_INET;
++		addr->sin_addr.s_addr = inet_addr(gateway);
++		addr = (struct sockaddr_in*) &route.rt_dst;
++		addr->sin_family = AF_INET;
++		addr->sin_addr.s_addr = inet_addr(ip_addr);
++		addr = (struct sockaddr_in*) &route.rt_genmask;
++		addr->sin_family = AF_INET;
++		addr->sin_addr.s_addr = inet_addr("255.255.255.255");
++		route.rt_flags = RTF_UP | RTF_GATEWAY;
++		route.rt_metric = 0;
++		route.rt_dev = ifname;
++
++		if ((err = ioctl(fd, SIOCADDRT, &route)) < 0) {
++			cprintf("####ADAM####, %s():line%d, err: %d %s\n", __FUNCTION__, __LINE__, err, strerror(errno));
++			return -1;
++		}
++
++		cprintf("####ADAM####, Add route Finish.\n");
++		
++		return 1;
++	}
++	else{
++		return 0;
++	}
++}
++
+ /* Note that the following code can create CNAME chains that don't point to a real record,
+    either because of lack of memory, or lack of SOA records.  These are treated by the cache code as 
+    expired and cleaned out that way. 
+@@ -791,8 +907,12 @@
+   int i, j, qtype, qclass, aqtype, aqclass, ardlen, res, searched_soa = 0;
+   unsigned long ttl = 0;
+   struct all_addr addr;
++  char lan_ip4addr[16];
+ 
+   cache_start_insert();
++  
++  int iptv_unc_flag = 0;
++  iptv_unc_flag = arc_hit_iptv_dns_domain(name);
+ 
+   /* find_soa is needed for dns_doctor and logging side-effects, so don't call it lazily if there are any. */
+   if (daemon->doctors || option_bool(OPT_LOG))
+@@ -826,7 +946,7 @@
+       if (qtype == T_PTR)
+ 	{ 
+ 	  int name_encoding = in_arpa_name_2_addr(name, &addr);
+-	  
++  
+ 	  if (!name_encoding)
+ 	    continue;
+ 
+@@ -870,7 +990,10 @@
+ 			    return 0; /* looped CNAMES */
+ 			  goto cname_loop;
+ 			}
+-		      
++		      if(iptv_unc_flag){
++			  	//cprintf("####ADAM####, arc_add_iptv_route 1 \n");
++			  	arc_add_iptv_route(addr.addr.addr4);
++			  }
+ #ifdef DNS46
+ 		      cache_insert(name, &addr, now, cttl, name_encoding | F_REVERSE, NULL);
+ #else
+@@ -892,6 +1015,11 @@
+ 		  searched_soa = 1;
+ 		  ttl = find_soa(header, qlen, NULL);
+ 		}
++		  if(iptv_unc_flag){
++		  	//cprintf("####ADAM####, arc_add_iptv_route 2 \n");
++		  	arc_add_iptv_route(addr.addr.addr4);
++		  }
++		  
+ 	      if (ttl)
+ #ifdef DNS46
+ 		cache_insert(NULL, &addr, now, ttl, name_encoding | F_REVERSE | F_NEG | flags, NULL);	
+@@ -942,13 +1070,19 @@
+ 		    }
+ 		  GETSHORT(ardlen, p1);
+ 		  endrr = p1+ardlen;
+-		  
++
+ 		  if (aqclass == C_IN && res != 2 && (aqtype == T_CNAME || aqtype == qtype))
+ 		    {
+ 		      if (aqtype == T_CNAME)
+ 			{
+ 			  if (!cname_count--)
+ 			    return 0; /* looped CNAMES */
++
++			  if(iptv_unc_flag){
++			  	//cprintf("####ADAM####, arc_add_iptv_route 3 \n");
++			  	arc_add_iptv_route(addr.addr.addr4);
++			  }
++			  
+ #ifdef DNS46
+ 			  newc = cache_insert(name, NULL, now, attl, F_CNAME | F_FORWARD, NULL);
+ #else
+@@ -976,13 +1110,18 @@
+ 			  if (!CHECK_LEN(header, p1, qlen, addrlen))
+ 			    return 0; /* bad packet */
+ 			  memcpy(&addr, p1, addrlen);
+-			  
++
+ 			  /* check for returned address in private space */
+ 			  if (check_rebind &&
+ 			      (flags & F_IPV4) &&
+ 			      private_net(addr.addr.addr4, !option_bool(OPT_LOCAL_REBIND)))
+ 			    return 1;
+ 			  
++			  if(iptv_unc_flag){
++			  	//cprintf("####ADAM####, arc_add_iptv_route 4 \n");
++			  	arc_add_iptv_route(addr.addr.addr4);
++			  }
++
+ #ifdef DNS46
+ 			  newc = cache_insert(name, &addr, now, attl, flags | F_FORWARD, dns46_addr6);
+ #else
+@@ -1014,6 +1153,11 @@
+ 		 pointing at this, inherit its TTL */
+ 	      if (ttl || cpp)
+ 		{
++
++		  if(iptv_unc_flag){
++		  	//cprintf("####ADAM####, arc_add_iptv_route 5 \n");
++		  	arc_add_iptv_route(addr.addr.addr4);
++		  }
+ #ifdef DNS46
+ 		  newc = cache_insert(name, NULL, now, ttl ? ttl : cttl, F_FORWARD | F_NEG | flags, NULL);	
+ #else

@@ -1,0 +1,17 @@
+***************
+*** 157,163 ****
+  	bool
+  	depends !avr32
+  	prompt "Build gdb" if TOOLCHAINOPTS
+- 	default y
+  	help
+  		Enable if you want to build the gdb
+  
+--- 157,163 ----
+  	bool
+  	depends !avr32
+  	prompt "Build gdb" if TOOLCHAINOPTS
++ 	default n
+  	help
+  		Enable if you want to build the gdb
+  

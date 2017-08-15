@@ -1,0 +1,69 @@
+--- a/pppd/Makefile.linux	2016-11-22 04:01:18.794870919 -0500
++++ b/pppd/Makefile.linux	2016-11-22 04:02:50.050651862 -0500
+@@ -11,6 +11,12 @@
+ 
+ TARGETS = pppd
+ 
++ifeq ($(ARC_FLAGS),pppoa)
++TARGETS += libatm
++ATMLIBDIR = ../../../../../extern/$(BSP_FOLDER_NAME)/userspace/gpl/apps/atm2684/atm/lib
++KERNEL_DIR = ../../../../../extern/$(BSP_FOLDER_NAME)/kernel/linux-3.4rt
++endif
++
+ PPPDSRCS = main.c magic.c fsm.c lcp.c ipcp.c upap.c chap-new.c md5.c ccp.c \
+ 	   ecp.c ipxcp.c auth.c options.c sys-linux.c md4.c chap_ms.c \
+ 	   demand.c utils.c tty.c eap.c chap-md5.c session.c
+@@ -24,6 +30,11 @@
+ 	   ecp.o auth.o options.o demand.o utils.o sys-linux.o ipxcp.o tty.o \
+ 	   eap.o chap-md5.o session.o
+ 
++ifeq ($(ARC_FLAGS),pppoa)
++PPPDSRCS += pppoatm.c
++PPPDOBJS += pppoatm.o
++endif
++
+ #
+ # include dependencies if present
+ ifeq (.depend,$(wildcard .depend))
+@@ -33,8 +44,11 @@
+ # CC = gcc
+ #
+ COPTS = -O2 -pipe -Wall -g
++ifeq ($(ARC_FLAGS),pppoa)
++LIBS = $(ATMLIBDIR)/libatm.a
++else
+ LIBS =
+-
++endif
+ # Uncomment the next 2 lines to include support for Microsoft's
+ # MS-CHAP authentication protocol.  Also, edit plugins/radius/Makefile.linux.
+ CHAPMS=y
+@@ -81,8 +95,13 @@
+ 
+ MAXOCTETS=y
+ 
++ifeq ($(ARC_FLAGS),pppoa)
++INCLUDE_DIRS= -I../include \
++              -I$(ATMLIBDIR) \
++	      -I$(KERNEL_DIR)
++else
+ INCLUDE_DIRS= -I../include
+-
++endif
+ COMPILE_FLAGS= -DHAVE_PATHS_H -DHAVE_MMAP
+ 
+ CFLAGS= $(COPTS) $(COMPILE_FLAGS) $(INCLUDE_DIRS) '-DDESTDIR="@DESTDIR@"'
+@@ -216,6 +235,13 @@
+ 
+ all: $(TARGETS)
+ 
++ifeq ($(ARC_FLAGS),pppoa)
++# mwang: ppp should not trigger build of libatm.
++# top level Makefile should build everything in the right order
++libatm:
++	$(MAKE) -C $(ATMLIBDIR) $(MFLAGS) all
++endif
++
+ install: pppd
+ 	mkdir -p $(BINDIR) $(MANDIR)
+ 	$(EXTRAINSTALL)

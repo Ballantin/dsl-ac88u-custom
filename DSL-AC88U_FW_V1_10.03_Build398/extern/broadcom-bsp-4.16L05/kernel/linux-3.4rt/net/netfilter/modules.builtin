@@ -1,0 +1,2 @@
+kernel/net/netfilter/x_tables.ko
+kernel/net/netfilter/xt_tcpudp.ko

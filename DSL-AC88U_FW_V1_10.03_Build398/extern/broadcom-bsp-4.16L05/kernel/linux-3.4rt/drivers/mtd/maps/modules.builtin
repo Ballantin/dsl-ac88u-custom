@@ -1,0 +1,3 @@
+kernel/drivers/mtd/maps/map_funcs.ko
+kernel/drivers/mtd/maps/bcm963xx.ko
+kernel/drivers/mtd/maps/bcm963xx_mtd.ko

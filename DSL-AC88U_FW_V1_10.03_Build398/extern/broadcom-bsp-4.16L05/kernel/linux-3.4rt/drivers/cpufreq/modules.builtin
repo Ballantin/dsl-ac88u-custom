@@ -1,0 +1,5 @@
+kernel/drivers/cpufreq/cpufreq_stats.ko
+kernel/drivers/cpufreq/cpufreq_userspace.ko
+kernel/drivers/cpufreq/cpufreq_ondemand.ko
+kernel/drivers/cpufreq/cpufreq_interactive.ko
+kernel/drivers/cpufreq/freq_table.ko

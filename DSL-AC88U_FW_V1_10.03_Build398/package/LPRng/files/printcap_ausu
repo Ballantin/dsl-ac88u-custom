@@ -1,0 +1,7 @@
+.common:
+   :sd=/var/spool/lpd/%P
+   :sh:mx=0:mc=0
+
+LPRServer:tc=.common
+   :lp=/dev/lp0
+

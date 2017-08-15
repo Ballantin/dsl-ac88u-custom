@@ -1,0 +1,60 @@
+diff --git a/minissdp.c b/minissdp.c
+old mode 100644
+new mode 100755
+index 92f7b75..ec8e6e1
+--- a/minissdp.c
++++ b/minissdp.c
+@@ -43,6 +43,9 @@
+ #define SSDP_PACKET_MAX_LEN 512
+ #endif
+ 
++#ifdef LISTEN_IP_CHANGE
++#define INADDR_LAN_IP ((in_addr_t) 0xEFFFFFFA)
++#endif
+ /* AddMulticastMembership()
+  * param s		socket
+  * param ifaddr	ip v4 address
+@@ -139,7 +142,11 @@ OpenAndConfSSDPReceiveSocket(int ipv6)
+ 		saddr->sin_port = htons(SSDP_PORT);
+ 		/* NOTE : it seems it doesnt work when binding on the specific address */
+ 		/*saddr->sin_addr.s_addr = inet_addr(UPNP_MCAST_ADDR);*/
++		#ifdef LISTEN_IP_CHANGE
++		saddr->sin_addr.s_addr = htonl(INADDR_LAN_IP);
++		#else
+ 		saddr->sin_addr.s_addr = htonl(INADDR_ANY);
++		#endif
+ 		/*saddr->sin_addr.s_addr = inet_addr(ifaddr);*/
+ 		sockname_len = sizeof(struct sockaddr_in);
+ 	}
+diff --git a/miniupnpd.c b/miniupnpd.c
+old mode 100644
+new mode 100755
+index 5665ccc..1fcd3c6
+--- a/miniupnpd.c
++++ b/miniupnpd.c
+@@ -90,6 +90,10 @@ void init_iptpinhole(void);
+ #define DEFAULT_CONFIG "/etc/miniupnpd.conf"
+ #endif
+ 
++#ifdef LISTEN_IP_CHANGE
++#define INADDR_LAN_IP ((in_addr_t) 0x0A00008A)
++#endif
++
+ #ifdef USE_MINIUPNPDCTL
+ struct ctlelem {
+ 	int socket;
+@@ -366,7 +370,11 @@ OpenAndConfHTTPSocket(unsigned short * port)
+ 	memset(&listenname, 0, sizeof(struct sockaddr_in));
+ 	listenname.sin_family = AF_INET;
+ 	listenname.sin_port = htons(*port);
++	#ifdef LISTEN_IP_CHANGE
++	listenname.sin_addr.s_addr = htonl(INADDR_LAN_IP);
++	#else
+ 	listenname.sin_addr.s_addr = htonl(INADDR_ANY);
++	#endif
+ 	listenname_len =  sizeof(struct sockaddr_in);
+ #endif
+ 
+-- 
+1.7.3.4
+

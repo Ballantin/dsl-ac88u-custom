@@ -1,0 +1,52 @@
+--- a/client/dhclient.c.ori 2015-12-30 16:46:08.602921335 +0800
++++ b/client/dhclient.c	2015-12-30 16:45:24.665293688 +0800
+@@ -115,6 +115,8 @@
+ int wanted_ia_pd = 0;
+ char *mockup_relay = NULL;
+ char *select_server = NULL;
++/* arcadyan */
++int bootpflags_ucast = 0;
+ 
+ void run_stateless(int exit_mode);
+ 
+@@ -518,6 +520,8 @@
+ 			tmp->next = client_env;
+ 			client_env = tmp;
+ 			client_env_count++;
++		}else if (!strcmp(argv[i], "-U")){
++			bootpflags_ucast = 1;
+ #ifdef DHCPv6
+ 		} else if (!strcmp(argv[i], "-S")) {
+ 			if (local_family_set && (local_family == AF_INET)) {
+@@ -2935,7 +2939,7 @@
+ 	client -> packet.xid = random ();
+ 	client -> packet.secs = 0; /* filled in by send_discover. */
+ 
+-	if (can_receive_unicast_unconfigured (client -> interface))
++	if (can_receive_unicast_unconfigured (client -> interface) || bootpflags_ucast == 1)
+ 		client -> packet.flags = 0;
+ 	else
+ 		client -> packet.flags = htons (BOOTP_BROADCAST);
+@@ -3019,7 +3023,7 @@
+ 	} else {
+ 		memset (&client -> packet.ciaddr, 0,
+ 			sizeof client -> packet.ciaddr);
+-		if (can_receive_unicast_unconfigured (client -> interface))
++		if (can_receive_unicast_unconfigured (client -> interface) || bootpflags_ucast == 1)
+ 			client -> packet.flags = 0;
+ 		else
+ 			client -> packet.flags = htons (BOOTP_BROADCAST);
+@@ -3081,11 +3085,12 @@
+ 	client -> packet.hops = 0;
+ 	client -> packet.xid = client -> xid;
+ 	client -> packet.secs = 0; /* Filled in by send_request. */
+-	if (can_receive_unicast_unconfigured (client -> interface))
++	if (can_receive_unicast_unconfigured (client -> interface) || bootpflags_ucast == 1)
+ 		client -> packet.flags = 0;
+ 	else
+ 		client -> packet.flags = htons (BOOTP_BROADCAST);
+ 
++
+ 	/* ciaddr must always be zero. */
+ 	memset (&client -> packet.ciaddr, 0,
+ 		sizeof client -> packet.ciaddr);

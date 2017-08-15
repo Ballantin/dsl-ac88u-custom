@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<voiceCLI>
+<voiceCmd Cmdname="G.711ALaw">
+voice set vad 0 0 off
+voice set vad 0 1 off
+voice set codecList 0 0 G.711ALaw
+voice set codecList 0 1 G.711ALaw
+voice save
+voice stop
+voice start
+</voiceCmd>
+<voiceCmd Cmdname="G.711MuLaw">
+voice set vad 0 0 off
+voice set vad 0 1 off
+voice set codecList 0 0 G.711MuLaw
+voice set codecList 0 1 G.711MuLaw
+voice save
+voice stop
+voice start
+</voiceCmd>
+<voiceCmd Cmdname="G.729">
+voice set vad 0 0 off
+voice set vad 0 1 off
+voice set codecList 0 0 G.729a
+voice set codecList 0 1 G.729a
+voice save
+voice stop
+voice start
+</voiceCmd>
+<voiceCmd Cmdname="G.723">
+voice set vad 0 0 off
+voice set vad 0 1 off
+voice set codecList 0 0 G.723.1
+voice set codecList 0 1 G.723.1
+voice save
+voice stop
+voice start
+</voiceCmd>
+<voiceCmd Cmdname="G.726">
+voice set vad 0 0 off
+voice set vad 0 1 off
+voice set codecList 0 0 G.726_32
+voice set codecList 0 1 G.726_32
+voice save
+voice stop
+voice start
+</voiceCmd>
+</voiceCLI>

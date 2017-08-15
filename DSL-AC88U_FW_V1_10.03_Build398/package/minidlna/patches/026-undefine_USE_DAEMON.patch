@@ -1,0 +1,42 @@
+From c969f10d0d0713b64028a627f9ed4db7b6a6b431 Mon Sep 17 00:00:00 2001
+From: garnet_huang <garnet_huang@arcadyan.com>
+Date: Mon, 7 Dec 2015 16:31:53 +0800
+Subject: [PATCH] undefine_USE_DAEMON
+
+---
+ process.c |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
+ mode change 100644 => 100755 process.c
+
+diff --git a/process.c b/process.c
+old mode 100644
+new mode 100755
+index 96ec1c3..f840aba
+--- a/process.c
++++ b/process.c
+@@ -128,6 +128,10 @@ int
+ process_daemonize(void)
+ {
+ 	int pid;
++#ifdef Proj_Entry
++#undef USE_DAEMON
++#endif
++
+ #ifndef USE_DAEMON
+ 	int i;
+ 
+@@ -167,6 +171,11 @@ process_daemonize(void)
+ 		perror("daemon()");
+ 	pid = getpid();
+ #endif
++
++#ifdef Proj_Entry
++#define USE_DAEMON 0
++#endif
++
+ 	return pid;
+ }
+ 
+-- 
+1.7.3.4
+

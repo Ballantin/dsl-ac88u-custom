@@ -1,0 +1,373 @@
+libxtables_la-xtables.lo: xtables.c ../config.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/ctype.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/features.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_config.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/cdefs.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/types.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/wordsize.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/include/stddef.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/typesizes.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/pthreadtypes.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/endian.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/endian.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/byteswap.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/byteswap.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/byteswap-common.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_touplow.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/errno.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/errno.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/linux/errno.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/errno.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm-generic/errno.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm-generic/errno-base.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/fcntl.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/fcntl.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/types.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/time.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/select.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/select.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sigset.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/time.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/sysmacros.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/inttypes.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/include/stdint.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/stdint.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/wchar.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/netdb.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/netinet/in.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/socket.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/uio.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uio.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/socket.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/include-fixed/limits.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/include-fixed/syslimits.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/limits.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/posix1_lim.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/local_lim.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/linux/limits.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_local_lim.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/posix2_lim.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sockaddr.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/socket.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/sockios.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/in.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/rpc/netdb.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/netdb.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/include/stdarg.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/include/stdbool.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/stdio.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_stdio.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/wchar.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_mutex.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/pthread.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sched.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sched.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_clk_tck.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/signal.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/setjmp.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_pthread.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/stdio_lim.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/stdlib.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/alloca.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/string.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/unistd.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/posix_opt.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/confname.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/getopt.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/stat.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/stat.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/statfs.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/statfs.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/utsname.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/utsname.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/wait.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/signum.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/siginfo.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sigaction.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sigcontext.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/sigcontext.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sigstack.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sigthread.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/resource.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/resource.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/waitflags.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/waitstatus.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/arpa/inet.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/linux/magic.h \
+ ../include/xtables.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/net/if.h \
+ ../include/linux/types.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/types.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm-generic/int-ll64.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/bitsperlong.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm-generic/bitsperlong.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/linux/posix_types.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/linux/stddef.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/posix_types.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm-generic/posix_types.h \
+ ../include/linux/netfilter.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/linux/sysctl.h \
+ ../include/linux/kernel.h ../include/linux/netfilter/x_tables.h \
+ ../include/xtables-version.h ../include/linux/netfilter_ipv4/ip_tables.h \
+ ../include/linux/netfilter_ipv4.h ../include/linux/netfilter/xt_tcpudp.h \
+ ../include/linux/netfilter_ipv6/ip6_tables.h \
+ ../include/linux/netfilter_ipv6.h ../include/libiptc/libxtc.h \
+ ../include/libiptc/ipt_kernel_headers.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/netinet/ip.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/netinet/ip_icmp.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/netinet/tcp.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/netinet/udp.h \
+ /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/getopt.h \
+ ../include/iptables/internal.h ../iptables/xshared.h
+
+../config.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/ctype.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/features.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_config.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/cdefs.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/types.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/wordsize.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/include/stddef.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/typesizes.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/pthreadtypes.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/endian.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/endian.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/byteswap.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/byteswap.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/byteswap-common.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_touplow.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/errno.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/errno.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/linux/errno.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/errno.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm-generic/errno.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm-generic/errno-base.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/fcntl.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/fcntl.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/types.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/time.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/select.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/select.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sigset.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/time.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/sysmacros.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/inttypes.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/include/stdint.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/stdint.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/wchar.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/netdb.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/netinet/in.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/socket.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/uio.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uio.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/socket.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/include-fixed/limits.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/include-fixed/syslimits.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/limits.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/posix1_lim.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/local_lim.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/linux/limits.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_local_lim.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/posix2_lim.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sockaddr.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/socket.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/sockios.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/in.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/rpc/netdb.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/netdb.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/include/stdarg.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/include/stdbool.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/stdio.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_stdio.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/wchar.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_mutex.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/pthread.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sched.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sched.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_clk_tck.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/signal.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/setjmp.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/uClibc_pthread.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/stdio_lim.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/stdlib.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/alloca.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/string.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/unistd.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/posix_opt.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/confname.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/getopt.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/stat.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/stat.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/statfs.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/statfs.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/utsname.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/utsname.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/wait.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/signum.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/siginfo.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sigaction.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sigcontext.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/sigcontext.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sigstack.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/sigthread.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/sys/resource.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/resource.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/waitflags.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/bits/waitstatus.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/arpa/inet.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/linux/magic.h:
+
+../include/xtables.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/net/if.h:
+
+../include/linux/types.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/types.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm-generic/int-ll64.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/bitsperlong.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm-generic/bitsperlong.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/linux/posix_types.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/linux/stddef.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm/posix_types.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/asm-generic/posix_types.h:
+
+../include/linux/netfilter.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/linux/sysctl.h:
+
+../include/linux/kernel.h:
+
+../include/linux/netfilter/x_tables.h:
+
+../include/xtables-version.h:
+
+../include/linux/netfilter_ipv4/ip_tables.h:
+
+../include/linux/netfilter_ipv4.h:
+
+../include/linux/netfilter/xt_tcpudp.h:
+
+../include/linux/netfilter_ipv6/ip6_tables.h:
+
+../include/linux/netfilter_ipv6.h:
+
+../include/libiptc/libxtc.h:
+
+../include/libiptc/ipt_kernel_headers.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/netinet/ip.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/netinet/ip_icmp.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/netinet/tcp.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/netinet/udp.h:
+
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/include/getopt.h:
+
+../include/iptables/internal.h:
+
+../iptables/xshared.h:

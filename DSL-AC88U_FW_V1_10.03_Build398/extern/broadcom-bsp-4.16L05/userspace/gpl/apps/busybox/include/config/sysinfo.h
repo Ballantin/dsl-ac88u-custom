@@ -1,0 +1,1 @@
+#define CONFIG_SYSINFO 1

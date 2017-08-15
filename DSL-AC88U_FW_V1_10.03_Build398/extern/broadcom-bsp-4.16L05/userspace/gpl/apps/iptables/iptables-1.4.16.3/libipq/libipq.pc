@@ -1,0 +1,11 @@
+
+prefix=/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install
+exec_prefix=${prefix}
+libdir=/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/gpl
+includedir=${prefix}/include
+
+Name:		libipq
+Description:	Interface to the (old) ip_queue mechanism
+Version:	1.4.16.3
+Libs:		-L${libdir} -lipq
+Cflags:		-I${includedir}

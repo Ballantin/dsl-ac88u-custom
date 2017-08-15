@@ -1,0 +1,26 @@
+# Tuxera package config
+
+menu "Configuration"
+	depends on PACKAGE_kmod-tuxera
+
+config tuxera_EXFAT
+	bool "Support Tuxera exfat"
+	default n
+	help
+
+config tuxera_FAT
+	bool "Support Tuxera fat"
+	default n
+	help
+	
+config tuxera_HFSPLUS
+	bool "Support Tuxera HFS plus"
+	default n
+	help
+	
+config tuxera_NTFS
+	bool "Support Tuxera NTFS"
+	default n
+	help
+
+endmenu

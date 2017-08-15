@@ -1,0 +1,56 @@
+--- a/frontend/get_audio.c	2012-02-14 18:35:58.000000000 +0800
++++ b/frontend/get_audio.c	2016-03-23 17:03:21.474343028 +0800
+@@ -613,7 +613,7 @@
+     else {
+ #ifdef LIBSNDFILE
+         if (strcmp(inPath, "-") != 0) { /* not for stdin */
+-            global. snd_file = open_snd_file(gfp, inPath);
++            global.snd_file = open_snd_file(gfp, inPath);
+         }
+ #endif
+         if (global.snd_file == 0) {
+@@ -960,15 +960,14 @@
+         if (gs_pSndFileIn == NULL) {
+             if (global_raw_pcm.in_signed == 0 && global_raw_pcm.in_bitwidth != 8) {
+                 error_printf("Unsigned input only supported with bitwidth 8\n");
+-                exit(1);
++                return gs_pSndFileIn;//exit(1);
+             }
+             /* set some defaults incase input is raw PCM */
+             gs_wfInfo.seekable = (global_reader.input_format != sf_raw); /* if user specified -r, set to not seekable */
+             gs_wfInfo.samplerate = lame_get_in_samplerate(gfp);
+             gs_wfInfo.channels = lame_get_num_channels(gfp);
+             gs_wfInfo.format = SF_FORMAT_RAW;
+-            if ((global_raw_pcm.in_endian == ByteOrderLittleEndian) ^ (global_reader.swapbytes !=
+-                                                                       0)) {
++            if ((global_raw_pcm.in_endian == ByteOrderLittleEndian) ^ (global_reader.swapbytes != 0)) {
+                 gs_wfInfo.format |= SF_ENDIAN_LITTLE;
+             }
+             else {
+@@ -1007,7 +1006,7 @@
+             if (global_ui_config.silent < 10) {
+                 error_printf("Could not open sound file \"%s\".\n", lpszFileName);
+             }
+-            exit(1);
++            return gs_pSndFileIn;//exit(1);
+         }
+         sf_command(gs_pSndFileIn, SFC_SET_SCALE_FLOAT_INT_READ, NULL, SF_TRUE);
+ 
+@@ -1123,7 +1122,7 @@
+             if (global_ui_config.silent < 10) {
+                 error_printf("Could not open sound file \"%s\".\n", lpszFileName);
+             }
+-            exit(1);
++            return gs_pSndFileIn;//exit(1);
+         }
+ 
+ 
+@@ -1132,7 +1131,7 @@
+             if (global_ui_config.silent < 10) {
+                 error_printf("Unsupported number of channels: %ud\n", gs_wfInfo.channels);
+             }
+-            exit(1);
++            return gs_pSndFileIn;//exit(1);
+         }
+         if (global_reader.input_samplerate == 0) {
+             (void) lame_set_in_samplerate(gfp, gs_wfInfo.samplerate);

@@ -1,0 +1,17 @@
+diff --git a/minissdp.c b/minissdp.c
+old mode 100644
+new mode 100755
+index 0114264..62a078a
+--- a/minissdp.c
++++ b/minissdp.c
+@@ -803,8 +803,8 @@ ProcessSSDPData(int s, const char *bufr, int n,
+ 	lan_addr = get_lan_for_peer(sender);
+ 	if(lan_addr == NULL)
+ 	{
+-		syslog(LOG_WARNING, "SSDP packet sender %s not from a LAN, ignoring",
+-		       sender_str);
++		if(strncmp(sender_str, "1.1.1.2", 7)!=0) /* filter out 5G WPS traffic */
++			syslog(LOG_WARNING, "SSDP packet sender %s not from a LAN, ignoring", sender_str);
+ 		return;
+ 	}
+ 

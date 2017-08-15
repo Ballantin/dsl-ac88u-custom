@@ -1,0 +1,101 @@
+/*
+** Copyright (c) 2012 Silicon Laboratories, Inc.
+** 2012-05-01 08:58:46
+**
+** Si322x ProSLIC API Configuration Tool Version 2.11.0
+*/
+
+#ifndef SI3226_CONSTANTS_H    /* support nested includes */
+#define SI3226_CONSTANTS_H
+
+/** Ringing Presets */
+enum {
+	RING_MAX_VBAT_PROVISIONING,
+	RING_F20_45VRMS_0VDC_LPR,
+	RING_F20_45VRMS_0VDC_BAL
+};
+
+/** DC_Feed Presets */
+enum {
+	DCFEED_48V_20MA,
+	DCFEED_48V_25MA,
+	DCFEED_PSTN_DET_1,
+	DCFEED_PSTN_DET_2
+};
+
+/** Impedance Presets */
+enum {
+	ZSYN_600_0_0_30_0,
+	ZSYN_270_750_150_30_0,
+	ZSYN_370_620_310_30_0,
+	ZSYN_220_820_120_30_0,
+	ZSYN_600_0_1000_30_0,
+	ZSYN_200_680_100_30_0,
+	ZSYN_220_820_115_30_0
+};
+
+/** FSK Presets */
+enum {
+	DEFAULT_FSK
+};
+
+/** Tone Presets */
+enum {
+	TONEGEN_FCC_DIAL,
+	TONEGEN_FCC_BUSY,
+	TONEGEN_FCC_RINGBACK,
+	TONEGEN_FCC_REORDER,
+	TONEGEN_FCC_CONGESTION
+};
+
+/** PCM Presets */
+enum {
+	PCM_8ULAW,
+	PCM_8ALAW,
+	PCM_16LIN,
+	PCM_16LIN_WB
+};
+
+
+/** Generic Preset Enumeration */
+enum {
+    SI3226_AUSTRALIA,
+    SI3226_AUSTRIA,
+    SI3226_BELGIUM,
+    SI3226_BRAZIL,
+    SI3226_CHILE,
+    SI3226_CHINA,
+    SI3226_CZECH,
+    SI3226_DENMARK,
+    SI3226_ETSI,
+    SI3226_FINLAND,
+    SI3226_FRANCE,
+    SI3226_GERMANY,
+    SI3226_HUNGARY,
+    SI3226_ITALY,
+    SI3226_JAPAN,
+	SI3226_MEXICO,
+    SI3226_NETHERLANDS,
+    SI3226_NEW_ZEALAND,
+    SI3226_NORTH_AMERICA,
+    SI3226_POLAND,
+    SI3226_SPAIN,
+    SI3226_SWEDEN,
+    SI3226_NORWAY,
+    SI3226_SWITZERLAND,
+    SI3226_TR57,
+    SI3226_UK,
+    SI3226_TAIWAN,
+    SI3226_INDIA,
+    SI3226_UNITED_ARAB_EMIRATES,
+    SI3226_CYPRUS,
+    SI3226_LOCALE_MAX
+};
+
+/** Multiple BOM General Param */
+enum {
+   SI3226_GEN_PARAM_QCUK
+};
+
+
+#endif /* SI3226_CONSTANTS_H */

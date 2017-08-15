@@ -1,0 +1,180 @@
+# 
+# Copyright (C) 2006-2010 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/image.mk
+
+
+# add_image_padding <input_image_name> <block_size(bytes)> <size_to_less(bytes)>
+# Result: <input_image_name>.padded
+define add_image_padding
+	len=`wc -c $(1) | awk '{ printf $$1 }'`; \
+	pad=`expr $(2) - $$len % $(2)`; \
+	pad=`expr $$pad % $(2)`; \
+	pad=`expr $$pad - $(3)`; \
+	cat $(1) > $(1).padded; \
+	dd if=/dev/zero of=$(1).padded bs=1 count=$$pad seek=$$len
+endef
+
+#LOADADDR = 0x00010000		# RAM start + 16M 
+#KERNEL_ENTRY = $(LOADADDR)	# Newer kernels add a jmp to the kernel_entry at the start of the binary
+#RAMSIZE = 0x01000000		# 64MB
+
+BINDIR=$(BIN_DIR)/$(BOARD)
+TARGET_IMG_DIR=$(BINDIR)
+
+
+#PROJ_FLASH_SIZE = 0x8000000
+export PROJ_FLASH_BLOCK_SIZE=$(if $(CONFIG_BLDR_PROJ_FLASH_BLOCK_SIZE),$(shell printf "%d" `expr $$[$(patsubst %KB,%,$(call qstrip, $(CONFIG_BLDR_PROJ_FLASH_BLOCK_SIZE)))*1024]`),$(shell printf "%d" `expr $$[128*1024]`))
+$(warning " PROJ_FLASH_BLOCK_SIZE is $(PROJ_FLASH_BLOCK_SIZE)")
+export PROJ_MKIMAGE_HEADER_SIZE=64
+$(warning " PROJ_MKIMAGE_HEADER_SIZE is $(PROJ_MKIMAGE_HEADER_SIZE)")
+
+#PROJ_LINUX_SIZE_MAX = 0x200000
+$(warning "STAGING_DIR_HOST is $(STAGING_DIR_HOST)")
+#HOSTUTILS = /opt/hostutils/bin
+HOSTTOOLS=$(TOPDIR)/linux/hostTools
+#HOSTTOOLS=/home/qmchen/release/test_entry2/w724_hotfix_1.5/linux/hostTools
+FAKEROOT = $(HOSTTOOLS)/fakeroot/fakeroot
+FAKEROOT_ENV = $(TOPDIR)/tmp/fakeroot.env
+#DEV_TABLE= $(TOPDIR)/device_table.txt
+MKSQLZ = $(HOSTTOOLS)/mksquashfs
+CMPLZMA = $(HOSTTOOLS)/cmplzma
+IMGBUILDER= $(HOSTTOOLS)/bcmImageBuilder
+#PROJ_SQUASHFS_BLOCK_SIZE = 65536
+PROJ_SQUASHFS_BLOCK_SIZE = 131072
+#ROOTFS_SQUASHLZMAFS = $(KDIR)/squashfs_root.lzma
+MERGER = $(STAGING_DIR_HOST)/bin/arc_merger
+ARCMERGER_CMD=$(MERGER)
+MKIMAGE = $(STAGING_DIR_HOST)/bin/mkimage
+LZMA465=$(STAGING_DIR_HOST)/bin/lzma465
+MAKEDEVS = makeDevs
+#PROJ_ROOTFS_SIZE_MAX = 0x2000000
+
+define Build/Clean
+	$(MAKE) -C lzma-loader clean
+endef
+
+define Image/Build/firmware
+	rm -f $(BINDIR)/sysimg.bin
+#	$(IMGBUILDER) --output $(BINDIR)/sysimg_brcm.bin --chip 63268 --board "963168VX" --blocksize 64 --image-version 001012031019\
+#	       	--cfefile $(TOPDIR)/linux/bootloader/cfe63268.bin --rootfsfile $(BINDIR)/rootfs.img \
+#		--kernelfile $(BINDIR)/vmlinux.lz
+	##### Jess Hsieh Added for Arcadyan DT Image Header
+		if [ ! -f "$(TARGET_IMG_DIR)/image_ver_info.txt" ] ; then \
+			mkdir -p $(TARGET_IMG_DIR); \
+			$(CP) $(TOPDIR)/projects/$(call qstrip, $(CONFIG_PROJECT_TOP_FOLDER_NAME))/image_ver_info.txt $(TARGET_IMG_DIR)/; \
+			$(ARCMERGER_CMD) -InitVer $(TARGET_IMG_DIR)/image_ver_info.txt; \
+		fi
+		$(ARCMERGER_CMD) -count 1 -model $(CONFIG_PROJECT_TOP_FOLDER_NAME) -dest $(TARGET_IMG_DIR)/sys_uImage.bin -flash_size $(TARGET_FLASH_SIZE) -block_size $(TARGET_FLASH_BLOCK_SIZE) \
+	-rsize 0 -skip 0 -file $(TARGET_IMG_DIR)/uImage -sr 0 -sp 255
+	  ### No Make Image Header on Broadcom rootfs.img
+		$(ARCMERGER_CMD) -count 1 -model $(CONFIG_PROJECT_TOP_FOLDER_NAME) -dest $(TARGET_IMG_DIR)/sys_rootfs.bin -flash_size $(TARGET_FLASH_SIZE) -block_size $(TARGET_FLASH_BLOCK_SIZE) \
+	-rsize 0 -skip 0 -file $(TARGET_IMG_DIR)/rootfs.img -sr 0 -sp 255
+		###########################
+		### Create Upgrade Image ### -msize $(TARGET_MAX_KERNEL_IMG_SIZE) -msize $(TARGET_MAX_SQUASHFS_IMG_SIZE)
+		$(ARCMERGER_CMD) -debug -count 2  -model $(CONFIG_PROJECT_TOP_FOLDER_NAME) -sysimg_header $(TARGET_SYSTEM_IMAGE_HEADER_SIZE) -dest $(TARGET_IMG_DIR)/sysimg.bin -flash_size $(TARGET_FLASH_SIZE) -block_size $(TARGET_FLASH_BLOCK_SIZE)  -append_ver $(TARGET_IMG_DIR)/image_ver_info.txt -crc32 BE \
+	-rsize 0 -skip 0 -file $(TARGET_IMG_DIR)/sys_uImage.bin -sr 0 -sp 255 \
+	-rsize 0 -skip 0 -file $(TARGET_IMG_DIR)/sys_rootfs.bin -sr 0 -sp 255; \
+		$(ARCENCFW_CMD) $(TARGET_IMG_DIR)/sysimg.bin $(TARGET_IMG_DIR)/sysimg_enc.bin 32768 B6 47
+		$(STAGING_DIR_HOST)/bin/arc_mkfwname.sh $(TARGET_IMG_DIR) `$(STAGING_DIR_HOST)/bin/arc_getfwversion.sh $(TARGET_IMG_DIR)/image_ver_info.txt`
+	############################
+			
+endef
+
+ROOTFS_EMPTY_DIR_LIST = ${TARGET_DIR}
+ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/opt
+ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/home/default
+ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/root
+ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/proc
+ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/lib
+ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/bin
+ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/sys
+ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/usr
+#ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/ramdisk_copy/var
+#ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/ramdisk_copy/var/run
+#ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/ramdisk_copy/var/lock/subsys
+#ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/ramdisk_copy/var/db
+#ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/ramdisk_copy/var/lib
+#ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/ramdisk_copy/var/lib/misc
+#ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/ramdisk_copy/tmp/arc-middle
+#ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/ramdisk_copy/etc/config
+#ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/ramdisk_copy/tmp/$(PROJ_NAME)
+#ROOTFS_EMPTY_DIR_LIST += $(TARGET_DIR)/ramdisk
+
+define Image/Prepare
+	make -C $(TOPDIR)/linux PROFILE=963138GWV_IPV6 BRCM_CHIP=63138 BLD_NAND=1 hosttools
+	mkdir -p $(BINDIR)
+	rm -f $(FAKEROOT_ENV)
+	@/bin/touch $(FAKEROOT_ENV)
+	mkdir -p $(ROOTFS_EMPTY_DIR_LIST)
+	@cd $(TARGET_DIR); \
+	$(FAKEROOT) -i $(FAKEROOT_ENV) -s $(FAKEROOT_ENV) -- ln -sf bin/busybox init; \
+	$(FAKEROOT) -i $(FAKEROOT_ENV) -s $(FAKEROOT_ENV) -- ln -sf ../tmp/etc/config etc/config; \
+	$(FAKEROOT) -i $(FAKEROOT_ENV) -s $(FAKEROOT_ENV) -- ln -sf ../proc/mounts etc/mtab; \
+	$(FAKEROOT) -i $(FAKEROOT_ENV) -s $(FAKEROOT_ENV) -- ln -sf ../tmp/etc/config/passwd etc/passwd; \
+	$(FAKEROOT) -i $(FAKEROOT_ENV) -s $(FAKEROOT_ENV) -- ln -sf ../tmp/etc/config/group etc/group; \
+	$(FAKEROOT) -i $(FAKEROOT_ENV) -s $(FAKEROOT_ENV) -- ln -sf ../tmp/etc/hosts etc/hosts; \
+	$(FAKEROOT) -i $(FAKEROOT_ENV) -s $(FAKEROOT_ENV) -- ln -sf ../tmp/resolv.conf etc/resolv.conf; \
+	$(FAKEROOT) -i $(FAKEROOT_ENV) -s $(FAKEROOT_ENV) -- ln -sf ../tmp/etc/TZ etc/TZ; \
+	cd -
+	$(FAKEROOT) -i $(FAKEROOT_ENV) -s $(FAKEROOT_ENV) -- $(MAKEDEVS) "$(LINUX_DIR)/.config" "$(TARGET_DIR)"
+	chmod a+x $(TARGET_DIR)/lib/*.so
+	$(TARGET_CROSS)strip -S $(TARGET_DIR)/lib/*.so
+	#chriskuo+zz138 remove dect.ko, it's too big
+	rm -f $(TOPDIR)/linux/targets/963138GWV_IPV6/modules/lib/modules/3.4.11-rt19/extra/dect.ko
+	cp -R $(TOPDIR)/linux/targets/963138GWV_IPV6/modules/lib/modules/* $(TARGET_DIR)/lib/modules/
+	@eval "find $(TARGET_DIR)/lib/modules/ -type f -print -name '*.ko' -exec $(TARGET_CROSS)strip --strip-unneeded --strip-debug -x -R .comment -R .note -R .pdr -R .mdebug.abi32 -R .note.gnu.build-id -R .gnu.attributes -R .reginfo {} \;"
+	#$(TARGET_CROSS)sstrip $(TARGET_DIR)/bin/vlanctl $(TARGET_DIR)/bin/fcctl $(TARGET_DIR)/bin/fapctl	
+endef
+
+define Image/BuildKernel
+	rm -f $(KDIR)/vmlinux.bin $(BINDIR)/vmlinux.lz
+	$(TARGET_CROSS)objcopy -O binary -R .note -R .comment -S $(LINUX_DIR)/vmlinux $(KDIR)/vmlinux.bin
+	@$(LZMA465) e $(KDIR)/vmlinux.bin $(KDIR)/vmlinux.lzma -d20 -lc1 -lp2 -pb2
+	@rm -f $(BINDIR)/uImage
+	# Create the uImage
+	@$(MKIMAGE) -A arm -O linux -T kernel -a \
+		0x$(shell grep -w stext $(KDIR)/linux-$(LINUX_VERSION)/System.map 2>/dev/null| awk '{ printf "%s", $$1 }') \
+		-C lzma -e \
+		0x$(shell grep -w stext $(KDIR)/linux-$(LINUX_VERSION)/System.map 2>/dev/null| awk '{ printf "%s", $$1 }') \
+		-n 'ARM BRCM Linux-$(LINUX_VERSION)' \
+		-d $(KDIR)/vmlinux.lzma $(KDIR)/uImage
+	# Create Broadcom vmlinux.lz
+	$(CMPLZMA) -k -2 $(LINUX_DIR)/vmlinux $(KDIR)/vmlinux.bin $(BINDIR)/vmlinux.lz
+	# Padding uImage
+	cp -f $(KDIR)/uImage $(BINDIR)/openwrt-$(BOARD)-uImage
+  ### Jess Hsieh, Padding Alignment should be based on NAND FLASH Block Size; if not NAND FLASH component, using the default, 16 bytes, to be alignment size
+	$$(call add_image_padding,$(KDIR)/vmlinux.lzma,\
+		$(PROJ_FLASH_BLOCK_SIZE), \
+		$(PROJ_MKIMAGE_HEADER_SIZE))
+	mkimage -A arm -O linux -T kernel -a \
+		0x$(shell grep -w stext $(KDIR)/linux-$(LINUX_VERSION)/System.map 2>/dev/null| awk '{ printf "%s", $$1 }') \
+		-C lzma -e \
+		0x$(shell grep -w stext $(KDIR)/linux-$(LINUX_VERSION)/System.map 2>/dev/null| awk '{ printf "%s", $$1 }') \
+		-n 'ARM BRCM Linux-$(LINUX_VERSION)' \
+		-d $(KDIR)/vmlinux.lzma.padded $(KDIR)/uImage.padded
+	# Create Final Padding uImage
+	# mkdir -p $(TARGET_IMG_DIR)
+	cp -f $(KDIR)/uImage.padded $(BINDIR)/uImage	
+	# 
+	rm -f $(KDIR)/vmlinux.bin
+endef
+
+define Image/Build
+	$(call Image/Build/$(1),$(1))
+endef
+
+define Image/Build/squashfs
+	$(FAKEROOT) -i $(FAKEROOT_ENV) -s $(FAKEROOT_ENV) -- $(MKSQLZ) $(TARGET_DIR) $(BINDIR)/rootfs.img \
+	-comp xz -no-xattrs -noappend -all-root -b $(PROJ_SQUASHFS_BLOCK_SIZE)
+
+	#$$(call add_image_padding,$(KDIR)/root.$(1),$(PROJ_FLASH_BLOCK_SIZE),0)
+	#mkimage -A MIPS -O Linux -C lzma -T filesystem -e 0x00 -a 0x00 -n "BRCM RootFS" -d $(KDIR)/root.$(1).padded $(KDIR)/rootfs.img.padded
+	#cp -f $(KDIR)/rootfs.img.padded $(BINDIR)/uRootfs
+endef
+
+$(eval $(call BuildImage))

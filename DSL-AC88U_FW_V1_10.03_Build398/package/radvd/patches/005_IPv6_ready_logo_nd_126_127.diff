@@ -1,0 +1,33 @@
+diff --git a/device-linux.c b/device-linux.c
+index e1c3aa3..b5200eb 100644
+--- a/device-linux.c
++++ b/device-linux.c
+@@ -293,9 +293,10 @@ set_interface_reachtime(const char *iface, uint32_t rtime)
+ 	if (privsep_enabled())
+ 		return privsep_interface_reachtime(iface, rtime);
+ 
++	/* ten_zheng, 2015-07-07, For IPv6 Ready Logo Test nd.p2 item 127, modify "NULL" to "BaseReachableTimer". */
+ 	ret = set_interface_var(iface,
+ 				PROC_SYS_IP6_BASEREACHTIME_MS,
+-				NULL,
++				"BaseReachableTimer",
+ 				rtime);
+ 	if (ret)
+ 		ret = set_interface_var(iface,
+diff --git a/send.c b/send.c
+index e2f56ce..16e192e 100644
+--- a/send.c
++++ b/send.c
+@@ -222,9 +222,9 @@ send_ra(struct Interface *iface, struct in6_addr *dest)
+ 
+ 	while(prefix)
+ 	{
+-		/* Zhijian 2014-08-18 We need send deprecated prefix information out while preferred life time is set to be 0. */
+-		//if( prefix->enabled && prefix->curr_preferredlft > 0 )
+-		if( prefix->enabled && prefix->curr_validlft > 0 )
++		/* ten_zheng, 2015-07-07, For IPv6 Ready Logo Test nd.p2 item 126. 
++		When valid or preferred time is 0, RA also includes prefix information. */
++		if( prefix->enabled )
+ 		{
+ 			struct nd_opt_prefix_info *pinfo;
+ 

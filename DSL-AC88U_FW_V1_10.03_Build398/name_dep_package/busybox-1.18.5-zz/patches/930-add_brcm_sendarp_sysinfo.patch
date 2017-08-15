@@ -1,0 +1,409 @@
+commit 765ee7d66f6f3fb90949ce1b505652fa1935d2eb
+Author: Jingwei Liang <jingwei_liang@sva-arcadyan.com.cn>
+Date:   Wed Nov 12 17:32:52 2014 +0800
+
+    	o Add brcm sendarp & sysinfo to busybox-1.18.5
+    
+    	modified:   include/applets.src.h
+    	modified:   include/usage.src.h
+    	modified:   miscutils/Config.src
+    	modified:   miscutils/Kbuild.src
+    	modified:   networking/Config.src
+    	modified:   networking/Kbuild.src
+    	new file:   networking/sendarp.c
+    	new file:   miscutils/sysinfo.c
+
+diff --git a/include/applets.src.h b/include/applets.src.h
+index f4fab53..f69abc1 100644
+--- a/include/applets.src.h
++++ b/include/applets.src.h
+@@ -72,6 +72,9 @@ IF_ADJTIMEX(APPLET(adjtimex, _BB_DIR_SBIN, _BB_SUID_DROP))
+ IF_AR(APPLET(ar, _BB_DIR_USR_BIN, _BB_SUID_DROP))
+ IF_ARP(APPLET(arp, _BB_DIR_SBIN, _BB_SUID_DROP))
+ IF_ARPING(APPLET(arping, _BB_DIR_USR_BIN, _BB_SUID_DROP))
++// brcm begin
++IF_SENDARP(APPLET(sendarp, _BB_DIR_USR_BIN, _BB_SUID_DROP))
++// brcm end
+ IF_AWK(APPLET_NOEXEC(awk, awk, _BB_DIR_USR_BIN, _BB_SUID_DROP, awk))
+ IF_BASENAME(APPLET_NOFORK(basename, basename, _BB_DIR_USR_BIN, _BB_SUID_DROP, basename))
+ IF_BBCONFIG(APPLET(bbconfig, _BB_DIR_BIN, _BB_SUID_DROP))
+@@ -396,6 +399,9 @@ IF_VOLNAME(APPLET(volname, _BB_DIR_USR_BIN, _BB_SUID_DROP))
+ IF_WALL(APPLET(wall, _BB_DIR_USR_BIN, _BB_SUID_REQUIRE))
+ IF_WATCH(APPLET(watch, _BB_DIR_BIN, _BB_SUID_DROP))
+ IF_WATCHDOG(APPLET(watchdog, _BB_DIR_SBIN, _BB_SUID_DROP))
++// brcm begin
++IF_SYSINFO(APPLET(sysinfo, _BB_DIR_SBIN, _BB_SUID_DROP))
++// brcm end
+ IF_WC(APPLET(wc, _BB_DIR_USR_BIN, _BB_SUID_DROP))
+ IF_WGET(APPLET(wget, _BB_DIR_USR_BIN, _BB_SUID_DROP))
+ IF_WHICH(APPLET(which, _BB_DIR_USR_BIN, _BB_SUID_DROP))
+diff --git a/include/usage.src.h b/include/usage.src.h
+index 30fef24..c9c9321 100644
+--- a/include/usage.src.h
++++ b/include/usage.src.h
+@@ -121,6 +121,23 @@ INSERT
+      "\n	-s SRC_IP	Sender IP address" \
+      "\n	DST_IP		Target IP address" \
+ 
++// brcm begin
++#define sendarp_trivial_usage \
++       "-s <src device name> -d <dst device name>"
++#define sendarp_full_usage "\n\n" \
++       "Send ARP packet with src device's IP and Hardware address to dst device.\n" \
++     "\nOptions:" \
++     "\n	-s DEVNAME	src device name." \
++     "\n	-d DEVNAME	dst device name." \
++
++#define sysinfo_trivial_usage \
++	"System status report"
++#define sysinfo_full_usage \
++	"System status report\n\n" 
++#define sysinfo_example_usage \
++	"$ sysinfo\n"
++// brcm end
++
+ #define awk_trivial_usage \
+        "[OPTIONS] [AWK_PROGRAM] [FILE]..."
+ #define awk_full_usage "\n\n" \
+diff --git a/miscutils/Config.src b/miscutils/Config.src
+index da52e14..0caf3dc 100644
+--- a/miscutils/Config.src
++++ b/miscutils/Config.src
+@@ -673,4 +673,12 @@ config WATCHDOG
+ 	  certain amount of time, the watchdog device assumes the system has
+ 	  hung, and will cause the hardware to reboot.
+ 
++# brcm begin
++config SYSINFO
++	bool "sysinfo"
++	default y
++	help
++	  The system status report utility.
++# brcm end
++
+ endmenu
+diff --git a/miscutils/Kbuild.src b/miscutils/Kbuild.src
+index 8c49864..9f9b567 100644
+--- a/miscutils/Kbuild.src
++++ b/miscutils/Kbuild.src
+@@ -48,3 +48,6 @@ lib-$(CONFIG_TTYSIZE)     += ttysize.o
+ lib-$(CONFIG_VOLNAME)     += volname.o
+ lib-$(CONFIG_WALL)        += wall.o
+ lib-$(CONFIG_WATCHDOG)    += watchdog.o
++# brcm begin
++lib-$(CONFIG_SYSINFO)    += sysinfo.o
++# brcm end
+diff --git a/miscutils/sysinfo.c b/miscutils/sysinfo.c
+new file mode 100644
+index 0000000..7947f76
+--- /dev/null
++++ b/miscutils/sysinfo.c
+@@ -0,0 +1,100 @@
++/*
++ *  Report system information including
++ *      number of processes, uptime, system average load
++ *      and memory information.
++ *
++ */
++
++
++#include <stdio.h>
++#include <errno.h>
++#include <stdlib.h>
++#include <time.h>
++#include "busybox.h"
++
++static const int FSHIFT = 16;              /* nr of bits of precision */
++#define FIXED_1         (1<<FSHIFT)     /* 1.0 as fixed-point */
++#define LOAD_INT(x) ((x) >> FSHIFT)
++#define LOAD_FRAC(x) LOAD_INT(((x) & (FIXED_1-1)) * 100)
++
++static int sysinfo_mem(void)
++{
++	struct sysinfo info;
++	sysinfo(&info);
++
++	/* Kernels prior to 2.4.x will return info.mem_unit==0, so cope... */
++	if (info.mem_unit==0) {
++		info.mem_unit=1;
++	}
++	info.mem_unit*=1024;
++
++	/* TODO:  Make all this stuff not overflow when mem >= 4 Gib */
++	info.totalram/=info.mem_unit;
++	info.freeram/=info.mem_unit;
++	info.totalswap/=info.mem_unit;
++	info.freeswap/=info.mem_unit;
++	info.sharedram/=info.mem_unit;
++	info.bufferram/=info.mem_unit;
++
++	printf("%6s%13s%13s%13s%13s%13s\n", "", "total", "used", "free",
++			"shared", "buffers");
++
++	printf("%6s%13ld%13ld%13ld%13ld%13ld\n", "Mem:", info.totalram,
++			info.totalram-info.freeram, info.freeram,
++			info.sharedram, info.bufferram);
++
++	printf("%6s%13ld%13ld%13ld\n", "Swap:", info.totalswap,
++			info.totalswap-info.freeswap, info.freeswap);
++
++	printf("%6s%13ld%13ld%13ld\n", "Total:", info.totalram+info.totalswap,
++			(info.totalram-info.freeram)+(info.totalswap-info.freeswap),
++			info.freeram+info.freeswap);
++	return EXIT_SUCCESS;
++}
++
++
++
++static int sysinfo_uptime(void)
++{
++	int updays, uphours, upminutes;
++	struct sysinfo info;
++	struct tm *current_time;
++	time_t current_secs;
++
++	time(&current_secs);
++	current_time = localtime(&current_secs);
++
++	sysinfo(&info);
++
++    printf("Number of processes: %d\n", info.procs);
++	printf(" %2d:%02d%s  up ",
++			current_time->tm_hour%12 ? current_time->tm_hour%12 : 12,
++			current_time->tm_min, current_time->tm_hour > 11 ? "pm" : "am");
++	updays = (int) info.uptime / (60*60*24);
++	if (updays)
++		printf("%d day%s, ", updays, (updays != 1) ? "s" : "");
++	upminutes = (int) info.uptime / 60;
++	uphours = (upminutes / 60) % 24;
++	upminutes %= 60;
++	if(uphours)
++		printf("%2d:%02d, ", uphours, upminutes);
++	else
++		printf("%d min, ", upminutes);
++
++	printf("\nload average: 1 min:%ld.%02ld, 5 min:%ld.%02ld, 15 min:%ld.%02ld\n",
++			LOAD_INT(info.loads[0]), LOAD_FRAC(info.loads[0]),
++			LOAD_INT(info.loads[1]), LOAD_FRAC(info.loads[1]),
++			LOAD_INT(info.loads[2]), LOAD_FRAC(info.loads[2]));
++
++	return EXIT_SUCCESS;
++}
++
++extern int sysinfo_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM) MAIN_EXTERNALLY_VISIBLE;
++extern int sysinfo_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
++{
++    sysinfo_uptime();
++    sysinfo_mem();
++
++    return EXIT_SUCCESS;
++
++}
+diff --git a/networking/Config.src b/networking/Config.src
+index 6dd7df7..7016c4f 100644
+--- a/networking/Config.src
++++ b/networking/Config.src
+@@ -62,6 +62,14 @@ config ARPING
+ 	help
+ 	  Ping hosts by ARP packets.
+ 
++# brcm begin
++config SENDARP
++	bool "sendarp"
++	default y
++	help
++	  Ping hosts by ARP packets.
++# brcm end
++
+ config BRCTL
+ 	bool "brctl"
+ 	default y
+diff --git a/networking/Kbuild.src b/networking/Kbuild.src
+index f41a2df..1601590 100644
+--- a/networking/Kbuild.src
++++ b/networking/Kbuild.src
+@@ -9,6 +9,9 @@ lib-y:=
+ INSERT
+ lib-$(CONFIG_ARP)          += arp.o interface.o
+ lib-$(CONFIG_ARPING)       += arping.o
++# brcm begin
++lib-$(CONFIG_SENDARP)      += sendarp.o
++# brcm end
+ lib-$(CONFIG_BRCTL)        += brctl.o
+ lib-$(CONFIG_DNSD)         += dnsd.o
+ lib-$(CONFIG_ETHER_WAKE)   += ether-wake.o
+diff --git a/networking/sendarp.c b/networking/sendarp.c
+new file mode 100644
+index 0000000..84b4b88
+--- /dev/null
++++ b/networking/sendarp.c
+@@ -0,0 +1,169 @@
++#include <stdlib.h>
++#include <string.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <linux/if_packet.h>
++#include <net/if.h>
++#include <sys/ioctl.h>
++#include <netinet/if_ether.h>
++#include "busybox.h"
++
++#define MAC_BCAST_ADDR	"\xff\xff\xff\xff\xff\xff"
++
++#define IFIPADDR        1
++#define IFHWADDR        2
++
++struct arpMsg {
++	struct ethhdr ethhdr;	 		/* Ethernet header */
++	u_short htype;				/* hardware type (must be ARPHRD_ETHER) */
++	u_short ptype;				/* protocol type (must be ETH_P_IP) */
++	u_char  hlen;				/* hardware address length (must be 6) */
++	u_char  plen;				/* protocol address length (must be 4) */
++	u_short operation;			/* ARP opcode */
++	u_char  sHaddr[6];			/* sender's hardware address */
++	u_char  sInaddr[4];			/* sender's IP address */
++	u_char  tHaddr[6];			/* target's hardware address */
++	u_char  tInaddr[4];			/* target's IP address */
++	u_char  pad[18];			/* pad for min. Ethernet payload (60 bytes) */
++};
++
++/* local prototypes */
++static void sendArp(char *srcDev, char *destDev);
++static void mkArpMsg(int opcode, u_long tInaddr, u_char *tHaddr, u_long sInaddr, u_char *sHaddr, struct arpMsg *msg);
++static int getDevInfo (char *devname, int infotype, char *data);
++
++int sendarp_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
++int sendarp_main(int argc, char **argv)
++{
++	char *srcdev = NULL;
++	char *dstdev = NULL;
++	int opt;
++
++	while ((opt = getopt(argc, argv, "s:d:")) != -1) {
++		switch (opt) {
++		case 's': 
++			srcdev = xstrdup(optarg);
++			break;
++		case 'd':
++			dstdev = xstrdup(optarg);
++			break;
++		}
++	}
++
++    if ((srcdev == NULL) || (dstdev == NULL)) {
++        bb_show_usage();
++        return 0;
++    }
++
++    /* send gratutious ARP packet with srcdev's IP and hardware address to dstdev */
++    sendArp(srcdev, dstdev);
++
++	return EXIT_SUCCESS;
++}
++
++static void mkArpMsg(int opcode, u_long tInaddr, u_char *tHaddr,
++		 u_long sInaddr, u_char *sHaddr, struct arpMsg *msg) {
++	bzero(msg, sizeof(*msg));
++	bcopy(MAC_BCAST_ADDR, msg->ethhdr.h_dest, 6); /* MAC DA */
++	bcopy(sHaddr, msg->ethhdr.h_source, 6);	/* MAC SA */
++	msg->ethhdr.h_proto = htons(ETH_P_ARP);	/* protocol type (Ethernet) */
++	msg->htype = htons(ARPHRD_ETHER);		/* hardware type */
++	msg->ptype = htons(ETH_P_IP);			/* protocol type (ARP message) */
++	msg->hlen = 6;							/* hardware address length */
++	msg->plen = 4;							/* protocol address length */
++	msg->operation = htons(opcode);			/* ARP op code */
++//brcm start
++   bcopy((u_char *)&sInaddr, &msg->sInaddr[0], 4);  /* source IP address */
++	bcopy(sHaddr, msg->sHaddr, 6);			/* source hardware address */
++   bcopy((u_char *)&tInaddr, &msg->tInaddr[0], 4);  /* target IP address */
++//brcm end
++	if ( opcode == ARPOP_REPLY )
++		bcopy(tHaddr, msg->tHaddr, 6);		/* target hardware address */
++}
++
++static int getDevInfo (char *devname, int infotype, char *data) {
++    int    sock;
++    struct ifreq ifr;
++    int rc = 0;
++
++    /* create device level socket */
++    if ((sock = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0)
++    {
++		perror("cannot open socket ");
++        return -1;
++    }
++
++    memset(&ifr, 0, sizeof(struct ifreq));
++    strcpy(ifr.ifr_name, devname);
++    switch(infotype) {
++        case IFIPADDR:
++            /* get IP address */
++            if (ioctl(sock, SIOCGIFADDR, &ifr) == -1) {
++                rc = -1;
++            } else {
++                memcpy(data, &((struct sockaddr_in *)&(ifr.ifr_addr))->sin_addr, sizeof(struct in_addr));
++            }
++            break;
++        case IFHWADDR:
++            /* get hardware address */
++            if (ioctl(sock, SIOCGIFHWADDR, &ifr) == -1) {
++                rc = -1;
++            } else {
++                memcpy(data, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
++            }
++            break;
++        default:
++            rc = -1;
++            break;
++    }
++	close (sock);
++	return rc;
++}
++
++static void sendArp(char *srcDev, char *destDev) {
++    int sock;
++    struct arpMsg arp;
++    unsigned char br_macaddr[ETH_ALEN];
++    unsigned char eth_macaddr[ETH_ALEN];
++    unsigned int br_ipAddr;
++    struct sockaddr_ll sll; 
++    struct ifreq ifr;
++    int flag;
++
++    if ((getDevInfo(srcDev, IFIPADDR, (char *)&br_ipAddr) == 0) &&
++       (getDevInfo(srcDev, IFHWADDR, (char *)br_macaddr) == 0) &&
++       (getDevInfo(destDev, IFHWADDR, (char *)eth_macaddr) == 0)) {
++            /* create device level socket */
++            if ((sock = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
++		        perror("cannot open socket ");
++                return;
++            }
++
++            memset(&sll, 0, sizeof(sll));
++            sll.sll_family = AF_PACKET;
++            sll.sll_protocol = htons(ETH_P_ALL);
++
++            /* get interface index number */
++            memset(&ifr, 0, sizeof(struct ifreq));
++            strcpy(ifr.ifr_name, destDev);
++            if (ioctl(sock, SIOCGIFINDEX, &ifr) < 0) {
++ 		        perror("SIOCGIFINDEX(): ");
++                close(sock);
++                return;
++            }
++            sll.sll_ifindex = ifr.ifr_ifindex;
++            /* bind the socket to the interface */
++            if (bind(sock, (struct sockaddr *)&sll,	sizeof(sll)) == -1) {
++ 		        perror("bind(): ");
++                close(sock);
++                return;
++            }
++            /* set socket to non-blocking operation */
++            if ((flag = fcntl(sock, F_GETFL, 0)) >= 0) {
++                fcntl(sock, F_SETFL, flag | O_NONBLOCK);
++            }
++            mkArpMsg(ARPOP_REQUEST, br_ipAddr, NULL, br_ipAddr, br_macaddr, &arp);
++            sendto(sock, &arp, sizeof(arp), 0, (struct sockaddr *)&sll, sizeof(sll));
++            close(sock);
++    }
++}

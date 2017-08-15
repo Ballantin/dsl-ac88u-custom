@@ -1,0 +1,618 @@
+#!/bin/bash
+
+# -----------------------------------------------------------------------------
+# Usage: build [-a appdir] [-d dspapp] [-t target] [-v] [-D XYZ] make-flags
+#  -a appdir    application directory (e.g. Bcm6348gw or Bcm6348gw__pcm)
+#  -d dspapp    DSP application (e.g. g711, g7231, g726, g729a, g7xx, faxr, faxr_internal)
+#  -t target    Target to be built
+#                  bosu        -  BOS for Linux user mode
+#                  bosk        -  BOS for Linux kernel mode
+#                  bosuk       -  BOS for Linux user and kernel mode
+#                  xdrv        -  Common drivers
+#                  vrg         -  Voice residential gateway
+#                  mta         -  Other MTA components (e.g. endpoint driver)
+#                  cellcmgr    -  Cellular call manager ( CELL Version )
+#                  sipcc       -  SIP call control
+#                  sipstack    -  SIP stack
+#                  codec       -  Codec List
+#                  sipcmgrcctk -  SIP call manager ( CCTK Version )
+#                  sipcctk     -  SIP call control toolkit
+#                  sipm5tua    -  SIP M5T User Agent (stack)
+#                  expat       -  Expat XML Parser
+#                  srtp        -  SRTP
+#                  alltargets  -  Build all targets (bosu, bosk, xdrv, vrg, mta, ...)
+#  -v           Turn on verbose mode
+#  -D XYZ       Pass define XYZ to make
+#  make-flags   These are passed on directly to make
+#
+# Example: build -a Bcm6348gw -d g729a -t bosu clean
+#    Clean up the Linux User BOS objects and libraries (DSP app is g729a)
+#
+# Example: build -a Bcm6348gw -d g729a -t bosu clean
+#    Clean up and then build Linux Kernel BOS objects an libraries (DSP app is g723)
+#
+#
+# -----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
+# ----------------- Local varaibles -------------------------------------------
+# -----------------------------------------------------------------------------
+APPDIR=
+DSPAPP=g729a                 # default DSP app
+BLD_FLAGS_GLOBAL=
+VERBOSE=false
+TARGET=
+MAKE_OPTS=
+BOS_LIBS=
+VRG_LIBS=
+DRV_LIBS=
+
+#
+# The variable CXC_VIEW_DIR has to point to the CommEngine directory
+# Assumption is that this script resides in CommEngine/xChange/dslx
+CXC_VIEW_DIR=`cd ../..;pwd`
+
+# -----------------------------------------------------------------------------
+# ----------------- Functions -------------------------------------------------
+# -----------------------------------------------------------------------------
+
+#
+# Emulate '^^' parameter expansion
+#
+toupper() {
+  local char="$*"
+  local out=$(echo $char | tr [:lower:] [:upper:])
+  local retval=$?
+  echo "$out"
+  unset out
+  unset char
+  return $retval
+}
+
+#
+# Parameters needed by the Makefiles in the dslx directory
+#
+setCxcParams()
+{
+  CXC_PROJ_DIR=${CXC_VIEW_DIR}/xChange
+  CXC_OS_ROOT_DIR=${KERNEL_DIR}
+  CXC_EPILOGUE_DIR=notused
+  CXC_WINDMANAGE_ROOT=notused
+  CXC_GENERIC_MAKEFILE=${CXC_PROJ_DIR}/dslx/rules/cxcGeneric.mk
+  CXC_HOST_TYPE=i386-linux
+  CXC_COMPILER_ROOT_DIR=${TOOLCHAIN}
+  CXC_LINUX_ARCHITECTURE=$(toupper ${PROFILE_ARCH})
+  XCHG_C_COMPILE=${CC}
+  XCHG_CPP_COMPILE=${CXX}
+  XCHG_AR=${AR}
+  XCHG_ASSEMBLE="${CC} -x assembler-with-cpp"
+
+  export   CXC_PROJ_DIR               CXC_OS_TYPE                \
+           CXC_OS_ROOT_DIR            CXC_EPILOGUE_DIR           \
+           CXC_WINDMANAGE_ROOT        CXC_GENERIC_MAKEFILE       \
+           CXC_LINUX_ARCHITECTURE     CXC_HOST_TYPE              \
+           CXC_COMPILER_ROOT_DIR      CXC_VIEW_DIR               \
+           XCHG_C_COMPILE             XCHG_CPP_COMPILE           \
+           XCHG_AR                    XCHG_ASSEMBLE
+}
+
+#
+# Copy the created libraries to the appropriate destination
+# folders in the Linux user or kernel space
+#
+copyLibs()
+{
+  SRC_DIR=${CXC_PROJ_DIR}/dslx/lib/${CXC_OS_TYPE}/${APPDIR}/xchg_common_build
+
+  if [ "${CXC_OS_TYPE}" == "LinuxKernel" ] ; then
+     DEST_DIR=${CXC_VIEW_DIR}/bcmdrivers/broadcom/char/endpoint/impl1/gwcommon/lib
+  elif [ "${CXC_OS_TYPE}" == "LinuxUser" ] ; then
+     DEST_DIR=${CXC_VIEW_DIR}/userspace/private/apps/vodsl/bos/lib
+  else
+       echo "Unknown OS. Cannot copy BOS libraries."
+  fi
+
+  echo
+  echo "Destination folder for copying libraries:"
+  echo ${DEST_DIR}
+  for i in ${BOS_LIBS[*]}; do
+     echo "Copying library ${i} ..."
+     cp ${SRC_DIR}/${i}.a ${DEST_DIR}/${i}.lib
+  done
+  for i in ${VRG_LIBS[*]}; do
+     echo "Copying library ${i} ..."
+     cp ${SRC_DIR}/${i}.a ${DEST_DIR}/${i}.lib
+  done
+  for i in ${DRV_LIBS[*]}; do
+     echo "Copying library ${i} ..."
+     cp ${SRC_DIR}/${i}.a ${DEST_DIR}/${i}.lib
+  done
+  echo
+}
+
+
+#
+# Common build for both Linux User and Linux Kernel
+#
+buildCommon()
+{
+  BOS_LIBS=(bos sme str)
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} xchg_common
+  else
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} xchg_common
+  fi
+}
+
+#
+# Build the Linux kernel BOS
+#
+buildBosLinuxKernel()
+{
+  echo
+  echo "Building xchg_common for Linux Kernel ..."
+  echo
+
+  CXC_OS_TYPE=LinuxKernel
+  buildCommon
+}
+
+#
+# Build the Linux User BOS
+#
+buildBosLinuxUser()
+{
+  echo
+  echo "Building xchg_common for Linux User ..."
+  echo
+
+  CXC_OS_TYPE=LinuxUser
+  buildCommon
+}
+
+buildSipStack()
+{
+  echo
+  echo "Building SIP stack ..."
+
+  echo
+
+  CXC_OS_TYPE=LinuxUser
+
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} sip_mx
+  else
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} sip_mx
+  fi
+}
+
+buildSipCallCtrl()
+{
+  echo
+  echo "Building SIP call control ..."
+  echo
+
+  CXC_OS_TYPE=LinuxUser
+
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make verbose=${VERBOSE} dspapp=${DSPAPP} callctrl
+  else
+     make verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} callctrl
+  fi
+}
+
+buildCellCallMgr()
+{
+  echo
+  echo "Building Cellular call manager ( CELL Version )..."
+  echo
+
+  CXC_OS_TYPE=LinuxUser
+
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make verbose=${VERBOSE} dspapp=${DSPAPP} cell_cmgr
+  else
+     make verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} cell_cmgr
+  fi
+}
+
+buildSipM5tua()
+{
+  echo
+  echo "Building SIP M5T User Agent (stack)..."
+  echo
+
+  CXC_OS_TYPE=LinuxUser
+
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} sip_m5tua
+  else
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} sip_m5tua
+  fi
+}
+
+buildSipCctk()
+{
+  echo
+  echo "Building SIP Call Control Toolkit..."
+  echo
+
+  CXC_OS_TYPE=LinuxUser
+
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} sip_cctk
+  else
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} sip_cctk
+  fi
+}
+
+buildSipCallMgrCctk()
+{
+  echo
+  echo "Building SIP Call Manager ( CCTK Version )..."
+  echo
+
+  CXC_OS_TYPE=LinuxUser
+
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} sip_cmgr
+  else
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} sip_cmgr
+  fi
+}
+
+buildExpat()
+{
+  echo
+  echo "Building Expat XML Parser ..."
+  echo
+
+  CXC_OS_TYPE=LinuxUser
+
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make verbose=${VERBOSE} dspapp=${DSPAPP} expat
+  else
+     make verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} expat
+  fi
+}
+
+buildSRTP()
+{
+  echo
+  echo "Building SRTP ..."
+  echo
+
+  CXC_OS_TYPE=LinuxUser
+
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make verbose=${VERBOSE} dspapp=${DSPAPP} srtp
+  else
+     make verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} srtp
+  fi
+}
+
+
+#
+# Build the drivers
+#
+buildDrivers()
+{
+  echo
+  echo "Building xchg_drivers ..."
+  echo
+
+  DRV_LIBS=(casDriver globalInterrupt)
+
+  CXC_OS_TYPE=LinuxKernel
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} xdrv
+  else
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} xdrv
+  fi
+}
+
+#
+# Build the voice residential gateway
+#
+buildVrg()
+{
+  echo
+  echo "Building voice residential gateway ..."
+  echo
+
+  VRG_LIBS=(casCtl classStm codec hdsp lhapi vrgEndpt)
+
+  CXC_OS_TYPE=LinuxKernel
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} vrg
+  else
+     make -j verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} vrg
+  fi
+}
+
+
+#
+# Build codec library only
+#
+buildcodeconly()
+{
+  echo
+  echo "Building codec library ..."
+  echo
+
+  VRG_LIBS=(codec)
+
+  CXC_OS_TYPE=LinuxKernel
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make verbose=${VERBOSE} dspapp=${DSPAPP} codec CXC_VRG_SPEC_LIB_BUILD=1
+  else
+     make verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} codec CXC_VRG_SPEC_LIB_BUILD=1
+  fi
+}
+
+#
+# Build the partially linked file for the DSP device driver. This function
+# basically copies the partially linked DSP binary from the application specific
+# output folder to the 'obj' folder under dslx.
+#
+builddspdd()
+{
+  echo
+  echo "Building partially linked DSP binary for the device driver ..."
+  echo
+
+  VRG_LIBS=(casCtl classStm codec hdsp lhapi vrgEndpt)
+
+  CXC_OS_TYPE=LinuxKernel
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make verbose=${VERBOSE} dspapp=${DSPAPP} dspdd
+  else
+     make verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} dspdd
+  fi
+}
+
+#
+# Build the non-common code
+#
+buildMta()
+{
+  echo
+  echo "Building the non-common voice code ..."
+  echo
+
+  CXC_OS_TYPE=LinuxKernel
+  cd ${CXC_PROJ_DIR}/dslx/apps/${APPDIR}
+
+  if [ "${MAKE_OPTS}" == "" ] ; then
+     make verbose=${VERBOSE} dspapp=${DSPAPP} mta
+  else
+     make verbose=${VERBOSE} dspapp=${DSPAPP} ${MAKE_OPTS} mta
+  fi
+}
+
+
+printCmdSyntax()
+{
+  echo ""
+  echo "Usage: build [-a appdir] [-d dspapp] [-t target] [-v] make-flags"
+  echo "  -a appdir    application directory (e.g. Bcm6348gw or Bcm6348gw_pcm)"
+  echo "  -d dspapp    DSP application (e.g. g711, g7231, g726, g729a, g7xx, faxr, faxr_internal)"
+  echo "  -t target    Target to be built"
+  echo "                  bosu        -  BOS for Linux user mode"
+  echo "                  bosk        -  BOS for Linux kernel mode"
+  echo "                  bosuk       -  BOS for Linux user and kernel mode"
+  echo "                  xdrv        -  Common drivers"
+  echo "                  vrg         -  Voice residential gateway"
+  echo "                  mta         -  Other MTA components (e.g. endpoint driver)"
+  echo "                  cellcmgr    -  Cellular call manager ( CELL Version )"
+  echo "                  sipcc       -  SIP call control"
+  echo "                  sipstack    -  SIP stack"
+  echo "                  codec       -  Codec List"
+  echo "                  sipcmgrcctk -  SIP call manager ( CCTK Version )"
+  echo "                  sipcctk     -  SIP call control toolkit"
+  echo "                  sipm5tua    -  SIP M5T User Agent (stack)"
+  echo "                  expat       -  Expat XML Parser"
+  echo "                  srtp        -  SRTP library"
+  echo "                  alltargets  -  Build all targets (bosu, bosk, xdrv, vrg, mta)"
+  echo "  -v           Turn on verbose mode"
+  echo "  -D XYZ       Pass define XYZ to make"
+  echo "  make-flags   These are passed on directly to make"
+  echo ""
+}
+
+################################################################################
+# -----------------------------------------------------------------------------#
+# ----------------- Main script -----------------------------------------------#
+# -----------------------------------------------------------------------------#
+################################################################################
+
+#
+# Verify that the kernel include directory asm points to asm-mips
+#
+#if [ ! -h ${CXC_VIEW_DIR}/kernel/linux/include/asm ]; then
+#  if [ -d ${CXC_VIEW_DIR}/kernel/linux/include/asm-mips ]; then
+#     ln -sf ${CXC_VIEW_DIR}/kernel/linux/include/asm-mips \
+#           ${CXC_VIEW_DIR}/kernel/linux/include/asm
+#  fi
+#fi
+
+#
+# Verify that CXC_VIEW_DIR is setup
+#
+if [ ! -d ${CXC_VIEW_DIR} ]; then
+  echo
+  echo "CXC_VIEW_DIR directory is not set up properly"
+  echo "Modify the script $0 and set the variable CXC_VIEW_DIR"
+  echo "CXC_VIEW_DIR should point to the CommEngine directory in the view"
+  echo
+  exit
+fi
+
+#
+# Set the parameters needed by the Makefiles in the dslx directory
+#
+setCxcParams
+
+
+while [ -n "$1" ];
+do
+   case $1 in
+
+   -a | -appdir)
+      APPDIR=$2 ;
+      shift
+      ;;
+
+   -d | -dspapp)
+      DSPAPP=$2 ;
+      shift
+      ;;
+
+   -D)
+      export BLD_FLAGS_GLOBAL="${BLD_FLAGS_GLOBAL} $2"
+      shift
+      ;;
+
+   -t | target)
+      TARGET=$2 ;
+      shift
+      ;;
+
+   -h)
+      printCmdSyntax
+      exit 1
+      ;;
+
+   -nolog)
+      LogEnabled=false
+      ;;
+
+   -v | -verbose)
+      VERBOSE=true
+      ;;
+
+   *)
+      MAKE_OPTS="${MAKE_OPTS} $1"
+      ;;
+   esac
+
+   shift
+done
+
+
+echo ""
+echo "Voice common code build for target ${TARGET}"
+echo ""
+echo "Voice app directory    : ${APPDIR}"
+echo "DSP app                : ${DSPAPP}"
+echo "Global build flags     : ${BLD_FLAGS_GLOBAL}"
+echo "Verbose mode           : ${VERBOSE}"
+echo "Additional make options: ${MAKE_OPTS}"
+echo ""
+
+
+if [ ! -d ${CXC_PROJ_DIR}/dslx/apps/${APPDIR} ]; then
+  echo
+  echo "Application directory ${CXC_PROJ_DIR}/dslx/apps/${APPDIR} does not exist !!!"
+  printCmdSyntax
+  exit
+fi
+
+
+   case ${TARGET} in
+
+   bosk)
+      buildBosLinuxKernel
+      ;;
+
+   bosu)
+      buildBosLinuxUser
+      ;;
+
+   bosuk)
+      buildBosLinuxUser && buildBosLinuxKernel
+      ;;
+
+   alltargets)
+      buildBosLinuxKernel && buildBosLinuxUser && buildDrivers && buildVrg && buildMta
+      ;;
+
+   xdrv)
+      buildDrivers
+      ;;
+
+   vrg)
+      buildVrg
+      ;;
+
+   mta)
+      buildMta
+      ;;
+
+   sipstack)
+      buildSipStack
+      ;;
+
+   sipcc)
+      buildSipCallCtrl
+      ;;
+
+   cellcmgr)
+      buildCellCallMgr
+      ;;
+
+   sipm5tua)
+      buildSipM5tua
+      ;;
+
+   sipcctk)
+      buildSipCctk
+      ;;
+
+   sipcmgrcctk)
+      buildSipCallMgrCctk
+      ;;
+
+   expat)
+      buildExpat
+      ;;
+
+   srtp)
+      buildSRTP
+      ;;
+
+   dspdd)
+      builddspdd
+	  ;;
+
+   codec)
+      buildcodeconly
+	  ;;
+
+   *)
+      echo "******"
+      printCmdSyntax
+      ;;
+
+   esac
+
+
+# -----------------------------------------------------------------------------

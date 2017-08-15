@@ -1,0 +1,1 @@
+cmd_net/802/built-in.o :=  /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/bin/arm-unknown-linux-uclibcgnueabi-ld -EL    -r -o net/802/built-in.o net/802/p8022.o net/802/psnap.o net/802/stp.o 

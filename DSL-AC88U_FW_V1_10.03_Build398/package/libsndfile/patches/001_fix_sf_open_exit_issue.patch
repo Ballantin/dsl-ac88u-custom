@@ -1,0 +1,15 @@
+--- a/src/sndfile.c	2011-07-06 17:29:01.000000000 +0800
++++ b/src/sndfile.c	2016-03-23 17:20:34.295468989 +0800
+@@ -309,7 +309,12 @@
+ {	SF_PRIVATE 	*psf ;
+ 
+ 	/* Ultimate sanity check. */
++// TEY 20160323: the checking here should match with the header file compile option as well.
++#if (defined (_MSCVER) || defined (_MSC_VER))
+ 	assert (sizeof (sf_count_t) == 8) ;
++#else
++	assert (sizeof (sf_count_t) == 4) ;
++#endif
+ 
+ 	if ((psf = calloc (1, sizeof (SF_PRIVATE))) == NULL)
+ 	{	sf_errno = SFE_MALLOC_FAILED ;

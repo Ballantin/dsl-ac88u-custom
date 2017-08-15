@@ -1,0 +1,3 @@
+# stl_diag.c in this lib depends on a header file installed by libtr143_utils, so build
+# in Layer1 after libtr143_utils 
+Layer1

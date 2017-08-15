@@ -1,0 +1,1 @@
+cmd_drivers/mtd/chips/built-in.o :=  /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/bin/arm-unknown-linux-uclibcgnueabi-ld -EL    -r -o drivers/mtd/chips/built-in.o drivers/mtd/chips/chipreg.o drivers/mtd/chips/map_rom.o 

@@ -1,0 +1,394 @@
+.SS DNAT (IPv4-specific)
+This target is only valid in the
+.B nat
+table, in the
+.B PREROUTING
+and
+.B OUTPUT
+chains, and user-defined chains which are only called from those
+chains.  It specifies that the destination address of the packet
+should be modified (and all future packets in this connection will
+also be mangled), and rules should cease being examined.  It takes one
+type of option:
+.TP
+\fB\-\-to\-destination\fP [\fIipaddr\fP[\fB\-\fP\fIipaddr\fP]][\fB:\fP\fIport\fP[\fB\-\fP\fIport\fP]]
+which can specify a single new destination IP address, an inclusive
+range of IP addresses, and optionally, a port range (which is only
+valid if the rule also specifies
+\fB\-p tcp\fP
+or
+\fB\-p udp\fP).
+If no port range is specified, then the destination port will never be
+modified. If no IP address is specified then only the destination port
+will be modified.
+
+In Kernels up to 2.6.10 you can add several \-\-to\-destination options. For
+those kernels, if you specify more than one destination address, either via an
+address range or multiple \-\-to\-destination options, a simple round-robin (one
+after another in cycle) load balancing takes place between these addresses.
+Later Kernels (>= 2.6.11-rc1) don't have the ability to NAT to multiple ranges
+anymore.
+.TP
+\fB\-\-random\fP
+If option
+\fB\-\-random\fP
+is used then port mapping will be randomized (kernel >= 2.6.22).
+.TP
+\fB\-\-persistent\fP
+Gives a client the same source-/destination-address for each connection.
+This supersedes the SAME target. Support for persistent mappings is available
+from 2.6.29-rc2.
+.SS DSCP
+This target allows to alter the value of the DSCP bits within the TOS
+header of the IPv4 packet.  As this manipulates a packet, it can only
+be used in the mangle table.
+.TP
+\fB\-\-set\-dscp\fP \fIvalue\fP
+Set the DSCP field to a numerical value (can be decimal or hex)
+.TP
+\fB\-\-set\-dscp\-class\fP \fIclass\fP
+Set the DSCP field to a DiffServ class.
+.SS HL (IPv6-specific)
+This is used to modify the Hop Limit field in IPv6 header. The Hop Limit field
+is similar to what is known as TTL value in IPv4.  Setting or incrementing the
+Hop Limit field can potentially be very dangerous, so it should be avoided at
+any cost. This target is only valid in
+.B mangle
+table.
+.PP
+.B Don't ever set or increment the value on packets that leave your local network!
+.TP
+\fB\-\-hl\-set\fP \fIvalue\fP
+Set the Hop Limit to `value'.
+.TP
+\fB\-\-hl\-dec\fP \fIvalue\fP
+Decrement the Hop Limit `value' times.
+.TP
+\fB\-\-hl\-inc\fP \fIvalue\fP
+Increment the Hop Limit `value' times.
+.SS LOG (IPv6-specific)
+Turn on kernel logging of matching packets.  When this option is set
+for a rule, the Linux kernel will print some information on all
+matching packets (like most IPv6 IPv6-header fields) via the kernel log
+(where it can be read with
+.I dmesg
+or 
+.IR syslogd (8)).
+This is a "non-terminating target", i.e. rule traversal continues at
+the next rule.  So if you want to LOG the packets you refuse, use two
+separate rules with the same matching criteria, first using target LOG
+then DROP (or REJECT).
+.TP
+\fB\-\-log\-level\fP \fIlevel\fP
+Level of logging (numeric or see \fIsyslog.conf\fP(5)).
+.TP
+\fB\-\-log\-prefix\fP \fIprefix\fP
+Prefix log messages with the specified prefix; up to 29 letters long,
+and useful for distinguishing messages in the logs.
+.TP
+\fB\-\-log\-tcp\-sequence\fP
+Log TCP sequence numbers. This is a security risk if the log is
+readable by users.
+.TP
+\fB\-\-log\-tcp\-options\fP
+Log options from the TCP packet header.
+.TP
+\fB\-\-log\-ip\-options\fP
+Log options from the IPv6 packet header.
+.TP
+\fB\-\-log\-uid\fP
+Log the userid of the process which generated the packet.
+.SS LOG (IPv4-specific)
+Turn on kernel logging of matching packets.  When this option is set
+for a rule, the Linux kernel will print some information on all
+matching packets (like most IP header fields) via the kernel log
+(where it can be read with
+.I dmesg
+or 
+.IR syslogd (8)).
+This is a "non-terminating target", i.e. rule traversal continues at
+the next rule.  So if you want to LOG the packets you refuse, use two
+separate rules with the same matching criteria, first using target LOG
+then DROP (or REJECT).
+.TP
+\fB\-\-log\-level\fP \fIlevel\fP
+Level of logging (numeric or see \fIsyslog.conf\fP(5)).
+.TP
+\fB\-\-log\-prefix\fP \fIprefix\fP
+Prefix log messages with the specified prefix; up to 29 letters long,
+and useful for distinguishing messages in the logs.
+.TP
+\fB\-\-log\-tcp\-sequence\fP
+Log TCP sequence numbers. This is a security risk if the log is
+readable by users.
+.TP
+\fB\-\-log\-tcp\-options\fP
+Log options from the TCP packet header.
+.TP
+\fB\-\-log\-ip\-options\fP
+Log options from the IP packet header.
+.TP
+\fB\-\-log\-uid\fP
+Log the userid of the process which generated the packet.
+.SS MARK
+This target is used to set the Netfilter mark value associated with the packet.
+It can, for example, be used in conjunction with routing based on fwmark (needs
+iproute2). If you plan on doing so, note that the mark needs to be set in the
+PREROUTING chain of the mangle table to affect routing.
+The mark field is 32 bits wide.
+.TP
+\fB\-\-set\-xmark\fP \fIvalue\fP[\fB/\fP\fImask\fP]
+Zeroes out the bits given by \fImask\fP and XORs \fIvalue\fP into the packet
+mark ("nfmark"). If \fImask\fP is omitted, 0xFFFFFFFF is assumed.
+.TP
+\fB\-\-set\-mark\fP \fIvalue\fP[\fB/\fP\fImask\fP]
+Zeroes out the bits given by \fImask\fP and ORs \fIvalue\fP into the packet
+mark. If \fImask\fP is omitted, 0xFFFFFFFF is assumed.
+.PP
+The following mnemonics are available:
+.TP
+\fB\-\-and\-mark\fP \fIbits\fP
+Binary AND the nfmark with \fIbits\fP. (Mnemonic for \fB\-\-set\-xmark
+0/\fP\fIinvbits\fP, where \fIinvbits\fP is the binary negation of \fIbits\fP.)
+.TP
+\fB\-\-or\-mark\fP \fIbits\fP
+Binary OR the nfmark with \fIbits\fP. (Mnemonic for \fB\-\-set\-xmark\fP
+\fIbits\fP\fB/\fP\fIbits\fP.)
+.TP
+\fB\-\-xor\-mark\fP \fIbits\fP
+Binary XOR the nfmark with \fIbits\fP. (Mnemonic for \fB\-\-set\-xmark\fP
+\fIbits\fP\fB/0\fP.)
+.SS MASQUERADE (IPv4-specific)
+This target is only valid in the
+.B nat
+table, in the
+.B POSTROUTING
+chain.  It should only be used with dynamically assigned IP (dialup)
+connections: if you have a static IP address, you should use the SNAT
+target.  Masquerading is equivalent to specifying a mapping to the IP
+address of the interface the packet is going out, but also has the
+effect that connections are
+.I forgotten
+when the interface goes down.  This is the correct behavior when the
+next dialup is unlikely to have the same interface address (and hence
+any established connections are lost anyway).
+.TP
+\fB\-\-to\-ports\fP \fIport\fP[\fB\-\fP\fIport\fP]
+This specifies a range of source ports to use, overriding the default
+.B SNAT
+source port-selection heuristics (see above).  This is only valid
+if the rule also specifies
+\fB\-p tcp\fP
+or
+\fB\-p udp\fP.
+.TP
+\fB\-\-random\fP
+Randomize source port mapping
+If option
+\fB\-\-random\fP
+is used then port mapping will be randomized (kernel >= 2.6.21).
+.RS
+.PP
+.SS NFQUEUE
+This target is an extension of the QUEUE target. As opposed to QUEUE, it allows
+you to put a packet into any specific queue, identified by its 16-bit queue
+number.
+It can only be used with Kernel versions 2.6.14 or later, since it requires
+the
+.B
+nfnetlink_queue
+kernel support. The \fBqueue-balance\fP option was added in Linux 2.6.31,
+\fBqueue-bypass\fP in 2.6.39.
+.TP
+\fB\-\-queue\-num\fP \fIvalue\fP
+This specifies the QUEUE number to use. Valid queue numbers are 0 to 65535. The default value is 0.
+.PP
+.TP
+\fB\-\-queue\-balance\fP \fIvalue\fP\fB:\fP\fIvalue\fP
+This specifies a range of queues to use. Packets are then balanced across the given queues.
+This is useful for multicore systems: start multiple instances of the userspace program on
+queues x, x+1, .. x+n and use "\-\-queue\-balance \fIx\fP\fB:\fP\fIx+n\fP".
+Packets belonging to the same connection are put into the same nfqueue.
+.PP
+.TP
+\fB\-\-queue\-bypass\fP
+By default, if no userspace program is listening on an NFQUEUE, then all packets that are to be queued
+are dropped.  When this option is used, the NFQUEUE rule is silently bypassed instead. The packet
+will move on to the next rule.
+.SS NOTRACK
+This target disables connection tracking for all packets matching that rule.
+It is obsoleted by \-j CT \-\-notrack. Like CT, NOTRACK can only be used in
+the \fBraw\fP table.
+.SS REDIRECT (IPv4-specific)
+This target is only valid in the
+.B nat
+table, in the
+.B PREROUTING
+and
+.B OUTPUT
+chains, and user-defined chains which are only called from those
+chains.  It redirects the packet to the machine itself by changing the
+destination IP to the primary address of the incoming interface
+(locally-generated packets are mapped to the 127.0.0.1 address).
+.TP
+\fB\-\-to\-ports\fP \fIport\fP[\fB\-\fP\fIport\fP]
+This specifies a destination port or range of ports to use: without
+this, the destination port is never altered.  This is only valid
+if the rule also specifies
+\fB\-p tcp\fP
+or
+\fB\-p udp\fP.
+.TP
+\fB\-\-random\fP
+If option
+\fB\-\-random\fP
+is used then port mapping will be randomized (kernel >= 2.6.22).
+.RS
+.PP
+.SS REJECT (IPv6-specific)
+This is used to send back an error packet in response to the matched
+packet: otherwise it is equivalent to 
+.B DROP
+so it is a terminating TARGET, ending rule traversal.
+This target is only valid in the
+.BR INPUT ,
+.B FORWARD
+and
+.B OUTPUT
+chains, and user-defined chains which are only called from those
+chains.  The following option controls the nature of the error packet
+returned:
+.TP
+\fB\-\-reject\-with\fP \fItype\fP
+The type given can be
+\fBicmp6\-no\-route\fP,
+\fBno\-route\fP,
+\fBicmp6\-adm\-prohibited\fP,
+\fBadm\-prohibited\fP,
+\fBicmp6\-addr\-unreachable\fP,
+\fBaddr\-unreach\fP,
+\fBicmp6\-port\-unreachable\fP or
+\fBport\-unreach\fP
+which return the appropriate ICMPv6 error message (\fBport\-unreach\fP is
+the default). Finally, the option
+\fBtcp\-reset\fP
+can be used on rules which only match the TCP protocol: this causes a
+TCP RST packet to be sent back.  This is mainly useful for blocking 
+.I ident
+(113/tcp) probes which frequently occur when sending mail to broken mail
+hosts (which won't accept your mail otherwise).
+\fBtcp\-reset\fP
+can only be used with kernel versions 2.6.14 or later.
+.SS REJECT (IPv4-specific)
+This is used to send back an error packet in response to the matched
+packet: otherwise it is equivalent to
+.B DROP
+so it is a terminating TARGET, ending rule traversal.
+This target is only valid in the
+.BR INPUT ,
+.B FORWARD
+and
+.B OUTPUT
+chains, and user-defined chains which are only called from those
+chains.  The following option controls the nature of the error packet
+returned:
+.TP
+\fB\-\-reject\-with\fP \fItype\fP
+The type given can be
+\fBicmp\-net\-unreachable\fP,
+\fBicmp\-host\-unreachable\fP,
+\fBicmp\-port\-unreachable\fP,
+\fBicmp\-proto\-unreachable\fP,
+\fBicmp\-net\-prohibited\fP,
+\fBicmp\-host\-prohibited\fP or
+\fBicmp\-admin\-prohibited\fP (*)
+which return the appropriate ICMP error message (\fBport\-unreachable\fP is
+the default).  The option
+\fBtcp\-reset\fP
+can be used on rules which only match the TCP protocol: this causes a
+TCP RST packet to be sent back.  This is mainly useful for blocking 
+.I ident
+(113/tcp) probes which frequently occur when sending mail to broken mail
+hosts (which won't accept your mail otherwise).
+.PP
+(*) Using icmp\-admin\-prohibited with kernels that do not support it will result in a plain DROP instead of REJECT
+.SS SNAT (IPv4-specific)
+This target is only valid in the
+.B nat
+table, in the
+.B POSTROUTING
+chain.  It specifies that the source address of the packet should be
+modified (and all future packets in this connection will also be
+mangled), and rules should cease being examined.  It takes one type
+of option:
+.TP
+\fB\-\-to\-source\fP [\fIipaddr\fP[\fB\-\fP\fIipaddr\fP]][\fB:\fP\fIport\fP[\fB\-\fP\fIport\fP]]
+which can specify a single new source IP address, an inclusive range
+of IP addresses, and optionally, a port range (which is only valid if
+the rule also specifies
+\fB\-p tcp\fP
+or
+\fB\-p udp\fP).
+If no port range is specified, then source ports below 512 will be
+mapped to other ports below 512: those between 512 and 1023 inclusive
+will be mapped to ports below 1024, and other ports will be mapped to
+1024 or above. Where possible, no port alteration will occur.
+
+In Kernels up to 2.6.10, you can add several \-\-to\-source options. For those
+kernels, if you specify more than one source address, either via an address
+range or multiple \-\-to\-source options, a simple round-robin (one after another
+in cycle) takes place between these addresses.
+Later Kernels (>= 2.6.11-rc1) don't have the ability to NAT to multiple ranges
+anymore.
+.TP
+\fB\-\-random\fP
+If option
+\fB\-\-random\fP
+is used then port mapping will be randomized (kernel >= 2.6.21).
+.TP
+\fB\-\-persistent\fP
+Gives a client the same source-/destination-address for each connection.
+This supersedes the SAME target. Support for persistent mappings is available
+from 2.6.29-rc2.
+.SS TCPMSS
+This target allows to alter the MSS value of TCP SYN packets, to control
+the maximum size for that connection (usually limiting it to your
+outgoing interface's MTU minus 40 for IPv4 or 60 for IPv6, respectively).
+Of course, it can only be used
+in conjunction with
+\fB\-p tcp\fP.
+.PP
+This target is used to overcome criminally braindead ISPs or servers
+which block "ICMP Fragmentation Needed" or "ICMPv6 Packet Too Big"
+packets.  The symptoms of this
+problem are that everything works fine from your Linux
+firewall/router, but machines behind it can never exchange large
+packets:
+.IP 1. 4
+Web browsers connect, then hang with no data received.
+.IP 2. 4
+Small mail works fine, but large emails hang.
+.IP 3. 4
+ssh works fine, but scp hangs after initial handshaking.
+.PP
+Workaround: activate this option and add a rule to your firewall
+configuration like:
+.IP
+ iptables \-t mangle \-A FORWARD \-p tcp \-\-tcp\-flags SYN,RST SYN
+             \-j TCPMSS \-\-clamp\-mss\-to\-pmtu
+.TP
+\fB\-\-set\-mss\fP \fIvalue\fP
+Explicitly sets MSS option to specified value. If the MSS of the packet is
+already lower than \fIvalue\fP, it will \fBnot\fP be increased (from Linux
+2.6.25 onwards) to avoid more problems with hosts relying on a proper MSS.
+.TP
+\fB\-\-clamp\-mss\-to\-pmtu\fP
+Automatically clamp MSS value to (path_MTU \- 40 for IPv4; \-60 for IPv6).
+This may not function as desired where asymmetric routes with differing
+path MTU exist \(em the kernel uses the path MTU which it would use to send
+packets from itself to the source and destination IP addresses. Prior to
+Linux 2.6.25, only the path MTU to the destination IP address was
+considered by this option; subsequent kernels also consider the path MTU
+to the source IP address.
+.PP
+These options are mutually exclusive.

@@ -1,0 +1,12 @@
+prefix=/usr/local/ssl
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: OpenSSL-libcrypto
+Description: OpenSSL cryptography library
+Version: 1.0.2a
+Requires: 
+Libs: -L${libdir} -lcrypto
+Libs.private: -L/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public -ldl
+Cflags: -I${includedir} 

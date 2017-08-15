@@ -1,0 +1,13 @@
+diff -ru a/traceroute/traceroute.c b/traceroute/traceroute.c
+--- a/traceroute/traceroute.c	2014-11-12 11:33:00.000000000 +0800
++++ b/traceroute/traceroute.c	2016-02-03 17:13:42.227052271 +0800
+@@ -186,7 +186,8 @@
+ 
+ 	memset (&hints, 0, sizeof (hints));
+ 	hints.ai_family = af;
+-	hints.ai_flags = AI_IDN;
++	//Fix "Bad value for ai_flags" issue
++	//hints.ai_flags = AI_IDN;
+ 
+ 	ret = getaddrinfo (name, NULL, &hints, &res);
+ 	if (ret) {

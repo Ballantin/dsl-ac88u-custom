@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+
+<html">
+
+<!--[if lte IE 9]>
+<p style="background-color:red; color:white"><b>Your version of Internet Explorer does not support web sockets.</b></p>
+<![endif]-->
+
+  <head>
+    <title>DPI Real-time Statistic Charts</title>
+    <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+    <link rel="stylesheet" href='stylemain.css' type='text/css'>
+    <link rel="stylesheet" href='colors.css' type='text/css'>
+    <link class="include" rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
+  
+    <!--[if lt IE 9]><script language="javascript" type="text/javascript" src="excanvas.js"></script><![endif]-->
+    <script class="include" type="text/javascript" src="jquery.js"></script>
+    <script class="include" type="text/javascript" src="jquery.jqplot.js"></script>
+    <script class="include" type="text/javascript" src="plugins/jqplot.canvasTextRenderer.js"></script>
+    <script class="include" type="text/javascript" src="plugins/jqplot.canvasAxisLabelRenderer.js"></script>
+    <script class="include" type="text/javascript" src="plugins/jqplot.highlighter.js"></script>
+    <script class="include" type="text/javascript" src="plugins/jqplot.cursor.js"></script>
+  </head>
+
+<script class="code" type="text/javascript">
+
+var DATA_POINTS_MIN = 0;
+var DATA_POINTS_MAX = 18;
+var NUM_ROWS_MAX = 2;
+var POLLING_INTERVAL_SEC = 2;
+var BITS_IN_BYTE = 8;
+var BITS_IN_KBIT = 1000;
+var SPACES_STRING = '     ';    // 5 space characters
+var plots = [null, null, null, null];
+var counters = [[0], [0], [0], [0]]; 
+var bandwidths = [[0], [0], [0], [0]]; 
+var key = <%ejGetOther(sessionKey)%>;
+
+$(document).ready(function() {
+
+  var options_up = {
+      title: 'Upstream DPI Statistic',
+      axesDefaults: {
+        labelRenderer: $.jqplot.CanvasAxisLabelRenderer
+      },
+      seriesDefaults: {
+          rendererOptions: {
+              smooth: true
+          }
+      },
+      axes: {
+        xaxis: { label: "Second", pad: 0 },
+        yaxis: { label: "Kbps", pad: 0}
+      },
+      highlighter: {
+        show: true,
+        sizeAdjust: 7.5,
+        tooltipAxes: 'y',
+        formatString: '%d'
+      },
+      cursor: { show: false }
+    }
+
+  var options_down = {
+      title: 'Downstream DPI Statistic',
+      axesDefaults: {
+        labelRenderer: $.jqplot.CanvasAxisLabelRenderer
+      },
+      seriesDefaults: {
+          rendererOptions: {
+              smooth: true
+          }
+      },
+      axes: {
+        xaxis: { label: "Second", pad: 0 },
+        yaxis: { label: "Kbps", pad: 0}
+      },
+      highlighter: {
+        show: true,
+        sizeAdjust: 7.5,
+        tooltipAxes: 'y',
+        formatString: '%d'
+      },
+      cursor: { show: false }
+    }
+
+  function updateAppNames(info)
+  {
+    var appNames = info.split('|');
+
+    for (i = 0; i < NUM_ROWS_MAX; i++)
+    {
+      // remove all items except the first one
+      $('#selApp' + i + ' option[value!=0]').remove();
+
+      // add items in appNames to selApp
+      for (j = 0; j < appNames.length; j++)
+      {
+        $('#selApp' + i)
+           .append($("<option></option>")
+                   .attr("value", j+1)
+                   .text(appNames[j])); 
+      }
+    }
+  }
+
+  function updateCategoryNames(info)
+  {
+    var catNames = info.split('|');
+
+    for (i = 0; i < NUM_ROWS_MAX; i++)
+    {
+      // remove all items except the first one
+      $('#selCat' + i + ' option[value!=0]').remove();
+
+      // add items in catNames to selCat
+      for (j = 0; j < catNames.length; j++)
+      {
+        $('#selCat' + i)
+           .append($("<option></option>")
+                   .attr("value", j+1)
+                   .text(catNames[j])); 
+      }
+    }
+  }
+
+  function updateDeviceNames(info)
+  {
+    var devNames = info.split('|');
+
+    for (i = 0; i < NUM_ROWS_MAX; i++)
+    {
+      // remove all items except the first one
+      $('#selDev' + i + ' option[value!=0]').remove();
+
+      // add items in devNames to selDev
+      for (j = 0; j < devNames.length; j++)
+      {
+        $('#selDev' + i)
+           .append($("<option></option>")
+                   .attr("value", j+1)
+                   .text(devNames[j])); 
+      }
+    }
+  }
+
+  function plotChart(chart_num, byte_count)
+  {
+    // counters[chart_num] array should contain
+    // only DATA_POINTS_MAX elements
+    if (counters[chart_num].length > DATA_POINTS_MAX)
+      counters[chart_num].shift();
+
+    var len = counters[chart_num].push(byte_count);
+    var bw = 0;
+
+    // only calculate bandwidth after receiving
+    // the first two byte_count
+    if (len > 2)
+      bw = ((counters[chart_num][len-1] - counters[chart_num][len-2]) * BITS_IN_BYTE) /
+           (POLLING_INTERVAL_SEC * BITS_IN_KBIT);
+
+    // bandwidths[chart_num] array should contain
+    // only DATA_POINTS_MAX elements
+    if (bandwidths[chart_num].length > DATA_POINTS_MAX)
+      bandwidths[chart_num].shift();
+
+    bandwidths[chart_num].push(bw);
+
+    if (plots[chart_num] != null)
+      plots[chart_num].destroy();
+
+    if ((chart_num % 2) == 0)
+      plots[chart_num] = $.jqplot ('chart' + chart_num, [bandwidths[chart_num]], options_up);
+    else
+      plots[chart_num] = $.jqplot ('chart' + chart_num, [bandwidths[chart_num]], options_down);
+  }
+
+  function showInfo(row, info)
+  {
+    // info should have 4 fields:
+    //    1. status number
+    //    2. error message if any
+    //    3. upstream bytes
+    //    4. downstream bytes
+
+    var infoArray = info.split('|');
+
+    // show info in text area of current row
+    $('#txtMsg' + row).val(info);
+
+    // status == 0: success
+    if (parseInt(infoArray[0]) == 0)
+    {
+      $('#txtMsg' + row).css('background-color', 'white');
+      $('#txtMsg' + row).css('color', 'black');
+
+      // only plotting charts when status is 0
+      plotChart(row*2, parseInt(infoArray[2]));
+      plotChart(row*2+1, parseInt(infoArray[3]));
+
+      // re-send DPI information to request
+      // byte counters every POLLING_INTERVAL_SEC
+      setTimeout(function(){sendDpiData(row)}, POLLING_INTERVAL_SEC * 1000); 
+    }
+    // status != 0: failure
+    else
+    {
+      $('#txtMsg' + row).css('background-color', 'red');
+      $('#txtMsg' + row).css('color', 'white');
+    }
+  }
+
+  function get_appropriate_ws_url()
+  {
+    var pcol;
+    var u = document.URL;
+
+    if (u.substring(0, 5) == "https") {
+      pcol = "wss://";
+      u = u.substr(8);
+    } else {
+      pcol = "ws://";
+      if (u.substring(0, 4) == "http")
+        u = u.substr(7);
+    }
+
+    u = u.split('/');
+
+    return pcol + u[0] + ":7681/";
+  }
+
+  if (typeof MozWebSocket != "undefined") {
+    ws_dpi_app = new MozWebSocket(get_appropriate_ws_url(), "dpi-app");
+    ws_dpi_cat = new MozWebSocket(get_appropriate_ws_url(), "dpi-cat");
+    ws_dpi_dev = new MozWebSocket(get_appropriate_ws_url(), "dpi-device");
+    ws_dpi_stat_0 = new MozWebSocket(get_appropriate_ws_url(), "dpi-stat-0");
+    ws_dpi_stat_1 = new MozWebSocket(get_appropriate_ws_url(), "dpi-stat-1");
+  } else {
+    ws_dpi_app = new WebSocket(get_appropriate_ws_url(), "dpi-app");
+    ws_dpi_cat = new WebSocket(get_appropriate_ws_url(), "dpi-cat");
+    ws_dpi_dev = new WebSocket(get_appropriate_ws_url(), "dpi-device");
+    ws_dpi_stat_0 = new WebSocket(get_appropriate_ws_url(), "dpi-stat-0");
+    ws_dpi_stat_1 = new WebSocket(get_appropriate_ws_url(), "dpi-stat-1");
+  }
+
+  try {
+    ws_dpi_app.onopen = function() {
+      // send session key to validate session
+      ws_dpi_app.send("sessionKey=" + key);
+      // send dummy data to request application names list
+      ws_dpi_app.send("0|0|0|0");
+    } 
+
+    ws_dpi_app.onmessage = function (msg) {
+      updateAppNames(msg.data);
+    } 
+
+    ws_dpi_cat.onopen = function() {
+      // send session key to validate session
+      ws_dpi_cat.send("sessionKey=" + key);
+      // send dummy data to request category names list
+      ws_dpi_cat.send("0|0|0|0");
+    } 
+
+    ws_dpi_cat.onmessage = function (msg) {
+      updateCategoryNames(msg.data);
+    } 
+
+    ws_dpi_dev.onopen = function() {
+      // send session key to validate session
+      ws_dpi_dev.send("sessionKey=" + key);
+      // send dummy data to request device names list
+      ws_dpi_dev.send("0|0|0|0");
+    } 
+
+    ws_dpi_dev.onmessage = function (msg) {
+      updateDeviceNames(msg.data);
+    } 
+
+    ws_dpi_stat_0.onopen = function() {
+      // send session key to validate session
+      ws_dpi_stat_0.send("sessionKey=" + key);
+    } 
+
+    ws_dpi_stat_0.onmessage = function (msg) {
+      showInfo(0, msg.data);
+    } 
+
+    ws_dpi_stat_1.onopen = function() {
+      // send session key to validate session
+      ws_dpi_stat_1.send("sessionKey=" + key);
+    } 
+
+    ws_dpi_stat_1.onmessage = function (msg) {
+      showInfo(1, msg.data);
+    } 
+  } catch(exception) {
+    alert('<p>Error' + exception);  
+  }
+
+  var sendDpiData = function(row)
+  {
+    var cat = $('#selCat' + row + ' option:selected').text();
+    // empty value is represented as SPACES_STRING for easier parsing
+    if (cat == '')
+      cat = SPACES_STRING;
+    var app = $('#selApp' + row + ' option:selected').text();
+    if (app == '')
+      app = SPACES_STRING;
+    var dev = $('#selDev' + row + ' option:selected').text();
+    if (dev == '')
+      dev = SPACES_STRING;
+
+    // DPI information is concatenated by cat,
+    // app, and dev with '|' as delimeter
+    var args = cat + '|' + app + '|' + dev + '|';
+
+    if (row == 0)
+    {
+      // readyState == OPEN (1)
+      if (ws_dpi_stat_0.readyState == 1)
+        ws_dpi_stat_0.send(args);
+    }
+    else if (row == 1)
+    {
+      if (ws_dpi_stat_1.readyState == 1) 
+        ws_dpi_stat_1.send(args);
+    }
+  };
+
+  var onClick = function(event)
+  {
+    if (event != null)
+      sendDpiData(event.data.row);
+  };
+
+  // bind click event to onClick function
+  $('#btn0').click({row: 0}, onClick);
+  $('#btn1').click({row: 1}, onClick);
+
+  // clear messages
+  $('#txtMsg0').val('');
+  $('#txtMsg1').val('');
+
+  // plot charts with default data and options
+  plots[0] = $.jqplot ('chart0', [bandwidths[0]], options_up);
+  plots[1] = $.jqplot ('chart1', [bandwidths[1]], options_down);
+  plots[2] = $.jqplot ('chart2', [bandwidths[2]], options_up);
+  plots[3] = $.jqplot ('chart3', [bandwidths[3]], options_down);
+
+});
+
+</script>
+
+  <body>
+        <b>DPI -- Real-time Statistic Charts</b><br>
+        <br>
+            To show DPI real-time statistic chart, select category, application, and/or
+            device, then click "Show" to display DPI real-time statistic chart.
+        <br><br><br>
+        <div id="row0" style="height:200px; width:900px">
+          <div id="options0" style="height:200px; width:300px; float:left;">
+            <br>
+            <center>
+              <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="70">Category:</td>
+                  <td><select id='selCat0' style="width: 200px">
+                        <option value="0"></option>
+                      </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="70">Application:</td>
+                  <td><select id='selApp0' style="width: 200px">
+                        <option value="0"></option>
+                      </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="70">Device:</td>
+                  <td><select id='selDev0' style="width: 200px">
+                        <option value="0"></option>
+                      </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="70">Message:</td>
+                  <td><textarea id='txtMsg0' style="width: 100%; height: 100%; border: none; box-sizing: border-box">
+                      </textarea>
+                  </td>
+                </tr>
+              </table>
+              <br>
+              <button id='btn0' type='button'>Show</button>
+            </center>
+          </div>
+          <div id="chart0" style="height:200px; width:300px;float:left;"></div>
+          <div id="chart1" style="height:200px; width:300px;float:left;"></div>
+        </div>
+        <br><br>
+        <div id="row1" style="height:200px; width:900px">
+          <div id="options1" style="height:200px; width:300px; float:left;">
+            <br>
+            <center>
+              <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="70">Category:</td>
+                  <td><select id='selCat1' style="width: 200px">
+                        <option value="0"></option>
+                      </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="70">Application:</td>
+                  <td><select id='selApp1' style="width: 200px">
+                        <option value="0"></option>
+                      </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="70">Device:</td>
+                  <td><select id='selDev1' style="width: 200px">
+                        <option value="0"></option>
+                      </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="70">Message:</td>
+                  <td><textarea id='txtMsg1' style="width: 100%; height: 100%; border: none; box-sizing: border-box">
+                      </textarea>
+                  </td>
+                </tr>
+              </table>
+              <br>
+              <button id='btn1' type='button'>Show</button>
+            </center>
+          </div>
+          <div id="chart2" style="height:200px; width:300px; float:left;"></div>
+          <div id="chart3" style="height:200px; width:300px; float:left;"></div>
+        </div>
+  </body>
+</html>

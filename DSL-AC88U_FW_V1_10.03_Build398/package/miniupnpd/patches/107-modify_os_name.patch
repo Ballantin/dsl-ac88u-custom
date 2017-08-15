@@ -1,0 +1,43 @@
+diff --git a/upnpglobalvars.c b/upnpglobalvars.c
+index e515fe1..d683209 100644
+--- a/upnpglobalvars.c
++++ b/upnpglobalvars.c
+@@ -52,6 +52,7 @@ char modelnumber[MODELNUMBER_MAX_LEN] = "1";
+ char presentationurl[PRESENTATIONURL_MAX_LEN];
+ 
+ #ifdef ENABLE_MANUFACTURER_INFO_CONFIGURATION
++#ifndef ENTRY_OS_NAME
+ /* friendly name for root devices in XML description */
+ char friendly_name[FRIENDLY_NAME_MAX_LEN] = OS_NAME " router";
+ 
+@@ -69,8 +70,26 @@ char model_description[MODEL_DESCRIPTION_MAX_LEN] = ROOTDEV_MODELDESCRIPTION;
+ 
+ /* model url for root devices in XML description */
+ char model_url[MODEL_URL_MAX_LEN] = ROOTDEV_MODELURL;
+-#endif
++#else
++/* friendly name for root devices in XML description */
++char friendly_name[FRIENDLY_NAME_MAX_LEN] = "TELSTRA ENTRY";
++
++/* manufacturer name for root devices in XML description */
++char manufacturer_name[MANUFACTURER_NAME_MAX_LEN] = "TELSTRA ENTRY";
+ 
++/* manufacturer url for root devices in XML description */
++char manufacturer_url[MANUFACTURER_URL_MAX_LEN] = "https://www.telstra.com.au/";
++
++/* model name for root devices in XML description */
++char model_name[MODEL_NAME_MAX_LEN] = "TELSTRA ENTRY";
++
++/* model description for root devices in XML description */
++char model_description[MODEL_DESCRIPTION_MAX_LEN] = "TELSTRA ENTRY";
++
++/* model url for root devices in XML description */
++char model_url[MODEL_URL_MAX_LEN] = "https://www.telstra.com.au/";
++#endif
++#endif
+ /* UPnP permission rules : */
+ struct upnpperm * upnppermlist = 0;
+ unsigned int num_upnpperm = 0;
+-- 
+1.7.3.4
+

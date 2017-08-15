@@ -1,0 +1,131 @@
+#!/bin/sh
+#
+# Copyright (C) 2009 Arcadyan
+# All Rights Reserved.
+#
+# FTP configuration shell program
+#
+
+#START=99
+
+CONSOLE=0
+DEBUG=0
+#
+# The debug flag should generally be set to 0
+# otherwise igmpproxy will spam your syslog.
+# However, this is very useful for debugging
+# a non-functional configuration file.
+#
+# DEBUG=0 = NO DEBUG!!!
+# DEBUG=1 -d
+# DEBUG=2 -v
+# DEBUG=3 -v -v
+
+LOGFILE="/root/igmpproxy.log"
+
+#
+# $1: upsteram section
+#
+start()
+{
+	local QUICKLEAVE
+	local DOWNSTREAM
+	local CONSOLE_OUT
+	local UPSTREAM
+
+	if [ -z "$1" ] ; then
+		return
+	fi
+
+	UPSTREAM=$1
+
+	echo -n "Starting igmpproxy"
+
+	if [ `ccfg_cli get upstream@igmpproxy | grep -cw "$UPSTREAM"` -le 0 ] ; then
+		return
+	fi
+
+	QUICKLEAVE=`ccfg_cli get quickleave@igmpproxy`
+	DOWNSTREAM=`ccfg_cli get downstream@igmpproxy`
+
+	if [ "$CONSOLE" == "1" ] ; then
+		CONSOLE_OUT="-c"
+	fi
+
+	PROTO=`ccfg_cli get proto@$UPSTREAM`
+	if [ "${PROTO:0:3}" == "ppp" ] ; then
+		let ID=1${UPSTREAM:3}-1000
+		UPIF="ppp${ID}"
+	else
+		UPIF=`ccfg_cli get ifname@$UPSTREAM`
+	fi
+	if [ -z "$UPIF" ] ; then
+		return
+	fi
+
+	CNT=1
+	while [ "$CNT" -le 20 ] ; do
+		if [ `ip addr show $DOWNSTREAM | grep -cw inet` -ge 1 ] &&
+		   [ `ip addr show $UPIF | grep -cw inet` -ge 1 ] ; then
+			break
+		fi
+		sleep 1
+		let CNT=$CNT+1
+	done
+	if [ $CNT -gt 20 ] ; then
+		return
+	fi
+
+	if [ "$CONSOLE" != 0 ] || [ "$DEBUG" != 0 ] ; then
+		exec >& /dev/console
+	fi
+
+	/usr/sbin/set_igmpproxy.sh $QUICKLEAVE $UPSTREAM $DOWNSTREAM
+
+	# Normal Mode
+	if [ $DEBUG -eq 0 ]; then
+		echo " in normal mode"
+		/usr/sbin/igmpproxy $CONSOLE_OUT /tmp/igmpproxy.conf &
+	# Debug Mode
+	elif [ $DEBUG -eq 1 ]; then
+		echo " in debug mode"
+		/usr/sbin/igmpproxy $CONSOLE_OUT -d /tmp/igmpproxy.conf &
+	# Verbose Mode
+	elif [ $DEBUG -eq 2 ]; then
+		echo " in verbose mode"
+		/usr/sbin/igmpproxy $CONSOLE_OUT -v /tmp/igmpproxy.conf &
+	# Very Verbose Mode
+	elif [ $DEBUG -eq 3 ]; then
+		echo " in very verbose mode"
+		/usr/sbin/igmpproxy $CONSOLE_OUT -v -v /tmp/igmpproxy.conf &
+	else
+		echo " unkown debug mode, must be 0, 1, 2 or 3"
+	fi
+}
+
+stop()
+{
+	echo "Killing igmpporxy"
+
+	CNT=0
+	while [ $CNT -lt 10 ] && [ -n "`pgrep igmpproxy`" ] ; do
+		pkill igmpproxy
+		sleep 1
+		let CNT=$CNT+1
+	done
+
+	pkill -9 igmpproxy
+}
+
+
+case "$1" in
+	"boot")			start $2 &	;;
+	"start")		start $2 &	;;
+	"stop")			stop		;;
+	*)
+			echo $0 'boot <wan_sect>  - setup and start IGMP proxy'
+			echo $0 'start <wan_sect> - start IGMP proxy'
+			echo $0 'stop             - stop IGMP proxy'
+			;;
+esac
+

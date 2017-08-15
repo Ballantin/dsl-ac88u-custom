@@ -1,0 +1,20 @@
+--- syslog-ng-3.3.9.orig/configure.in	2013-08-28 10:20:45.285516180 +0000
++++ syslog-ng-3.3.9/configure.in	2013-08-28 10:21:17.441516176 +0000
+@@ -508,7 +508,7 @@
+ AC_CACHE_CHECK(for TCP wrapper library,
+                 blb_cv_c_lwrap,
+ 
+-for libwrap in "-lwrap" "/usr/local/lib/libwrap.a"; do
++for libwrap in "-lwrap"; do
+         LIBS="$old_LIBS $libwrap"
+ 
+         [AC_TRY_LINK(,
+@@ -555,7 +555,7 @@
+ 
+ if test "$libdbi_pkgconfig_not_found" -eq 1; then
+ 	dnl if libdbi has no .pc file, try it without one
+-	AC_CHECK_LIB(dbi, dbi_initialize, LIBDBI_LIBS="-ldbi"; LIBDBI_CFLAGS="-I/usr/include")
++	AC_CHECK_LIB(dbi, dbi_initialize, LIBDBI_LIBS="-ldbi"; LIBDBI_CFLAGS="")
+ fi
+ 
+ if test "x$enable_sql" = "xauto"; then

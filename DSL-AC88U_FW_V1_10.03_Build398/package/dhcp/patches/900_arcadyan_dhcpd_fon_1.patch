@@ -1,0 +1,19 @@
+diff -Naur dhcp-4.1.1.old/server/dhcp.c dhcp-4.1.1/server/dhcp.c
+--- dhcp-4.1.1.old/server/dhcp.c	2016-05-26 16:25:37.934774700 +0800
++++ dhcp-4.1.1/server/dhcp.c	2016-05-26 18:30:45.410659200 +0800
+@@ -968,6 +968,15 @@
+ 		release_lease (lease, packet);
+ 	} 
+ 	log_info ("%s", msgbuf);
++#ifdef CONFIG_PACKAGE_FON	
++	if(strncmp(packet->interface->name, "br-", 3) == 0)
++	{
++		char cmd[256];
++		sprintf(cmd, "ip neigh release %s dev %s", cstr, packet->interface->name); 
++		log_info ("%s", cmd);	
++		system(cmd);
++	}
++#endif
+ #if defined(FAILOVER_PROTOCOL)
+       out:
+ #endif

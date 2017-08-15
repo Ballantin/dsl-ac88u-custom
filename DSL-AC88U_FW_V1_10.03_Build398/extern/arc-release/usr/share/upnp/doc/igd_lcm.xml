@@ -1,0 +1,287 @@
+<?xml version="1.0"?>
+<scpd xmlns="urn:schemas-upnp-org:service-1-0">
+<specVersion>
+	<major>1</major>
+	<minor>0</minor>
+</specVersion>
+
+<actionList>
+<action>
+	<name>SetDHCPServerConfigurable</name>
+	<argumentList>
+	<argument>
+		<name>NewDHCPServerConfigurable</name>
+		<relatedStateVariable>DHCPServerConfigurable</relatedStateVariable>
+		<direction>in</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetDHCPServerConfigurable</name>
+	<argumentList>
+	<argument>
+		<name>NewDHCPServerConfigurable</name>
+		<relatedStateVariable>DHCPServerConfigurable</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>SetDHCPRelay</name>
+	<argumentList>
+	<argument>
+		<name>NewDHCPRelay</name>
+		<relatedStateVariable>DHCPRelay</relatedStateVariable>
+		<direction>in</direction>
+		</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetDHCPRelay</name>
+	<argumentList>
+	<argument>
+		<name>NewDHCPRelay</name>
+		<relatedStateVariable>DHCPRelay</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>SetSubnetMask</name>
+	<argumentList>
+	<argument>
+		<name>NewSubnetMask</name>
+		<relatedStateVariable>SubnetMask</relatedStateVariable>
+		<direction>in</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetSubnetMask</name>
+	<argumentList>
+	<argument>
+		<name>NewSubnetMask</name>
+		<relatedStateVariable>SubnetMask</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>SetIPRouter</name>
+	<argumentList>
+	<argument>
+		<name>NewIPRouters</name>
+		<relatedStateVariable>IPRouters</relatedStateVariable>
+		<direction>in</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>DeleteIPRouter</name>
+	<argumentList>
+	<argument>
+		<name>NewIPRouters</name>
+		<relatedStateVariable>IPRouters</relatedStateVariable>
+		<direction>in</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetIPRoutersList</name>
+	<argumentList>
+	<argument>
+		<name>NewIPRouters</name>
+		<relatedStateVariable>IPRouters</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>SetDomainName</name>
+	<argumentList>
+	<argument>
+		<name>NewDomainName</name>
+		<relatedStateVariable>DomainName</relatedStateVariable>
+		<direction>in</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetDomainName</name>
+	<argumentList>
+	<argument>
+		<name>NewDomainName</name>
+		<relatedStateVariable>DomainName</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>SetAddressRange</name>
+	<argumentList>
+	<argument>
+		<name>NewMinAddress</name>
+		<relatedStateVariable>MinAddress</relatedStateVariable>
+		<direction>in</direction>
+	</argument>
+	
+	<argument>
+		<name>NewMaxAddress</name>
+		<relatedStateVariable>MaxAddress</relatedStateVariable>
+		<direction>in</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetAddressRange</name>
+	<argumentList>
+	<argument>
+		<name>NewMinAddress</name>
+		<relatedStateVariable>MinAddress</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	
+	<argument>
+		<name>NewMaxAddress</name>
+		<relatedStateVariable>MaxAddress</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>SetReservedAddress</name>
+	<argumentList>
+	<argument>
+		<name>NewReservedAddresses</name>
+		<relatedStateVariable>ReservedAddresses</relatedStateVariable>
+		<direction>in</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>DeleteReservedAddress</name>
+	<argumentList>
+	<argument>
+		<name>NewReservedAddresses</name>
+		<relatedStateVariable>ReservedAddresses</relatedStateVariable>
+		<direction>in</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetReservedAddresses</name>
+	<argumentList>
+	<argument>
+		<name>NewReservedAddresses</name>
+		<relatedStateVariable>ReservedAddresses</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>SetDNSServer</name>
+	<argumentList>
+	<argument>
+		<name>NewDNSServers</name>
+		<relatedStateVariable>DNSServers</relatedStateVariable>
+		<direction>in</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>DeleteDNSServer</name>
+	<argumentList>
+	<argument>
+		<name>NewDNSServers</name>
+		<relatedStateVariable>DNSServers</relatedStateVariable>
+		<direction>in</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetDNSServers</name>
+	<argumentList>
+	<argument>
+		<name>NewDNSServers</name>
+		<relatedStateVariable>DNSServers</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+</actionList>
+
+<serviceStateTable>
+<stateVariable sendEvents="no">
+	<name>DHCPServerConfigurable</name>
+	<dataType>boolean</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>DHCPRelay</name>
+	<dataType>boolean</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>SubnetMask</name>
+	<dataType>string</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>DNSServers</name>
+	<dataType>string</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>DomainName</name>
+	<dataType>string</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>MinAddress</name>
+	<dataType>string</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>MaxAddress</name>
+	<dataType>string</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>IPRouters</name>
+	<dataType>string</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>ReservedAddresses</name>
+	<dataType>string</dataType>
+</stateVariable>
+</serviceStateTable>
+</scpd>
+
+<!-- 
+	File		: igd_lcm.xml
+	Descripte	: internet gateway device (LAN Connection Management) description page
+	Copyright	: 
+	Authors		: Pert
+	Date		: 03/14/2002
+	Last Date	: 03/??/2002
+	Version		: v1.0
+-->

@@ -1,0 +1,3804 @@
+======= 
+This product may contain components licensed under several software licenses.
+In addition to the GPL, the following license notices describe requirements
+that apply to components that may be included in the system. These requirements
+are generally a superset of the components actually configured on any particular device.
+======= 
+
+ Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)                        
+ All rights reserved.                                                          
+                                                                               
+ This package is an SSL implementation written                                 
+ by Eric Young (eay@cryptsoft.com).                                            
+ The implementation was written so as to conform with Netscapes SSL.           
+                                                                               
+ This library is free for commercial and non-commercial use as long as         
+ the following conditions are aheared to.  The following conditions            
+ apply to all code found in this distribution, be it the RC4, RSA,             
+ lhash, DES, etc., code; not just the SSL code.  The SSL documentation         
+ included with this distribution is covered by the same copyright terms        
+ except that the holder is Tim Hudson (tjh@cryptsoft.com).                     
+                                                                               
+ Copyright remains Eric Young's, and as such any Copyright notices in          
+ the code are not to be removed.                                               
+ If this package is used in a product, Eric Young should be given attribution  
+ as the author of the parts of the library used.                               
+ This can be in the form of a textual message at program startup or            
+ in documentation (online or textual) provided with the package.               
+                                                                               
+ Redistribution and use in source and binary forms, with or without            
+ modification, are permitted provided that the following conditions            
+ are met:                                                                      
+ 1. Redistributions of source code must retain the copyright                   
+    notice, this list of conditions and the following disclaimer.              
+ 2. Redistributions in binary form must reproduce the above copyright          
+    notice, this list of conditions and the following disclaimer in the        
+    documentation and/or other materials provided with the distribution.       
+ 3. All advertising materials mentioning features or use of this software      
+    must display the following acknowledgement:                                
+    "This product includes cryptographic software written by                   
+     Eric Young (eay@cryptsoft.com)"                                           
+    The word 'cryptographic' can be left out if the rouines from the library   
+    being used are not cryptographic related :-).                              
+ 4. If you include any Windows specific code (or a derivative thereof) from    
+    the apps directory (application code) you must include an acknowledgement: 
+    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)" 
+                                                                               
+ THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND                         
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE         
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE    
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE       
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL    
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS       
+ OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)         
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT    
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY     
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF        
+ SUCH DAMAGE.                                                                  
+                                                                               
+ The licence and distribution terms for any publically available version or    
+ derivative of this code cannot be changed.  i.e. this code cannot simply be   
+ copied and put under another distribution licence                             
+ [including the GNU Public Licence.]                                           
+
+
+
+
+======= 
+
+ Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+                                                                          
+ Redistribution and use in source and binary forms, with or without       
+ modification, are permitted provided that the following conditions       
+ are met:                                                                 
+                                                                          
+ 1. Redistributions of source code must retain the above copyright        
+    notice, this list of conditions and the following disclaimer.         
+                                                                          
+ 2. Redistributions in binary form must reproduce the above copyright     
+    notice, this list of conditions and the following disclaimer in       
+    the documentation and/or other materials provided with the            
+    distribution.                                                         
+                                                                          
+ 3. All advertising materials mentioning features or use of this          
+    software must display the following acknowledgment:                   
+    "This product includes software developed by the OpenSSL Project      
+    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"            
+                                                                          
+ 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to 
+    endorse or promote products derived from this software without        
+    prior written permission. For written permission, please contact      
+    openssl-core@openssl.org.                                             
+                                                                          
+ 5. Products derived from this software may not be called "OpenSSL"       
+    nor may "OpenSSL" appear in their names without prior written         
+    permission of the OpenSSL Project.                                    
+                                                                          
+ 6. Redistributions of any form whatsoever must retain the following      
+    acknowledgment:                                                       
+    "This product includes software developed by the OpenSSL Project      
+    for use in the OpenSSL Toolkit (http://www.openssl.org/)"             
+                                                                          
+ THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY       
+ EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE      
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR       
+ PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR        
+ ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,         
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT             
+ NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;             
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)                 
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,      
+ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)            
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED      
+ OF THE POSSIBILITY OF SUCH DAMAGE.                                       
+                                                                          
+ This product includes cryptographic software written by Eric Young       
+ (eay@cryptsoft.com).  This product includes software written by Tim      
+ Hudson (tjh@cryptsoft.com).                                              
+                                                                                                                                                  
+ Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de> 
+ for the OpenSSL project.                                                                         
+
+
+
+
+======= 
+
+ Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.        
+                                                                          
+ Redistribution and use in source and binary forms, with or without       
+ modification, are permitted provided that the following conditions       
+ are met:                                                                 
+                                                                          
+ 1. Redistributions of source code must retain the above copyright        
+    notice, this list of conditions and the following disclaimer.         
+                                                                          
+ 2. Redistributions in binary form must reproduce the above copyright     
+    notice, this list of conditions and the following disclaimer in       
+    the documentation and/or other materials provided with the            
+    distribution.                                                         
+                                                                          
+ 3. All advertising materials mentioning features or use of this          
+    software must display the following acknowledgment:                   
+    "This product includes software developed by the OpenSSL Project      
+    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"            
+                                                                          
+ 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to 
+    endorse or promote products derived from this software without        
+    prior written permission. For written permission, please contact      
+    openssl-core@openssl.org.                                             
+                                                                          
+ 5. Products derived from this software may not be called "OpenSSL"       
+    nor may "OpenSSL" appear in their names without prior written         
+    permission of the OpenSSL Project.                                    
+                                                                          
+ 6. Redistributions of any form whatsoever must retain the following      
+    acknowledgment:                                                       
+    "This product includes software developed by the OpenSSL Project      
+    for use in the OpenSSL Toolkit (http://www.openssl.org/)"             
+                                                                          
+ THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY       
+ EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE      
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR       
+ PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR        
+ ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,         
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT             
+ NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;             
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)                 
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,      
+ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)            
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED      
+ OF THE POSSIBILITY OF SUCH DAMAGE.                                       
+                                                                          
+ This product includes cryptographic software written by Eric Young       
+ (eay@cryptsoft.com).  This product includes software written by Tim      
+ Hudson (tjh@cryptsoft.com).                                              
+                                                                                                                                                  
+ Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de> 
+ for the OpenSSL project.                                                                         
+
+
+
+
+======= 
+
+Copyright (c) 1997 Zubin D. Dittia.All rights reserved.
+Copyright (c) 1995, 1996, 1998
+ 	Christopher G. Demetriou.All rights reserved.
+Copyright (c) 1994 Charles M. Hannum.All rights reserved.
+ 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+ must display the following acknowledgement:
+ 	This product includes software developed by Charles M. Hannum.
+4. The name of the author may not be used to endorse or promote products
+ derived from this software without specific prior written permission.
+ 
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (c) 1995, 1996 Christopher G. Demetriou
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+    This product includes software developed by Christopher G. Demetriou
+	for the NetBSD Project.
+4. The name of the author may not be used to endorse or promote products
+   derived from this software without specific prior written permission
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
+======= 
+
+Apache Felix Preferences Service
+Copyright 2007-2009 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Framework
+Copyright 2006 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright 2006 The OSGi Alliance.
+Licensed under the Apache License 2.0.
+
+
+
+======= 
+
+Apache Felix Framework
+Copyright 2006 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright 2006 The OSGi Alliance.
+Licensed under the Apache License 2.0.
+
+This product includes software developed by the
+MX4J project (http://mx4j.sourceforge.net).
+
+
+
+======= 
+
+Apache Felix Main
+Copyright 2010 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+
+
+======= 
+
+Apache Felix Jetty HTTP Service
+Copyright 2008-2009 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed by
+Mortbay (http://mortbay.org)
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix EventAdmin Bridge WireAdmin
+Copyright 2006 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Event Admin
+Copyright 2006-2010 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+Sun Microsystems, Inc.
+Copyright (c) 1994-2000.
+Licensed under a BSD license.
+
+
+
+======= 
+
+Apache Felix EventAdmin Bridge UPnP
+Copyright 2006 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+OSGi Foundation EE Classes
+Copyright 2001 Sun Microsystems
+Copyright 2005 OSGi Alliance
+
+This product includes software developed at
+the OSGi Alliance and Sun Microsystems.
+
+
+
+======= 
+
+Apache Felix Commons jzlib
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons aopalliance
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-configuration
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons Quartz
+Copyright 2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+This product includes software developed at
+OpenSymphony (http://www.opensymphony.com/).
+
+
+
+======= 
+
+Apache Felix Commons jstl
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons JSP API
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons hsqldb
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons dom4j
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons Activation
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons xml-resolver
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons antlr
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons hibernate
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons jta
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons POI Scratchpad
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons xercesImpl
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons cglib
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons LogKit
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-beanutils
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-el
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-httpclient
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-email
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-codec
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons ehcache
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-validator
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+JLine
+Copyright (c) 2002-2007, Marc Prud'hommeaux <mwp1@cornell.edu>
+All rights reserved.
+
+This product includes software developed at
+JLine (http://jline.sourceforge.net/).
+
+
+
+======= 
+
+Apache Felix Commons POI
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons mail
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons Portlet API
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-logging
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons jms
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons Servlet API
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-jxpath
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-attributes-api
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons jmxtools
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons log4j
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons xml-apis
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-fileupload
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-digester
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Commons commons-attributes-compiler
+Copyright 2006-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Main Distribution
+Copyright 2010 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+This product includes software from http://kxml.sourceforge.net.
+Copyright (c) 2002,2003, Stefan Haustein, Oberhausen, Rhld., Germany.
+Licensed under BSD License.
+
+
+
+======= 
+
+Apache Felix Bundle Maven Plugin
+Copyright 2006-2009 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright 2006-2009 The OSGi Alliance.
+Licensed under the Apache License 2.0.
+
+This product includes software developed by Peter Kriens
+(http://www.aqute.biz/Code/Bnd)
+Copyright 2006-2009 aQute, All rights reserved
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed by Peter Kriens
+(http://www.aqute.biz/Code/Bnd)
+Copyright 2006-2009 aQute, All rights reserved
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright 2006-2009 The OSGi Alliance.
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Codehaus (http://www.codehaus.org)
+Licensed under the Apache License 2.0.
+
+This product uses software from http://kxml.sourceforge.net.
+Copyright (c) 2002,2003, Stefan Haustein, Oberhausen, Rhld., Germany.
+Licensed under the BSD License.
+
+
+III. License Summary
+- Apache License 2.0
+- BSD License
+
+
+
+======= 
+
+Apache Felix Shell Service
+Copyright 2006-2010 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Codehaus (http://www.codehaus.org)
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+OSGi Bundle Repository Classes
+Copyright 2006-2008 The OSGi Alliance
+
+
+I. Included Software
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright 2006-2008 The OSGi Alliance.
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright 2006-2008 The OSGi Alliance.
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Utils
+Copyright 2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Remote Shell
+Copyright 2008-2009 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+OSGi Compendium Classes
+Copyright (c) OSGi Alliance (2000, 2009).
+
+This product includes software developed at
+the OSGi Alliance (http://www.osgi.org/).
+
+
+
+======= 
+
+Apache Felix File Install
+Copyright 2008-2010 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix OSGi Web Console
+Copyright 2007-2010 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software from http://www.jquery.com
+Copyright (c) 2009 John Resig, http://jquery.com/
+Licensed under the MIT License
+
+This product includes software from http://tablesorter.com
+Copyright (c) 2007 Christian Bach
+Licensed under the MIT License
+
+This product includes software from http://www.fyneworks.com
+Copyright (c) 2008 Fyneworks.com
+Licensed under the MIT License
+
+This product includes icons from the Silk Icon set
+(http://www.famfamfam.com/lab/icons/silk/)
+Copyright (c) 2006 Mark James
+Licensed under the Creative Commons Attribution 2.5 License
+
+This product includes software from http://benchsketch.com/bquery/index.html
+Copyright (c) 2009 Tanner Hildebrand
+Licensed under Tanner Hildebrand's License
+
+This product includes software from http://code.google.com/p/cookies/
+Copyright (c) 2005 - 2009, James Auldridge
+Licensed under the MIT License
+
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+- JSON License
+- MIT License
+- Creative Commons Attribution 2.5 License
+- Tanner Hildebrand's License
+
+
+
+======= 
+
+Apache Felix Parent POM
+Copyright 2009 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Dependency Manager
+Copyright 2009 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Servlet API
+Copyright 2006 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Shell Textual Interface
+Copyright 2006-2009 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Codehaus (http://www.codehaus.org)
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Simple Bundle
+Copyright 2006 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Service-Based Triangle Service Example
+Copyright 2006 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Service-Based Circle Service Example
+Copyright 2006 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Service-Based Square Service Example
+Copyright 2006 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Service-Based Host Example
+Copyright 2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+
+
+======= 
+
+Apache Felix Karaf
+Copyright 2010 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix UPnP Extra
+Copyright 2006-2009 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright 2006-2008 The OSGi Alliance.
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix UPnP Base Driver
+Copyright 2006-2009 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+ISTI-CNR (http://domoware.isti.cnr.it/).
+Copyright 2007-2008, ISTI-CNR,
+Licensed under the BSD License.
+
+This product includes software developed by Satoshi Konno
+(http://sourceforge.net/projects/cgupnpjava/)
+Copyright 2003-2008 Satoshi Konno,
+Licensed under the BSD License.
+
+The version targeting JVM 1.3 of this product includes software from http://kxml.sourceforge.net.
+Copyright (c) 2002,2003, Stefan Haustein, Oberhausen, Rhld., Germany.
+Licensed under the BSD License.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright 2006-2008 The OSGi Alliance.
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+- BSD License
+
+
+
+======= 
+
+Apache Felix UPnP Tester
+Copyright 2006-2009 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright 2006-2008 The OSGi Alliance.
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix UPnP Sample Binary-Light
+Copyright 2006-2009 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright 2006-2008 The OSGi Alliance.
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+- BSD License
+
+
+
+======= 
+
+Apache Felix Http Service Filter Sample
+Copyright 2009 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Http Service Proxy
+Copyright 2009 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Http Service Bridge Sample
+Copyright 2009 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Http Service Whiteboard Sample
+Copyright 2009 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Http Service Api
+Copyright 2009 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Http Service Base
+Copyright 2009 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Http Service
+Copyright 2009 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed by
+Mortbay (http://mortbay.org)
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Http Service Bundle
+Copyright 2009 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed by
+Mortbay (http://mortbay.org)
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Http Service Jetty
+Copyright 2009 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed by
+Mortbay (http://mortbay.org)
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Framework
+Copyright 2010 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+
+
+======= 
+
+Apache Felix iPOJO Composite
+Copyright 2008-2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+Copyright (c) 2000-2005 INRIA, France Telecom
+Licensed under BSD License.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+- BSD License
+
+
+
+======= 
+
+Apache Felix iPOJO junit4osgi Framework
+Copyright 2008-2009 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed by
+Junit project (http://junit.org)
+Licensed under Common Public License 1.0.
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+- Common Public License 1.0
+
+
+
+======= 
+
+Apache Felix iPOJO Maven Plugin
+Copyright 2008-2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Codehaus (http://www.codehaus.org)
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix iPOJO Ant Task
+Copyright 2008-2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+Copyright (c) 2000-2005 INRIA, France Telecom
+Licensed under BSD License.
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+- BSD License
+
+
+
+======= 
+
+Apache Felix iPOJO Online Manipulator
+Copyright 2008-2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+Copyright (c) 2000-2005 INRIA, France Telecom
+Licensed under BSD License.
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+- BSD License
+
+
+
+======= 
+
+Apache Felix iPOJO Webconsole Plugins
+Copyright 2008-2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix iPOJO Metadata
+Copyright 2008-2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix iPOJO Arch Command
+Copyright 2008-2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix iPOJO Annotations
+Copyright 2008-2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix iPOJO Commands for Gogo
+Copyright 2008-2010 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+
+======= 
+
+Apache Felix iPOJO API
+Copyright 2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+Copyright (c) 2000-2005 INRIA, France Telecom
+Licensed under BSD License.
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+- BSD License
+
+
+
+======= 
+
+Apache Felix iPOJO Event Admin Handler
+Copyright 2008-2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix iPOJO JMX Handler
+Copyright 2008-2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix iPOJO Manipulator
+Copyright 2008-2010 The Apache Software Foundation
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+Copyright (c) 2000-2005 INRIA, France Telecom
+Licensed under BSD License.
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+III. License Summary
+- Apache License 2.0
+- BSD License
+
+
+
+======= 
+
+Apache Felix SCR Annotations
+Copyright 2007-2010 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix OBR Maven Plugin
+Copyright 2007-2008 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright 2006-2008 The OSGi Alliance.
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright 2006-2008 The OSGi Alliance.
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The Codehaus (http://www.codehaus.org)
+Licensed under the Apache License 2.0.
+
+This product uses software from http://kxml.sourceforge.net.
+Copyright (c) 2002,2003, Stefan Haustein, Oberhausen, Rhld., Germany.
+Licensed under the BSD License.
+
+
+III. License Summary
+- Apache License 2.0
+- BSD License
+
+
+
+======= 
+
+Apache Felix Declarative Services
+Copyright 2006-2009 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0. 
+
+This product includes software from http://kxml.sourceforge.net.
+Copyright (c) 2002,2003, Stefan Haustein, Oberhausen, Rhld., Germany.
+Licensed under BSD License.
+
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0. 
+
+
+III. License Summary
+- Apache License 2.0
+- BSD License
+
+
+
+======= 
+
+Apache Felix OSGi Bundle Repository
+Copyright 2010 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software from http://kxml.sourceforge.net.
+Copyright (c) 2002,2003, Stefan Haustein, Oberhausen, Rhld., Germany.
+Licensed under BSD License.
+
+
+
+======= 
+
+Apache Felix Framework Security
+Copyright 2010 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+
+
+======= 
+
+OSGi Core Classes
+Copyright (c) OSGi Alliance (2000, 2009).
+
+This product includes software developed at
+the OSGi Alliance (http://www.osgi.org/).
+
+
+
+======= 
+
+Apache Felix Configuration Admin Service
+Copyright 2006-2009 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0. 
+
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0. 
+
+This product uses software developed at
+The Codehaus (http://www.codehaus.org)
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+Open Participation Software for Java (http://www.ops4j.org)
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix SCR Maven Plugin
+Copyright 2007-2010 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0. 
+
+This product uses software developed at http://asm.objectweb.org
+Copyright (c) 2000-2005 INRIA, France Telecom
+Licensed under the BSD License.
+
+This product uses software developed at
+The Codehaus (http://www.codehaus.org)
+Licensed under the Apache License 2.0.
+
+This product uses software developed at
+slf4j (http://www.sl4j.org)
+Licensed under the MIT License.
+
+
+III. License Summary
+- Apache License 2.0
+- BSD License
+- MIT License
+
+
+
+======= 
+
+Apache Felix Gogo Runtime
+Copyright 2010 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+
+
+======= 
+
+Apache Felix Gogo
+Copyright 2010 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+
+
+======= 
+
+Apache Felix Gogo Shell
+Copyright 2010 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+
+======= 
+
+Apache Felix Gogo Command
+Copyright 2010 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+
+
+======= 
+
+Apache Felix OSGi Web Console Event Plugin
+Copyright 2007-2010 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix OSGi Web Console UPnP Plugin
+Copyright 2007-2010 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+This product includes software from http://bassistance.de/jquery-plugins/jquery-plugin-treeview/
+Copyright (c) 2007 Jorn Zaefferer
+Licensed under the MIT License
+
+This product is based on original source code developer by ProSyst (http://www.prosyst.com/)
+
+
+III. License Summary
+- Apache License 2.0
+- MIT License
+
+
+
+======= 
+
+Apache Felix Web Console Memory Usage Plugin
+Copyright 2010 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2009).
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Apache Felix Log Service
+Copyright 2009 The Apache Software Foundation
+
+
+I. Included Software
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+Licensed under the Apache License 2.0.
+
+This product includes software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+
+II. Used Software
+
+This product uses software developed at
+The OSGi Alliance (http://www.osgi.org/).
+Copyright (c) OSGi Alliance (2000, 2007).
+Licensed under the Apache License 2.0.
+
+
+III. License Summary
+- Apache License 2.0
+
+
+
+======= 
+
+Copyright (c) 1994, 1995, 1996, 1997, 1998
+     The Regents of the University of California.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+     This product includes software developed by the Computer Systems
+     Engineering Group at Lawrence Berkeley Laboratory.
+4. Neither the name of the University nor of the Laboratory may be used
+   to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+
+
+======= 
+
+ fad-sita.c: Packet capture interface additions for SITA ACN devices
+ and
+ pcap-sita.c: Packet capture interface additions for SITA ACN devices
+
+ 
+ Copyright (c) 2007 Fulko Hew, SITA INC Canada, Inc <fulko.hew@sita.aero>
+ 
+ License: BSD
+ 
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in
+    the documentation and/or other materials provided with the
+    distribution.
+ 3. The names of the authors may not be used to endorse or promote
+    products derived from this software without specific prior
+    written permission.
+ 
+ THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+
+
+
+======= 
+
+ Copyright (c) 2002 - 2005 NetGroup, Politecnico di Torino (Italy)
+ Copyright (c) 2005 - 2006 CACE Technologies, Davis (California)
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+
+ 1. Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+ 3. Neither the name of the Politecnico di Torino, CACE Technologies
+ nor the names of its contributors may be used to endorse or promote
+ products derived from this software without specific prior written
+ permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
+
+
+======= 
+
+ Copyright (c) 2006 Paolo Abeni (Italy)
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+
+ 1. Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+ 3. The name of the author may not be used to endorse or promote
+ products derived from this software without specific prior written
+ permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+ Bluetooth sniffing API implementation for Linux platform
+ By Paolo Abeni <paolo.abeni@email.it>
+
+
+
+
+
+======= 
+
+ Copyright (c) 2009 Felix Obenhuber
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+
+ 1. Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+ 3. The name of the author may not be used to endorse or promote
+ products derived from this software without specific prior written
+ permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+ SocketCan sniffing API implementation for Linux platform
+ By Felix Obenhuber <felix@obenhuber.de>
+
+
+
+
+======= 
+
+  pcap-linux.c: Packet capture interface to the Linux kernel
+
+  Copyright (c) 2000 Torsten Landschoff <torsten@debian.org>
+  		       Sebastian Krahmer  <krahmer@cs.uni-potsdam.de>
+
+  License: BSD
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in
+     the documentation and/or other materials provided with the
+     distribution.
+  3. The names of the authors may not be used to endorse or promote
+     products derived from this software without specific prior
+     written permission.
+
+  THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+  Modifications:     Added PACKET_MMAP support
+                     Paolo Abeni <paolo.abeni@email.it> 
+                     
+                     based on previous works of:
+                     Simon Patarin <patarin@cs.unibo.it>
+                     Phil Wood <cpw@lanl.gov>
+
+ Monitor-mode support for mac80211 includes code taken from the iw
+ command; the copyright notice for that code is
+
+ Copyright (c) 2007, 2008	Johannes Berg
+ Copyright (c) 2007		Andy Lutomirski
+ Copyright (c) 2007		Mike Kershaw
+ Copyright (c) 2008		Gábor Stefanik
+
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer. 
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. The name of the author may not be used to endorse or promote products
+    derived from this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  
+ IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+
+
+
+
+======= 
+
+Copyright (C) 1998 and 1999 WIDE Project.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (C) 1998 and 1999 WIDE Project.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 1998-2001, 2003  Internet Software Consortium.
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+
+
+
+======= 
+
+Copyright (C) 1998 and 1999 WIDE Project.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2000, 2001  Internet Software Consortium.
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+
+
+
+======= 
+
+Copyright (c) 1995, 1999
+Berkeley Software Design, Inc.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+THIS SOFTWARE IS PROVIDED BY Berkeley Software Design, Inc. ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL Berkeley Software Design, Inc. BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (C) 2002 WIDE Project.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (c) 1989 Regents of the University of California.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by the University of California, Berkeley.  The name of the
+University may not be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+======= 
+
+Copyright (c) 1985, 1986 The Regents of the University of California.
+All rights reserved.
+ 
+This code is derived from software contributed to Berkeley by
+James A. Woods, derived from original work by Spencer Thomas
+and Joseph Orost.
+ 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+ 	This product includes software developed by the University of
+ 	California, Berkeley and its contributors.
+4. Neither the name of the University nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+ 
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (c) 1989 Carnegie Mellon University.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by Carnegie Mellon University.  The name of the
+University may not be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+======= 
+
+Copyright (C) 1999, 2000  Paul Mackerras.  All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms.  The name of the author
+may not be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+======= 
+
+Copyright (c) 1999 The Australian National University.
+Copyright (c) 1994 The Australian National University.
+Copyright (c) 1993 The Australian National University.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by the Australian National University.  The name of the University
+may not be used to endorse or promote products derived from this
+software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+======= 
+
+Copyright (c) 2000 by Sun Microsystems, Inc. All rights reserved.
+
+
+
+======= 
+
+Copyright (c) 1995 Pedro Roque Marques
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by Pedro Roque Marques.  The name of the author may not be used to
+endorse or promote products derived from this software without
+specific prior written permission.
+
+
+
+======= 
+
+Copyright (c) 1991 Gregory M. Christy.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by Gregory M. Christy.  The name of the author may not be used to
+endorse or promote products derived from this software without
+specific prior written permission.
+
+
+
+======= 
+
+Copyright (c) 1995 Eric Rosenquist, Strata Software Limited.
+http://www.strataware.com/
+
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by Eric Rosenquist.  The name of the author may not be used to
+endorse or promote products derived from this software without
+specific prior written permission.
+
+
+
+======= 
+
+Copyright (C) 1999  Tommi Komulainen <Tommi.Komulainen@iki.fi>
+
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms and that any documentation,
+advertising materials, and other materials related to such
+distribution and use acknowledge that the software was developed
+by Tommi Komulainen.  The name of the author may not be used
+to endorse or promote products derived from this software without
+specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+======= 
+
+Copyright (c) 1995, 1996, 1997 Francis.Dupont@inria.fr, INRIA Rocquencourt,
+Alain.Durand@imag.fr, IMAG,
+Jean-Luc.Richier@imag.fr, IMAG-LSR.
+
+Copyright (c) 1998, 1999 Francis.Dupont@inria.fr, GIE DYADE,
+Alain.Durand@imag.fr, IMAG,
+Jean-Luc.Richier@imag.fr, IMAG-LSR.
+
+This software is available with usual "research" terms
+with the aim of retain credits of the software. 
+Permission to use, copy, modify and distribute this software for any
+purpose and without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies,
+and the name of INRIA, IMAG, or any contributor not be used in advertising
+or publicity pertaining to this material without the prior explicit
+permission. The software is provided "as is" without any
+warranties, support or liabilities of any kind.
+This software is derived from source code from
+"University of California at Berkeley" and
+"Digital Equipment Corporation" protected by copyrights.
+
+
+
+======= 
+
+Copyright (C) 1990, RSA Data Security, Inc. All rights reserved.
+                                                                  
+License to copy and use this software is granted provided that    
+it is identified as the "RSA Data Security, Inc. MD5 Message-     
+Digest Algorithm" in all material mentioning or referencing this  
+software or this function.                                        
+                                                                  
+License is also granted to make and use derivative works          
+provided that such works are identified as "derived from the RSA  
+Data Security, Inc. MD5 Message-Digest Algorithm" in all          
+material mentioning or referencing the derived work.              
+                                                                  
+RSA Data Security, Inc. makes no representations concerning       
+either the merchantability of this software or the suitability    
+of this software for any particular purpose.  It is provided "as  
+is" without express or implied warranty of any kind.              
+                                                                  
+These notices must be retained in any copies of any part of this  
+documentation and/or software.
+
+
+
+======= 
+
+Copyright (C) Andrew Tridgell 1999
+ 
+Redistribution and use in source and binary forms are permitted
+provided that the above copyright notice and this paragraph are
+duplicated in all such forms AND provided that this software or
+any derived work is only used as part of the PPP daemon (pppd)
+and related utilities.
+The name of the author may not be used to endorse or promote products
+derived from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+======= 
+
+Copyright (C) 2000-2004 Paul Mackerras. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+2. The name(s) of the authors of this software must not be used to
+    endorse or promote products derived from this software without
+    prior written permission.
+
+3. Redistributions of any form whatsoever must retain the following
+   acknowledgment:
+    "This product includes software developed by Paul Mackerras
+     <paulus@samba.org>".
+
+THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
+THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS, IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY
+SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+
+======= 
+
+Copyright (c) 1984-2000 Carnegie Mellon University. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in
+   the documentation and/or other materials provided with the
+   distribution.
+
+3. The name "Carnegie Mellon University" must not be used to
+   endorse or promote products derived from this software without
+   prior written permission. For permission or any legal
+   details, please contact
+     Office of Technology Transfer
+     Carnegie Mellon University
+     5000 Forbes Avenue
+     Pittsburgh, PA  15213-3890
+     (412) 268-4387, fax: (412) 268-7395
+     tech-transfer@andrew.cmu.edu
+
+4. Redistributions of any form whatsoever must retain the following
+   acknowledgment:
+   "This product includes software developed by Computing Services
+    at Carnegie Mellon University (http://www.cmu.edu/computing/)."
+
+CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO
+THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS, IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE
+FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+
+======= 
+
+Copyright (C) 1995-1996 Jean-loup Gailly and Mark Adler
+
+This software is provided 'as-is', without any express or implied
+warranty.  In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
+
+
+
+======= 
+
+Copyright (c) 1994, 1995, 1996
+The Regents of the University of California.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+    This product includes software developed by the Computer Systems
+	Engineering Group at Lawrence Berkeley Laboratory.
+4. Neither the name of the University nor of the Laboratory may be used
+   to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
+      The Regents of the University of California.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that: (1) source code distributions
+retain the above copyright notice and this paragraph in its entirety, (2)
+distributions including binary code include the above copyright notice and
+this paragraph in its entirety in the documentation or other materials
+provided with the distribution, and (3) all advertising materials mentioning
+features or use of this software display the following acknowledgement:
+``This product includes software developed by the University of California,
+Lawrence Berkeley Laboratory and its contributors.'' Neither the name of
+the University nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior
+written permission.
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+======= 
+
+Copyright (c) 1983, 1993
+	The Regents of the University of California.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. All advertising materials mentioning features or use of this software
+    must display the following acknowledgement:
+ 	This product includes software developed by the University of
+ 	California, Berkeley and its contributors.
+ 4. Neither the name of the University nor the names of its contributors
+    may be used to endorse or promote products derived from this software
+    without specific prior written permission.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (C) 2000, 2001 WIDE Project.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (c) 1991, 1993
+The Regents of the University of California.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+4. Neither the name of the University nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright 2000 Aaron D. Gifford.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) AND CONTRIBUTOR(S) ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) OR CONTRIBUTOR(S) BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002 and 2003 WIDE Project.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
+Contributed by: Michal Ludvig <mludvig@suse.cz>, SUSE Labs
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (C) 2004-2006 Emmanuel Dreyfus
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (C) 2004-2005 Emmanuel Dreyfus
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (C) 2004 Emmanuel Dreyfus
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright (C) 2000 WIDE Project.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the project nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+
+
+======= 
+
+Copyright 2000 Wasabi Systems, Inc.
+All rights reserved.
+
+This software was written by Frank van der Linden of Wasabi Systems
+for Zembu Labs, Inc. http://www.zembu.com/
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of Wasabi Systems, Inc. may not be used to endorse
+   or promote products derived from this software without specific prior
+   written permission.
+
+THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+
+
+======= 
+
+ milli_httpd - pretty small HTTP server
+ A combination of
+ micro_httpd - really small HTTP server
+ and
+ mini_httpd - small HTTP server
+
+ Copyright (c) 1999,2000 by Jef Poskanzer <jef@acme.com>.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+
+
+
+
+======= 
+
+Copyright (C) 2010-2011  Internet Systems Consortium, Inc. ("ISC")
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+
+
+
+======= 
+
+Copyright (c) 1997, 1998, 
+               SMASH, Harrie Hazewinkel.  All rights reserved.
+
+This product is developed by Harrie Hazewinkel and updates the
+original SMUT compiler made as his graduation project at the
+University of Twente.
+
+SMASH is a software package containing an SNMP MIB compiler and
+an SNMP agent system. The package can be used for development
+of monolithic SNMP agents and contains a compiler which compiles
+MIB definitions into C-code to developed an SNMP agent.
+More information about him and this software product can
+be found on http://www-musiq.jrc.it/~harrie/SMASH/.
+
+With this file you should have received a file called
+'License'. If not you can pick one up from
+
+http://www-musiq.jrc.it/~harrie/SMASH/licence.txt
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer. 
+
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in
+the documentation and/or other materials provided with the
+distribution.
+
+3. All materials mentioning features or use of this
+software must display the following acknowledgment:
+"This product includes software developed by Harrie Hazewinkel"
+
+4. The name of the Copyright holder must not be used to
+endorse or promote products derived from this software without
+prior written permission.
+
+5. Redistributions of any form whatsoever must retain the following
+acknowledgment:
+"This product includes software developed by Harrie Hazewinkel"
+Also acknowledged are:
+- The Simple group of the University of Twente,
+   http://wwwsnmp.cs.utwente.nl/
+- The MUSIQ workpackage of the DESIRE project,
+   http://www-musiq.jrc.it/
+- The CEO programme managing the MUSIQ workpackage,
+   http://www.ceo.org/
+
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR, ITS DISTRIBUTORS
+ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
+======= 
+

@@ -1,0 +1,4 @@
+[erase]
+partitions=linux
+[write]
+linux=0x00000000:0x06400000:0x00000000

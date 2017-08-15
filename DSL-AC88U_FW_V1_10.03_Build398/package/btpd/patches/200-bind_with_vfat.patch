@@ -1,0 +1,36 @@
+diff -uNrp btpd-0.16/btpd/cli_if.c btpd-0.16_new/btpd/cli_if.c
+--- btpd-0.16/btpd/cli_if.c	2010-07-27 11:12:07.000000000 +0800
++++ btpd-0.16_new/btpd/cli_if.c	2015-08-05 18:08:19.907668946 +0800
+@@ -497,9 +497,14 @@ ipc_init(void)
+     int sd;
+     struct sockaddr_un addr;
+     size_t psiz = sizeof(addr.sun_path);
++    char UnixSockFile[128]={"/tmp/btpd_sock"};
+ 
+     addr.sun_family = PF_UNIX;
++    /*fixed the bug that can not bind the path which is vfat*/
++#if 0
+     if (snprintf(addr.sun_path, psiz, "%s/sock", btpd_dir) >= psiz)
++#endif
++    if (snprintf(addr.sun_path, psiz, "%s", UnixSockFile) >= psiz)
+         btpd_err("'%s/sock' is too long.\n", btpd_dir);
+ 
+     if ((sd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+diff -uNrp btpd-0.16/misc/btpd_if.c btpd-0.16_new/misc/btpd_if.c
+--- btpd-0.16/misc/btpd_if.c	2010-07-27 11:12:07.000000000 +0800
++++ btpd-0.16_new/misc/btpd_if.c	2015-08-05 18:09:13.742345953 +0800
+@@ -57,9 +57,14 @@ ipc_open(const char *dir, struct ipc **o
+     size_t plen;
+     struct ipc *res;
+     struct sockaddr_un addr;
++    char UnixSockFile[128]={"/tmp/btpd_sock"};
+ 
+     plen = sizeof(addr.sun_path);
++    /*fixed the bug that can not bind the path which is vfat, char "dir" do not use here.*/
++#if 0
+     if (snprintf(addr.sun_path, plen, "%s/sock", dir) >= plen)
++#endif
++    if (snprintf(addr.sun_path, plen, "%s", UnixSockFile) >= plen)
+         return ENAMETOOLONG;
+     addr.sun_family = AF_UNIX;
+ 

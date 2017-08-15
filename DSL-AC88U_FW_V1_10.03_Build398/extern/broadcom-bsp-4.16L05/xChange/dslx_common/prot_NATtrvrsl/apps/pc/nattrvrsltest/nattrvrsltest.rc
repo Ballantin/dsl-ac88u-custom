@@ -1,0 +1,398 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+//#include "afxres.h"
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+#include "resource.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if 1
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+#endif
+
+#if 0
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_NATTC_DLG DIALOGEX 0, 0, 759, 578
+STYLE DS_SETFONT | DS_3DLOOK | WS_CHILD | WS_VISIBLE
+FONT 8, "Courier New", 400, 0, 0x0
+BEGIN
+    LISTBOX         IDC_LOGGER,321,222,434,354,LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_LOCAL_IPADDR,62,21,104,30,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "IP Address",IDC_STATIC,24,23,35,8,0,WS_EX_RIGHT
+    EDITTEXT        IDC_TLS_PORT,62,45,53,14,ES_AUTOHSCROLL
+    LTEXT           "TLS",IDC_STATIC,42,48,14,8,0,WS_EX_RIGHT
+    LTEXT           "UDP for Binding Test",IDC_STATIC,39,61,87,8,0,
+                    WS_EX_RIGHT
+    LISTBOX         IDC_UDP_PORT_LIST,61,88,46,40,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Remove",IDC_UDP_LIST_REMOVE,110,113,34,14
+    PUSHBUTTON      "Add",IDC_UDP_LIST_ADD,113,71,20,14
+    EDITTEXT        IDC_UDP_ADD,61,71,46,14,ES_AUTOHSCROLL
+    GROUPBOX        "Local Interface",IDC_STATIC,19,5,154,238
+    GROUPBOX        "TURN Server",IDC_STATIC,177,113,132,47
+    LTEXT           "FQDN/IP",IDC_STATIC,182,126,31,8,0,WS_EX_RIGHT
+    EDITTEXT        IDC_TURN_SERVER_PORT,219,139,53,14,ES_AUTOHSCROLL
+    LTEXT           "TURN Port",IDC_STATIC,179,142,36,8,0,WS_EX_RIGHT
+    EDITTEXT        IDC_TURN_SERVER_IPADDR,219,122,86,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Shared Secret Req",IDC_TEST_SHARED_SECRET_REQ,186,31,72,
+                    14
+    PUSHBUTTON      "Binding Req",IDC_TEST_BINDING_REQ,186,48,73,14
+    PUSHBUTTON      "STARTUP",IDC_START,18,250,43,31
+    PUSHBUTTON      "SHUTDOWN",IDC_END,132,252,41,29
+    PUSHBUTTON      "Clear Pwd",IDC_TEST_CLEAR_PWD,238,88,43,14
+    GROUPBOX        "LOGGER",IDC_STATIC,316,209,439,369
+    GROUPBOX        "STUN Server",IDC_STATIC,177,162,131,48
+    LTEXT           "FQDN/IP",IDC_STATIC,181,175,31,8,0,WS_EX_RIGHT
+    EDITTEXT        IDC_STUN_SERVER_IPADDR,219,172,86,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_STUN_SERVER_PORT,219,190,53,14,ES_AUTOHSCROLL
+    LTEXT           "STUN Port",IDC_STATIC,179,193,36,8,0,WS_EX_RIGHT
+    GROUPBOX        "UTILS",IDC_STATIC,186,79,116,26
+    GROUPBOX        "STUN TESTS",IDC_STATIC,178,6,138,103
+    PUSHBUTTON      "Send Request ...",IDC_TEST_ALLOCATE_REQ,325,132,70,14
+    GROUPBOX        "ALLOCATE",IDC_STATIC,321,16,140,177
+    EDITTEXT        IDC_BANDWIDTH,385,28,73,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_LIFETIME,385,46,73,14,ES_AUTOHSCROLL
+    LTEXT           "Bandwidth",IDC_STATIC,333,32,42,8,0,WS_EX_RIGHT
+    LTEXT           "Lifetime",IDC_STATIC,333,48,42,8,0,WS_EX_RIGHT
+    PUSHBUTTON      "DeAllocate",IDC_TEST_DEALLOCATE,332,168,50,14
+    EDITTEXT        IDC_REQD_IPADDR,398,80,60,14,ES_AUTOHSCROLL
+    CONTROL         "Requested Transport",IDC_STATIC,"Static",
+                    SS_LEFTNOWORDWRAP | WS_GROUP,333,84,45,20,WS_EX_RIGHT
+    COMBOBOX        IDC_PORT_PROPS,385,114,76,48,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Port Props",IDC_STATIC,335,115,42,8,0,WS_EX_RIGHT
+    CONTROL         "Req'd Transport",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_GROUP,323,66,55,8,WS_EX_RIGHT
+    GROUPBOX        "STUN Ports",IDC_STATIC,25,33,142,98
+    GROUPBOX        "TURN Ports",IDC_STATIC,25,132,142,36
+    EDITTEXT        IDC_TURN_UDP_PORT,33,150,34,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TURN_TCP_PORT,79,151,34,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TURN_TLS_PORT,125,150,34,14,ES_AUTOHSCROLL
+    LTEXT           "TLS",IDC_STATIC,135,141,14,8,0,WS_EX_RIGHT
+    LTEXT           "TCP",IDC_STATIC,89,141,15,8,0,WS_EX_RIGHT
+    LTEXT           "UDP",IDC_STATIC,38,141,16,8,0,WS_EX_RIGHT
+    CONTROL         "Active Destination",IDC_STATIC,"Static",
+                    SS_LEFTNOWORDWRAP | WS_GROUP,480,32,39,23,WS_EX_RIGHT
+    EDITTEXT        IDC_ACTIVE_DEST_IPADDR,540,27,57,14,ES_AUTOHSCROLL
+    GROUPBOX        "ACTIVE DESTINATION",IDC_STATIC,467,16,137,68
+    PUSHBUTTON      "Send Request ...",IDC_TEST_ACTIVE_DEST_REQ,473,58,70,14
+    EDITTEXT        IDC_CNX_REMOTE_IPADDR,541,98,58,14,ES_AUTOHSCROLL
+    CONTROL         "Remote Address",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_GROUP,483,106,39,23,WS_EX_RIGHT
+    PUSHBUTTON      "Send Request ...",IDC_TEST_CONNECT_REQ,469,131,70,14
+    GROUPBOX        "CONNECT",IDC_STATIC,467,89,137,61
+    CONTROL         "Remote Address",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_GROUP,630,34,39,19,WS_EX_RIGHT
+    EDITTEXT        IDC_SEND_DATA_REMOTE_IPADDR,689,27,56,14,ES_AUTOHSCROLL
+    GROUPBOX        "SEND DATA",IDC_STATIC,611,17,137,68
+    PUSHBUTTON      "Send Request ...",IDC_TEST_SEND_DATA_REQ,618,60,70,14
+    PUSHBUTTON      "Show Pwd",IDC_TEST_SHOW_PWD,191,88,43,14
+    COMBOBOX        IDC_TRANSPORT,385,64,75,46,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_ORG_TRANSPORT,523,169,75,46,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Originating Transport",IDC_STATIC,"Static",
+                    SS_LEFTNOWORDWRAP | WS_GROUP,474,167,45,15,WS_EX_RIGHT
+    GROUPBOX        "Miscellaneous",IDC_STATIC,468,155,137,38
+    CONTROL         "IP",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,
+                    382,82,10,11,WS_EX_RIGHT
+    EDITTEXT        IDC_REQD_PORT,398,96,60,14,ES_AUTOHSCROLL
+    CONTROL         "Port",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,
+                    381,99,15,11,WS_EX_RIGHT
+    EDITTEXT        IDC_ALLOCATE_HDL,410,168,24,14,ES_AUTOHSCROLL
+    CONTROL         "Req Hdl",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_GROUP,391,166,15,16,WS_EX_RIGHT
+    CONTROL         "IP",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,
+                    526,27,10,11,WS_EX_RIGHT
+    EDITTEXT        IDC_ACTIVE_DEST_PORT,540,43,58,14,ES_AUTOHSCROLL
+    CONTROL         "Port",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,
+                    521,43,15,11,WS_EX_RIGHT
+    CONTROL         "IP",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,
+                    675,30,10,11,WS_EX_RIGHT
+    EDITTEXT        IDC_SEND_DATA_REMOTE_PORT,689,43,56,14,ES_AUTOHSCROLL
+    CONTROL         "Port",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,
+                    670,44,15,11,WS_EX_RIGHT
+    GROUPBOX        "RECEIVE DATA INDICATION",IDC_STATIC,611,92,137,37
+    PUSHBUTTON      "Receive canned data ...",IDC_TEST_RECV_DATA,618,106,94,
+                    14
+    GROUPBOX        "CONNECT STATUS INDICATION",IDC_STATIC,611,134,137,37
+    PUSHBUTTON      "Receive Connect Status IND",IDC_TEST_CONNECT_STATUS_IND,
+                    618,147,119,14
+    EDITTEXT        IDC_CNX_REMOTE_PORT,541,114,58,14,ES_AUTOHSCROLL
+    CONTROL         "IP",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,
+                    528,102,10,11,WS_EX_RIGHT
+    CONTROL         "Port",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,
+                    523,116,15,11,WS_EX_RIGHT
+    CONTROL         "Error Resp",IDC_ALLOCATE_ERR,"Button",BS_AUTOCHECKBOX | 
+                    BS_LEFTTEXT | WS_TABSTOP,407,133,49,10
+    CONTROL         "Error Resp",IDC_ACTIVE_DEST_ERR,"Button",
+                    BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,548,62,49,10
+    CONTROL         "Error Resp",IDC_CONNECT_ERR,"Button",BS_AUTOCHECKBOX | 
+                    BS_LEFTTEXT | WS_TABSTOP,549,132,49,10
+    CONTROL         "Sync Evt",IDC_SYNCEVT,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,188,20,45,10
+    CONTROL         "Error Resp.",IDC_SS_ERROR,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,262,35,47,10
+    CONTROL         "Error Resp.",IDC_BINDING_ERROR,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,262,52,49,10
+    CONTROL         "STUNC",IDC_STUNC_START,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,69,250,41,10
+    CONTROL         "TURNC",IDC_TURNC_START,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,69,261,41,10
+    CONTROL         "ICE",IDC_ICE_START,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,69,271,27,10
+    GROUPBOX        "TURN TESTS",IDC_STATIC,317,6,438,194
+    CONTROL         "Pref. Override",IDC_ICE_PREF_OVERRIDE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,95,347,72,10
+    EDITTEXT        IDC_ICE_PREF_LOCAL,48,298,28,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_ICE_PREF_HOST,47,313,28,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_ICE_PREF_SRFLX,116,293,29,13,ES_AUTOHSCROLL
+    EDITTEXT        IDC_ICE_PREF_RELAY,116,323,29,12,ES_AUTOHSCROLL
+    GROUPBOX        "Priority Preference",IDC_STATIC,18,287,155,52
+    LTEXT           "LOCAL",IDC_STATIC,21,301,24,8,0,WS_EX_RIGHT
+    LTEXT           "HOST",IDC_STATIC,24,314,21,8,0,WS_EX_RIGHT
+    LTEXT           "S-REFLX",IDC_STATIC,81,294,31,8,0,WS_EX_RIGHT
+    LTEXT           "RELAY",IDC_STATIC,88,326,24,8,0,WS_EX_RIGHT
+    EDITTEXT        IDC_ICE_RTP_PORT1,73,190,31,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_ICE_RTCP_PORT1,118,190,34,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_ICE_RTP_PORT2,73,207,32,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_ICE_RTCP_PORT2,118,206,34,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_ICE_RTP_PORT3,73,223,32,13,ES_AUTOHSCROLL
+    EDITTEXT        IDC_ICE_RTCP_PORT3,118,222,34,14,ES_AUTOHSCROLL
+    LTEXT           "RTP",IDC_STATIC,79,180,16,8,0,WS_EX_RIGHT
+    LTEXT           "RTCP",IDC_STATIC,123,180,20,8,0,WS_EX_RIGHT
+    LTEXT           "M-Line #1",IDC_STATIC,22,194,46,8,0,WS_EX_RIGHT
+    LTEXT           "M-Line #3",IDC_STATIC,22,224,46,8,0,WS_EX_RIGHT
+    LTEXT           "M-Line #2",IDC_STATIC,21,209,46,8,0,WS_EX_RIGHT
+    CONTROL         "",IDC_ICE_B_RTP1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    106,196,8,10
+    CONTROL         "",IDC_ICE_B_RTP2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    106,212,8,10
+    CONTROL         "",IDC_ICE_B_RTP3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    106,227,8,10
+    CONTROL         "",IDC_ICE_B_RTCP3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    153,226,8,10
+    CONTROL         "",IDC_ICE_B_RTCP2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    153,210,8,10
+    CONTROL         "",IDC_ICE_B_RTCP1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    153,196,8,10
+    PUSHBUTTON      "Gather Cndts",IDC_TEST_CNDT_GATHER,18,381,70,14
+    PUSHBUTTON      "SDP Process Local",IDC_TEST_SDP_ENCODE,17,440,84,32
+    EDITTEXT        IDC_ICE_AGENT_ID,139,413,24,14,ES_AUTOHSCROLL
+    CONTROL         "Agent ID",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_GROUP,101,411,28,16,WS_EX_RIGHT
+    CONTROL         "Lite Mode",IDC_ICE_LITE_MODE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,95,356,69,10
+    EDITTEXT        IDC_ICE_PREF_PRFLX,116,307,29,13,ES_AUTOHSCROLL
+    LTEXT           "P-REFLX",IDC_STATIC,81,311,31,8,0,WS_EX_RIGHT
+    EDITTEXT        IDC_ICE_MAX_WAIT,129,381,34,14,ES_AUTOHSCROLL
+    LTEXT           "MaxWait",IDC_STATIC,93,385,30,9,0,WS_EX_RIGHT
+    GROUPBOX        "UTILS",IDC_STATIC,327,156,127,31
+    PUSHBUTTON      "Util - Agent Dump",IDC_TEST_AGENT_DUMP,17,421,84,14
+    EDITTEXT        IDC_ICE_SDP_AGENT_ID,138,440,21,14,ES_AUTOHSCROLL
+    CONTROL         "Agent Id",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_GROUP,104,439,28,16,WS_EX_RIGHT
+    PUSHBUTTON      "SDP Process Remote",IDC_TEST_SDP_PARSE,17,477,84,29
+    EDITTEXT        IDC_SDP_TEXT1,31,510,130,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_SDP_TEXT2,31,526,130,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_SDP_TEXT3,31,542,130,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_SDP_TEXT4,31,558,130,14,ES_AUTOHSCROLL
+    CONTROL         "Line-1",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_GROUP,7,514,24,9,WS_EX_RIGHT
+    CONTROL         "Line-2",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_GROUP,6,529,24,9,WS_EX_RIGHT
+    CONTROL         "Line-3",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_GROUP,7,545,24,9,WS_EX_RIGHT
+    CONTROL         "Line-4",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_GROUP,7,561,24,9,WS_EX_RIGHT
+    PUSHBUTTON      "Create Agent",IDC_TEST_AGENT_CREATE,19,344,70,16
+    EDITTEXT        IDC_STUN_MAX_WAIT,262,65,34,14,ES_AUTOHSCROLL
+    LTEXT           "MaxWait",IDC_STATIC,226,66,30,9,0,WS_EX_RIGHT
+    GROUPBOX        "ICE media Ports",IDC_STATIC,24,172,142,67
+    PUSHBUTTON      "Delete Agent",IDC_TEST_AGENT_DELETE,17,402,84,14
+    COMBOBOX        IDC_SDP_ROLE,113,457,48,38,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_ICE_RSDP_AGENT_ID,139,477,21,14,ES_AUTOHSCROLL
+    CONTROL         "Agent Id",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_GROUP,107,476,28,15,WS_EX_RIGHT
+    COMBOBOX        IDC_RSDP_ROLE,113,494,48,38,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "DLOG",IDC_ICE_DLOG,105,262,21,18
+    CONTROL         "Aggressive Nom",IDC_ICE_AGGRESSIVE_NOM,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,95,364,74,10
+    PUSHBUTTON      "Set Port Parms",IDC_TEST_SET_PORT_PARMS,19,362,70,16
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_NATTC_DLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 755
+        TOPMARGIN, 6
+        BOTTOMMARGIN, 575
+        HORZGUIDE, 575
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_NATTC_ICON          ICON                    "icon1.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Broadcom Corporation"
+            VALUE "FileDescription", "nattrvrsltest"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "nattrvrsltest"
+            VALUE "LegalCopyright", "Copyright © 2006"
+            VALUE "OriginalFilename", "nattrvrsltest.exe"
+            VALUE "ProductName", "Broadcom Corporation nattrvrsltest"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_NATTC_MENU MENU 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Log Session",                ID_FILE_LOG
+        MENUITEM "E&xit",                       ID_FILE_EXIT
+    END
+    POPUP "&Logger"
+    BEGIN
+        MENUITEM "&Freeze",                     ID_LOG_FREEZE
+        MENUITEM "&Clear",                      ID_LOG_CLEAR
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About",                      ID_HELP_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    ID_HELP_ABOUT           "1.0"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_NATTC_TITLE         "NAT Traversal TEST Client"
+    IDS_SC                  "cc2006"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

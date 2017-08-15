@@ -1,0 +1,184 @@
+/****************************************************************************
+*
+*  Copyright (c) 2000-2008 Broadcom
+*
+*  This program is the proprietary software of Broadcom and/or
+*  its licensors, and may only be used, duplicated, modified or distributed
+*  pursuant to the terms and conditions of a separate, written license
+*  agreement executed between you and Broadcom (an "Authorized License").
+*  Except as set forth in an Authorized License, Broadcom grants no license
+*  (express or implied), right to use, or waiver of any kind with respect to
+*  the Software, and Broadcom expressly reserves all rights in and to the
+*  Software and all intellectual property rights therein.  IF YOU HAVE NO
+*  AUTHORIZED LICENSE, THEN YOU HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY,
+*  AND SHOULD IMMEDIATELY NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE
+*  SOFTWARE.
+*
+*  Except as expressly set forth in the Authorized License,
+*
+*  1.     This program, including its structure, sequence and organization,
+*  constitutes the valuable trade secrets of Broadcom, and you shall use all
+*  reasonable efforts to protect the confidentiality thereof, and to use this
+*  information only in connection with your use of Broadcom integrated circuit
+*  products.
+*
+*  2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED
+*  "AS IS" AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS
+*  OR WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH
+*  RESPECT TO THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL
+*  IMPLIED WARRANTIES OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR
+*  A PARTICULAR PURPOSE, LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET
+*  ENJOYMENT, QUIET POSSESSION OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME
+*  THE ENTIRE RISK ARISING OUT OF USE OR PERFORMANCE OF THE SOFTWARE.
+*
+*  3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM
+*  OR ITS LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL,
+*  INDIRECT, OR EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY
+*  RELATING TO YOUR USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM
+*  HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN
+*  EXCESS OF THE AMOUNT ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1,
+*  WHICHEVER IS GREATER. THESE LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY
+*  FAILURE OF ESSENTIAL PURPOSE OF ANY LIMITED REMEDY.
+*
+****************************************************************************
+*
+*    Description:
+*		This is for different country specific parameters.
+*
+****************************************************************************/
+#ifndef SLAC_SI3215_LOCALE_H    /* support nested includes */
+#define SLAC_SI3215_LOCALE_H
+
+#include <vrgCountry.h>
+#include <si321x_constants.h>
+#include <xdrvSlicGains.h>
+
+/* ---- Constants and Types ---------------------------------- */
+typedef struct {
+   int si321xLocale;
+   short int Dlp;
+   short int TxGain;   /* tx gain */
+} SI321X_LOCALE_MAP;
+
+/* ----Locale Map -------------------------------------------- */
+#undef  COUNTRY_ARCHIVE_MAKE_NAME
+#define COUNTRY_ARCHIVE_MAKE_NAME( country ) { SI321X_##country, FXS_##country##_Profile_Dlp, FXS_##country##_Profile_Tx_Gain },
+static SI321X_LOCALE_MAP si321xLocaleMap [VRG_COUNTRY_MAX] =
+{
+   #include <countryArchive.h>
+};
+#if 0
+static SI321X_LOCALE_MAP si321xLocaleMap [VRG_COUNTRY_MAX] =
+{
+#if VRG_COUNTRY_CFG_AUSTRALIA   
+   { VRG_COUNTRY_AUSTRALIA,     SI321X_AUSTRALIA    },                                                           
+#endif                                                        
+#if VRG_COUNTRY_CFG_AUSTRIA                                  
+   { VRG_COUNTRY_AUSTRIA,       SI321X_AUSTRIA      },        
+#endif                                                        
+#if VRG_COUNTRY_CFG_BELGIUM                                  
+   { VRG_COUNTRY_BELGIUM,       SI321X_BELGIUM      },        
+#endif                                                        
+#if VRG_COUNTRY_CFG_BRAZIL                                   
+   { VRG_COUNTRY_BRAZIL,        SI321X_BRAZIL       },        
+#endif                                                         
+#if VRG_COUNTRY_CFG_CHILE                                     
+   { VRG_COUNTRY_CHILE,         SI321X_CHILE        },                                                            
+#endif                                                         
+#if VRG_COUNTRY_CFG_CHINA                                     
+   { VRG_COUNTRY_CHINA,         SI321X_CHINA        },                                                           
+#endif                                                         
+#if VRG_COUNTRY_CFG_CZECH                                     
+   { VRG_COUNTRY_CZECH,         SI321X_CZECH        },                                                           
+#endif                                                      
+#if VRG_COUNTRY_CFG_DENMARK                                
+   { VRG_COUNTRY_DENMARK,       SI321X_DENMARK      },      
+#endif                                                      
+#if VRG_COUNTRY_CFG_ETSI                                   
+   { VRG_COUNTRY_ETSI,          SI321X_ETSI         },                                                         
+#endif                                                      
+#if VRG_COUNTRY_CFG_FINLAND                                
+   { VRG_COUNTRY_FINLAND,       SI321X_FINLAND      },                                                         
+#endif                                                      
+#if VRG_COUNTRY_CFG_FRANCE                                 
+   { VRG_COUNTRY_FRANCE,        SI321X_FRANCE       },                                                         
+#endif                                                      
+#if VRG_COUNTRY_CFG_GERMANY                                
+   { VRG_COUNTRY_GERMANY,       SI321X_GERMANY      },                                                         
+#endif                                                      
+#if VRG_COUNTRY_CFG_HUNGARY     
+   { VRG_COUNTRY_HUNGARY,       SI321X_HUNGARY      },
+#endif
+#if VRG_COUNTRY_CFG_ITALY       
+   { VRG_COUNTRY_ITALY,         SI321X_ITALY        },
+#endif
+#if VRG_COUNTRY_CFG_INDIA       
+   { VRG_COUNTRY_INDIA,         SI321X_INDIA        },
+#endif
+#if VRG_COUNTRY_CFG_JAPAN       
+   { VRG_COUNTRY_JAPAN,         SI321X_JAPAN        },
+#endif
+#if VRG_COUNTRY_CFG_MEXICO
+   { VRG_COUNTRY_MEXICO,        SI321X_MEXICO       },
+#endif
+#if VRG_COUNTRY_CFG_NETHERLANDS 
+   { VRG_COUNTRY_NETHERLANDS,   SI321X_NETHERLANDS  },
+#endif
+#if VRG_COUNTRY_CFG_NEW_ZEALAND 
+   { VRG_COUNTRY_NEW_ZEALAND,   SI321X_NEW_ZEALAND  },
+#endif
+#if VRG_COUNTRY_CFG_NORTH_AMERICA
+   { VRG_COUNTRY_NORTH_AMERICA, SI321X_NORTH_AMERICA},
+#endif
+#if VRG_COUNTRY_CFG_POLAND
+   { VRG_COUNTRY_POLAND,        SI321X_POLAND       },
+#endif
+#if VRG_COUNTRY_CFG_SPAIN       
+   { VRG_COUNTRY_SPAIN,         SI321X_SPAIN        },
+#endif
+#if VRG_COUNTRY_CFG_SWEDEN      
+   { VRG_COUNTRY_SWEDEN,        SI321X_SWEDEN       },
+#endif
+#if VRG_COUNTRY_CFG_NORWAY      
+   { VRG_COUNTRY_NORWAY,        SI321X_NORWAY       },
+#endif
+#if VRG_COUNTRY_CFG_SWITZERLAND 
+   { VRG_COUNTRY_SWITZERLAND,   SI321X_SWITZERLAND  },
+#endif
+#if VRG_COUNTRY_CFG_TR57        
+   { VRG_COUNTRY_TR57,          SI321X_TR57         },
+#endif
+#if VRG_COUNTRY_CFG_UK          
+   { VRG_COUNTRY_UK,            SI321X_UK           },
+#endif
+#if VRG_COUNTRY_CFG_TAIWAN      
+   { VRG_COUNTRY_TAIWAN,        SI321X_TAIWAN       },
+#endif
+#if VRG_COUNTRRY_CFG_POLAND  
+   { VRG_COUNTRY_POLAND,        SI321X_POLAND       },
+#endif
+#if VRG_COUNTRRY_CFG_IRELAND 
+   { VRG_COUNTRY_IRELAND,       SI321X_IRELAND      },
+#endif
+#if VRG_COUNTRRY_CFG_SLOVAKIA
+   { VRG_COUNTRY_SLOVAKIA,      SI321X_SLOVAKIA     },
+#endif
+#if VRG_COUNTRRY_CFG_ROMANIA 
+   { VRG_COUNTRY_ROMANIA,       SI321X_ROMANIA      },
+#endif
+#if VRG_COUNTRRY_CFG_SLOVENIA
+   { VRG_COUNTRY_SLOVENIA,      SI321X_SLOVENIA     },
+#endif
+#if VRG_COUNTRRY_CFG_UNITED_ARAB_EMIRATES
+   { VRG_COUNTRY_UNITED_ARAB_EMIRATES,      SI321X_UNITED_ARAB_EMIRATES     },
+#endif
+#if VRG_COUNTRY_CFG_CYPRUS
+   { VRG_COUNTRY_CYPRUS,       SI321X_CYPRUS      },
+#endif
+   { VRG_COUNTRY_MAX,           SI321X_LOCALE_MAX   }   
+};
+#endif
+   
+#endif /* SLAC_SI3215_LOCALE_H */
+
+

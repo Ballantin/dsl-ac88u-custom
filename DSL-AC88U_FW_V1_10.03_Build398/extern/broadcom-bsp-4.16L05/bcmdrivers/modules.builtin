@@ -1,0 +1,4 @@
+kernel//home/users/popeye_shen/ac88u-gpl/bcm963xx/bcmdrivers/broadcom/char/bpm/bcm963138/bcm_bpm.ko
+kernel//home/users/popeye_shen/ac88u-gpl/bcm963xx/bcmdrivers/opensource/char/i2c/busses/bcm963138/i2c_bcm6xxx.ko
+kernel//home/users/popeye_shen/ac88u-gpl/bcm963xx/bcmdrivers/opensource/char/i2c/chips/bcm963138/sfp_i2c.ko
+kernel//home/users/popeye_shen/ac88u-gpl/bcm963xx/bcmdrivers/opensource/char/serial/bcm963138/bcm63xx_cons.ko

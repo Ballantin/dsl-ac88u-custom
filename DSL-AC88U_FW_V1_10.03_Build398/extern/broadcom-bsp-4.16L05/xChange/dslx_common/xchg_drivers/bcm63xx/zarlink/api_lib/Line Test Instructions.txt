@@ -1,0 +1,6 @@
+Extract zipfile to computer
+Copy zipfile\lt_api\* to \xchg_drivers\bcm63xx\zarlink\api_lib
+Copy zipfile\api_lib\vp886_api\* to \xchg_drivers\bcm63xx\zarlink\api_lib\vp886_api
+Edit lt_api_pkg_sel.h and uncomment #define LT_VP886_VVP_PACKAGE to include support for this SLIC
+Edit bcm63xx_zarlink.mk and change the value of XDRV_ZARLINK_TPD_SUPPORT from 0 to 1
+Move vp886_testline.h from \xchg_drivers\bcm63xx\zarlink\api_lib\vp886_lt to \xchg_drivers\bcm63xx\zarlink\api_lib\includes

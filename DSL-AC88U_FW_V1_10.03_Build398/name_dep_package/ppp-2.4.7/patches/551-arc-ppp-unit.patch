@@ -1,0 +1,162 @@
+--- a/include/net/ppp_defs.h	2014-08-09 20:31:39.000000000 +0800
++++ b/include/net/ppp_defs.h	2015-10-26 14:52:25.000000000 +0800
+@@ -183,6 +183,16 @@
+     time_t recv_idle;		/* time since last NP packet received */
+ };
+ 
++/*
++ * Define for Arcadyan DSL-AC87U PPP interface.
++ * To distinguish pptp client between LAN and WAN.
++ */
++struct arc_ppp_unit {
++    int ifunit;			/* ppp unit */
++    int client_from_lan;	/* 1 if client is from LAN; 0 if client is from WAN */
++};
++
++
+ #ifndef __P
+ #ifdef __STDC__
+ #define __P(x)	x
+--- a/include/linux/ppp_defs.h	2014-08-09 20:31:39.000000000 +0800
++++ b/include/linux/ppp_defs.h	2015-10-26 14:52:10.000000000 +0800
+@@ -184,6 +184,15 @@
+     time_t recv_idle;		/* time since last NP packet received */
+ };
+ 
++/*
++ * Define for Arcadyan DSL-AC87U PPP interface.
++ * To distinguish pptp client between LAN and WAN.
++ */
++struct arc_ppp_unit {
++    int ifunit;			/* ppp unit */
++    int client_from_lan;	/* 1 if client is from LAN; 0 if client is from WAN */
++};
++
+ #ifndef __P
+ #ifdef __STDC__
+ #define __P(x)	x
+--- a/pppd/sys-linux.c	2015-11-09 13:32:27.763328519 +0800
++++ b/pppd/sys-linux.c	2015-11-09 13:31:43.194687399 +0800
+@@ -238,6 +238,8 @@
+ static void decode_version (char *buf, int *version, int *mod, int *patch);
+ static int set_kdebugflag(int level);
+ static int ppp_registered(void);
++static int pptp_client_from_lan();
++
+ static int make_ppp_unit(void);
+ static int setifstate (int u, int state);
+ 
+@@ -619,12 +621,74 @@
+ }
+ 
+ /*
++ * Determine if the client is fromt the LAN side.
++ * 2015-10-27 Adam Chen
++ * return 2 if the pptp client is from the LAN side.
++ * return 1  if the pptp client is from the WAN side.
++ * return 0 if the ppp interface is not created for pptp clients. (in pppoecd)
++ * return -1 if error.( pptp VPN client)
++ *
++ * The pptpd listens the pptp clients. 
++ * If there is a client wanna connnects to the server, it calls pptpctrl to launcd a pppd connection. 
++ * Once it launches, it write done (1) client IP address (2) LAN side IP address (3) LAN side IP mask in /data/pptpd/client_ip
++ * If the program successfully parsed /data/pptpd/client_ip, then it is a pptp client connection.
++ * We recognize the client from the LAN side, If the client IP is not in the same subnet of DUT LAN, 
++ * then it will be classified as WAN pptp client.
++ */
++static int pptp_client_from_lan(){
++	int c, pos, line = 0, ret = -1;
++	unsigned int ip[4], mask[4], clientip[4], i;
++    char *buf = (char *)malloc(1024);
++	char lan_ipaddr[16];
++   	char lan_ipmask[16];
++   	char client_ip[16];
++	FILE *fp; 
++	fp = fopen("/data/pptpd/client_ip", "r");
++	if(fp == NULL) return ret;	
++    do { // read all lines in file
++    	do{ // read one line
++        	c = fgetc(fp);     
++          	if(c != EOF && c != '\n'){
++          		buf[pos] = (char)c;
++			  	pos++;
++		  	}	 
++        }while(c != EOF && c != '\n');
++        pos = 0;
++        line++;
++        if( line == 1 ) snprintf(lan_ipaddr, sizeof(lan_ipaddr), buf);
++        if( line == 2 ) snprintf(lan_ipmask, sizeof(lan_ipmask), buf);
++        if( line == 3 ) snprintf(client_ip, sizeof(client_ip), buf);
++        memset(buf, 0, 1024);
++	}while(c != EOF); 
++	fclose(fp);
++
++	system("rm /data/pptpd/client_ip");
++	if( sscanf(lan_ipaddr, "%d.%d.%d.%d", &ip[0], &ip[1], &ip[2], &ip[3]) != 4 ) return ret;
++   	if( sscanf(lan_ipmask, "%d.%d.%d.%d", &mask[0], &mask[1], &mask[2], &mask[3]) != 4 ) return ret;
++   	if( sscanf(client_ip, "%d.%d.%d.%d", &clientip[0], &clientip[1], &clientip[2], &clientip[3]) != 4 ) return ret;
++
++	// Now, it is a pptp client connection.
++	ret = 2;       
++   	for( i = 0 ; i < 4 ; i++){
++		if( (ip[i]&mask[i]) != (clientip[i]&mask[i]) ){
++			ret = 1;
++			break;
++		} 
++	}
++
++	return ret;
++}
++
++
++
++/*
+  * make_ppp_unit - make a new ppp unit for ppp_dev_fd.
+  * Assumes new_style_driver.
+  */
+ static int make_ppp_unit()
+ {
+ 	struct ifreq ifr;
++	struct arc_ppp_unit ppp_unit;
+ 	int x, flags, s;
+ 
+ 	if (ppp_dev_fd >= 0) {
+@@ -638,14 +702,33 @@
+ 	if (flags == -1
+ 	    || fcntl(ppp_dev_fd, F_SETFL, flags | O_NONBLOCK) == -1)
+ 		warn("Couldn't set /dev/ppp to nonblock: %m");
+-
+-	ifunit = req_unit;
+-	x = ioctl(ppp_dev_fd, PPPIOCNEWUNIT, &ifunit);
++	
++	ppp_unit.client_from_lan = pptp_client_from_lan();
++	if( ppp_unit.client_from_lan > 0 ){
++		FILE* fp;
++		char cmd[128], if_in_use[16], *renewCh;
++
++		snprintf(cmd, sizeof(cmd), "cat data/pptpd/client_list | grep ppp -c");
++		fp = popen(cmd, "r");
++		fgets(if_in_use, sizeof(if_in_use), fp);
++		if(fp != NULL)	pclose(fp);
++		renewCh = strstr(if_in_use,"\n");
++		if(renewCh) *renewCh= '\0';
++
++		if( atoi(if_in_use) > 0 )
++			ppp_unit.ifunit = req_unit + atoi(if_in_use);
++		else
++			ppp_unit.ifunit = req_unit;
++	}
++	else
++		ppp_unit.ifunit = req_unit;
++	x = ioctl(ppp_dev_fd, PPPIOCNEWUNIT, &ppp_unit);
+ 	if (x < 0 && req_unit >= 0 && errno == EEXIST) {
+ 		warn("Couldn't allocate PPP unit %d as it is already in use", req_unit);
+-		ifunit = -1;
+-		x = ioctl(ppp_dev_fd, PPPIOCNEWUNIT, &ifunit);
++		ppp_unit.ifunit = -1;
++		x = ioctl(ppp_dev_fd, PPPIOCNEWUNIT, &ppp_unit);
+ 	}
++	ifunit = ppp_unit.ifunit;
+ 	if (x < 0)
+ 		error("Couldn't create new ppp unit: %m");
+ 

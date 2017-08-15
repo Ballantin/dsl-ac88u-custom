@@ -1,0 +1,16 @@
+kernel/drivers/scsi/scsi_wait_scan.ko
+kernel/drivers/usb/host/ehci-hcd.ko
+kernel/drivers/usb/host/ohci-hcd.ko
+kernel/drivers/usb/host/xhci-hcd.ko
+kernel/drivers/usb/storage/usb-storage.ko
+kernel/drivers/usb/class/usblp.ko
+kernel/drivers/usb/host/ehci-hcd.ko
+kernel/drivers/usb/host/ohci-hcd.ko
+kernel/drivers/usb/host/xhci-hcd.ko
+kernel/drivers/usb/storage/usb-storage.ko
+kernel/drivers/usb/class/usblp.ko
+kernel/drivers/ata/libata.ko
+kernel/drivers/ata/ahci.ko
+kernel/drivers/ata/libahci.ko
+kernel/drivers/ata/ahci_platform.ko
+kernel/drivers/ata/libahci.ko

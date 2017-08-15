@@ -1,0 +1,14 @@
+diff --git a/getifaddr.c b/getifaddr.c
+old mode 100644
+new mode 100755
+index 6bbbe78..98f3630
+--- a/getifaddr.c
++++ b/getifaddr.c
+@@ -63,6 +63,7 @@ getifaddr(const char * ifname, char * buf, int len,
+ 	if(ioctl(s, SIOCGIFADDR, &ifr, &ifrlen) < 0)
+ 	{
+ 		syslog(LOG_ERR, "ioctl(s, SIOCGIFADDR, ...): %m");
++		syslog(LOG_ERR, "can't get if %s address", ifname);
+ 		close(s);
+ 		return -1;
+ 	}

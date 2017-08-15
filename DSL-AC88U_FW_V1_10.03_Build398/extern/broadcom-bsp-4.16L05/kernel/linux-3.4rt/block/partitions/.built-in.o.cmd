@@ -1,0 +1,1 @@
+cmd_block/partitions/built-in.o :=  /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/bin/arm-unknown-linux-uclibcgnueabi-ld -EL    -r -o block/partitions/built-in.o block/partitions/check.o block/partitions/ldm.o block/partitions/msdos.o block/partitions/efi.o 

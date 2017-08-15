@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<scpd xmlns="urn:schemas-upnp-org:service-1-0">
+
+<specVersion>
+	<major>1</major>
+	<minor>0</minor>
+</specVersion>
+
+<actionList>
+<action>
+	<name>GetCommonLinkProperties</name>
+	<argumentList>
+	<argument>
+		<name>NewWANAccessType</name>
+		<relatedStateVariable>WANAccessType</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	
+	<argument>
+		<name>NewLayer1UpstreamMaxBitRate</name>
+		<relatedStateVariable>Layer1UpstreamMaxBitRate</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	
+	<argument>
+		<name>NewLayer1DownstreamMaxBitRate</name>
+		<relatedStateVariable>Layer1DownstreamMaxBitRate</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	
+	<argument>
+		<name>NewPhysicalLinkStatus</name>
+		<relatedStateVariable>PhysicalLinkStatus</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>SetEnabledForInternet</name>
+	<argumentList>
+	<argument>
+		<name>NewEnabledForInternet</name>
+		<relatedStateVariable>EnabledForInternet</relatedStateVariable>
+		<direction>in</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetEnabledForInternet</name>
+	<argumentList>
+	<argument>
+		<name>NewEnabledForInternet</name>
+		<relatedStateVariable>EnabledForInternet</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetTotalBytesSent</name>
+	<argumentList>
+	<argument>
+		<name>NewTotalBytesSent</name>
+		<relatedStateVariable>TotalBytesSent</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetTotalBytesReceived</name>
+	<argumentList>
+	<argument>
+		<name>NewTotalBytesReceived</name>
+		<relatedStateVariable>TotalBytesReceived</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetTotalPacketsSent</name>
+	<argumentList>
+	<argument>
+		<name>NewTotalPacketsSent</name>
+		<relatedStateVariable>TotalPacketsSent</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+
+<action>
+	<name>GetTotalPacketsReceived</name>
+	<argumentList>
+	<argument>
+		<name>NewTotalPacketsReceived</name>
+		<relatedStateVariable>TotalPacketsReceived</relatedStateVariable>
+		<direction>out</direction>
+	</argument>
+	</argumentList>
+</action>
+</actionList>
+
+<serviceStateTable>
+<stateVariable sendEvents="no">
+	<name>WANAccessType</name>
+	<dataType>string</dataType>
+	<allowedValueList>
+		<allowedValue>DSL</allowedValue>
+		<allowedValue>POTS</allowedValue>
+		<allowedValue>Cable</allowedValue>
+		<allowedValue>Ethernet</allowedValue>
+	</allowedValueList>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>Layer1UpstreamMaxBitRate</name>
+	<dataType>ui4</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>Layer1DownstreamMaxBitRate</name>
+	<dataType>ui4</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="yes">
+	<name>PhysicalLinkStatus</name>
+	<dataType>string</dataType>
+	<allowedValueList>
+		<allowedValue>Up</allowedValue>
+		<allowedValue>Down</allowedValue>
+	</allowedValueList>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>TotalBytesSent</name>
+	<dataType>ui4</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>TotalBytesReceived</name>
+	<dataType>ui4</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>TotalPacketsSent</name>
+	<dataType>ui4</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="no">
+	<name>TotalPacketsReceived</name>
+	<dataType>ui4</dataType>
+</stateVariable>
+
+<stateVariable sendEvents="yes">
+	<name>EnabledForInternet</name>
+	<dataType>boolean</dataType>
+</stateVariable>
+</serviceStateTable>
+</scpd>

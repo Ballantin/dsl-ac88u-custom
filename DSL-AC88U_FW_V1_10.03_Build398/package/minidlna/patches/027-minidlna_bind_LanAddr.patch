@@ -1,0 +1,66 @@
+diff --git a/minidlna.c b/minidlna.c
+old mode 100644
+new mode 100755
+index be34fe3..29011a0
+--- a/minidlna.c
++++ b/minidlna.c
+@@ -99,7 +99,11 @@
+ # warning "Your SQLite3 library appears to be too old!  Please use 3.5.1 or newer."
+ # define sqlite3_threadsafe() 0
+ #endif
+- 
++
++#ifdef LISTEN_IP_CHANGE
++#define INADDR_LAN_IP ((in_addr_t) 0x0A00008A)
++#endif
++
+ /* OpenAndConfHTTPSocket() :
+  * setup the socket used to handle incoming HTTP connections. */
+ static int
+@@ -125,8 +129,12 @@ OpenAndConfHTTPSocket(unsigned short port)
+ 	memset(&listenname, 0, sizeof(struct sockaddr_in));
+ 	listenname.sin_family = AF_INET;
+ 	listenname.sin_port = htons(port);
++	#ifdef LISTEN_IP_CHANGE
++	listenname.sin_addr.s_addr = htonl(INADDR_LAN_IP);
++	#else
+ 	listenname.sin_addr.s_addr = htonl(INADDR_ANY);
+-
++	#endif
++	
+ 	if (bind(s, (struct sockaddr *)&listenname, sizeof(struct sockaddr_in)) < 0)
+ 	{
+ 		DPRINTF(E_ERROR, L_GENERAL, "bind(http): %s\n", strerror(errno));
+diff --git a/minissdp.c b/minissdp.c
+old mode 100644
+new mode 100755
+index ba9a861..76c3c19
+--- a/minissdp.c
++++ b/minissdp.c
+@@ -56,6 +56,10 @@
+ #define SSDP_PORT (1900)
+ #define SSDP_MCAST_ADDR ("239.255.255.250")
+ 
++#ifdef LISTEN_IP_CHANGE
++#define INADDR_LAN_IP ((in_addr_t) 0xEFFFFFFA)
++#endif
++
+ static int
+ AddMulticastMembership(int s, struct lan_addr_s *iface)
+ {
+@@ -107,7 +111,12 @@ OpenAndConfSSDPReceiveSocket(void)
+ 	sockname.sin_family = AF_INET;
+ 	sockname.sin_port = htons(SSDP_PORT);
+ 	/* NOTE : it seems it doesnt work when binding on the specific address */
++	
++	#ifdef LISTEN_IP_CHANGE
++	sockname.sin_addr.s_addr = htonl(INADDR_LAN_IP);
++	#else
+ 	sockname.sin_addr.s_addr = htonl(INADDR_ANY);
++	#endif
+ 
+ 	if (bind(s, (struct sockaddr *)&sockname, sizeof(struct sockaddr_in)) < 0)
+ 	{
+-- 
+1.7.3.4
+

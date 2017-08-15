@@ -1,0 +1,23 @@
+	o Jingwei Liang  2015/07
+	Comment the codes where to verify uid, to prevent logrotate doesn't parse config file.
+
+diff --git a/config.c b/config.c
+index a85d1df..a504856 100644
+--- a/config.c
++++ b/config.c
+@@ -669,6 +669,7 @@ static int readConfigFile(const char *configFile, struct logInfo *defConfig)
+ 			return 0;
+ 		}
+ 
++#if 0   //comment by jingwei_liang 2015/07, to prevent logrotate doesn't parse config file.
+ 		if (sb.st_uid != ROOT_UID && (pw == NULL ||
+ 				sb.st_uid != pw->pw_uid ||
+ 				strcmp("root", pw->pw_name) != 0)) {
+@@ -678,6 +679,7 @@ static int readConfigFile(const char *configFile, struct logInfo *defConfig)
+ 			close(fd);
+ 			return 0;
+ 		}
++#endif
+ 	}
+ 
+ 	length = sb.st_size;

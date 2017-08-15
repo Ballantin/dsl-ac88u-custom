@@ -1,0 +1,50 @@
+/*
+Copyright (c) 2008 Silicon Laboratories, Inc.
+2008-09-29 13:09:53 */
+/*ProSLIC API Tool Rev0.31 Beta*/
+
+#ifndef SILABS_CONSTANTS_H    /* support nested includes */
+#define SILABS_CONSTANTS_H
+
+enum {
+   ALAW_NEGATIVEEDGE_PCM,
+	ULAW_NEGATIVEEDGE_PCM,
+	LINEAR_NEGATIVEEDGE_PCM,
+	LINEAR_NEGATIVEEDGE_WB_PCM
+};
+
+enum {
+   SILABS_AUSTRALIA,    
+   SILABS_AUSTRIA,    
+   SILABS_BELGIUM,      
+   SILABS_BRAZIL,       
+   SILABS_CHILE,        
+   SILABS_CHINA,        
+   SILABS_CZECH,        
+   SILABS_DENMARK,      
+   SILABS_ETSI,         
+   SILABS_FINLAND,      
+   SILABS_FRANCE,       
+   SILABS_GERMANY,      
+   SILABS_HUNGARY,      
+   SILABS_ITALY,        
+   SILABS_JAPAN,        
+   SILABS_MEXICO,
+   SILABS_NETHERLANDS,  
+   SILABS_NEW_ZEALAND,  
+   SILABS_NORTH_AMERICA,
+   SILABS_POLAND,
+   SILABS_SPAIN,        
+   SILABS_SWEDEN,       
+   SILABS_NORWAY,       
+   SILABS_SWITZERLAND,  
+   SILABS_TR57,         
+   SILABS_UK,           
+   SILABS_TAIWAN,
+   SILABS_INDIA,  
+   SILABS_UNITED_ARAB_EMIRATES,
+   SILABS_CYPRUS,
+   SILABS_LOCALE_MAX
+};
+
+#endif /* SILABS_CONSTANTS_H */

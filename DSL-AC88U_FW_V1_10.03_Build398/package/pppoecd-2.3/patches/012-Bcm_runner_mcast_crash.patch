@@ -1,0 +1,51 @@
+diff -Nur pppoecd-2.3/include/linux/if_ppp.h pppoecd-2.3-new/include/linux/if_ppp.h
+--- pppoecd-2.3/include/linux/if_ppp.h	2011-06-23 17:28:10.000000000 +0800
++++ pppoecd-2.3-new/include/linux/if_ppp.h	2016-05-26 11:46:14.795787616 +0800
+@@ -107,6 +107,9 @@
+ 	struct ppp_comp_stats stats;
+ };
+ 
++/* PPP device name type */
++typedef char	ppp_dev_name[IFNAMSIZ];
++
+ #define ifr__name       b.ifr_ifrn.ifrn_name
+ #define stats_ptr       b.ifr_ifru.ifru_data
+ 
+@@ -143,6 +146,7 @@
+ #define PPPIOCDISCONN	_IO('t', 57)		/* disconnect channel */
+ #define PPPIOCATTCHAN	_IOW('t', 56, int)	/* attach to ppp channel */
+ #define PPPIOCGCHAN	_IOR('t', 55, int)	/* get ppp channel number */
++#define	PPPIOCSREALDEV	_IOW('t', 53, ppp_dev_name) /* set real device name */
+ 
+ #define SIOCGPPPSTATS   (SIOCDEVPRIVATE + 0)
+ #define SIOCGPPPVER     (SIOCDEVPRIVATE + 1)	/* NEVER change this!! */
+diff -Nur pppoecd-2.3/pppoecd/main.c pppoecd-2.3-new/pppoecd/main.c
+--- pppoecd-2.3/pppoecd/main.c	2016-05-26 16:27:59.984599993 +0800
++++ pppoecd-2.3-new/pppoecd/main.c	2016-05-26 16:46:36.902664214 +0800
+@@ -504,6 +504,7 @@
+     disconnect:
+ 	new_phase(PHASE_DISCONNECT);
+ 	the_channel->disconnect();
++	strlcpy(devnam, ppp_devnam, sizeof(devnam));
+ 
+ /*  fail: */
+ 	if (the_channel->cleanup)
+diff -Nur pppoecd-2.3/pppoecd/sys-linux.c pppoecd-2.3-new/pppoecd/sys-linux.c
+--- pppoecd-2.3/pppoecd/sys-linux.c	2011-12-27 20:50:02.000000000 +0800
++++ pppoecd-2.3-new/pppoecd/sys-linux.c	2016-05-26 16:52:32.411664216 +0800
+@@ -452,6 +452,15 @@
+ 	}
+ 	if (x < 0)
+ 		error("Couldn't create new ppp unit: %m");
++	else
++    {
++        if(!demand)
++			strcpy(devnam, "lo");
++        x = ioctl(ppp_dev_fd, PPPIOCSREALDEV, devnam);
++        if (x < 0) {
++           error("Couldn't set ppp real device (%s): %m", devnam);
++        }
++    }
+ 	return x;
+ }
+ 

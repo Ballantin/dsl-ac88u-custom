@@ -1,0 +1,545 @@
+Output of:
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/bin/arm-unknown-linux-uclibcgnueabi-gcc -Wall -Wshadow -Wwrite-strings -Wundef -Wstrict-prototypes -Wunused -Wunused-parameter -Wunused-function -Wunused-value -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement -Wold-style-definition -fno-builtin-strlen -finline-limit=0 -fomit-frame-pointer -ffunction-sections -fdata-sections -fno-guess-branch-probability -funsigned-char -static-libgcc -falign-functions=1 -falign-jumps=1 -falign-labels=1 -falign-loops=1 -Os -I/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.build/public/include -I/home/users/popeye_shen/ac88u-gpl/bcm963xx/userspace/public/include -I/home/users/popeye_shen/ac88u-gpl/bcm963xx/userspace/public/include/linux -DTFTPD -DCMS_LOG3 -DLINUX -Os -march=armv7-a -fomit-frame-pointer -mno-thumb-interwork -mabi=aapcs-linux -marm -fno-common -ffixed-r8 -msoft-float -D__ARM_ARCH_7A__ -Werror=return-type -Werror=uninitialized -Wall -Darm -g -fPIC -DMDM_SHARED_MEM -DCMS_MEM_DEBUG -DSUPPORT_DM_HYBRID -DDMP_BASELINE_1 -DDMP_X_BROADCOM_COM_BASELINE_1 -DDMP_ETHERNETLAN_1 -DDMP_X_BROADCOM_COM_DEBUG_1 -DDMP_X_BROADCOM_COM_SECURITY_1 -DDMP_DEVICEASSOCIATION_1 -DDMP_IPPING_1 -DDMP_DUSTATECHNGCOMPLPOLICY_1 -DDMP_DEVICE2_BASELINE_1 -DDMP_DEVICE2_X_BROADCOM_COM_BASELINE_1 -DDMP_DEVICE2_BASELINE_2 -DDMP_DEVICE2_BASELINE_3 -DDMP_DEVICE2_IPINTERFACE_1 -DDMP_DEVICE2_IPINTERFACE_2 -DDMP_DEVICE2_ETHERNETLINK_1 -DDMP_DEVICE2_ETHERNETINTERFACE_1 -DDMP_DEVICE2_VLANTERMINATION_1 -DDMP_DEVICE2_PPPINTERFACE_1 -DDMP_DEVICE2_PPPINTERFACE_2 -DDMP_DEVICE2_IPPING_1 -DDMP_DEVICE2_TRACEROUTE_1 -DDMP_DEVICE2_ROUTING_1 -DDMP_DEVICE2_ROUTING_2 -DDMP_DEVICE2_DUSTATECHNGCOMPLPOLICY_1 -DSUPPORT_DSL -DDMP_ADSLWAN_1 -DDMP_X_BROADCOM_COM_ADSLWAN_1 -DDMP_X_BROADCOM_COM_XTMSTATS_1 -DDMP_VDSL2WAN_1 -DDMP_X_BROADCOM_COM_VDSL2WAN_1 -DNONE -DSUPPORT_DSL_GFAST -DDMP_X_BROADCOM_COM_ATMWAN_1 -DDMP_ATMLOOPBACK_1 -DDMP_X_BROADCOM_COM_ATMLOOPBACK_1 -DSUPPORT_PTM -DDMP_PTMWAN_1 -DDMP_X_BROADCOM_COM_PTMWAN_1 -DSUPPORT_ETHWAN -DDMP_ETHERNETWAN_1 -DSUPPORT_RDPA -DSUPPORT_TMCTL -DSUPPORT_GRE_TUNNEL -DSUPPORT_IPSEC -DDMP_X_BROADCOM_COM_IPSEC_1 -DSUPPORT_TR64C -DDMP_X_BROADCOM_COM_TR64_1 -DSUPPORT_IPV6 -DDMP_X_BROADCOM_COM_DEV2_IPV6_1 -DDMP_DEVICE2_DSLITE_1 -DDMP_DEVICE2_DSLITE_2 -DDMP_DEVICE2_IPV6RD_1 -DDMP_DEVICE2_IPV6INTERFACE_1 -DDMP_DEVICE2_IPV6ROUTING_1 -DDMP_DEVICE2_DHCPV6CLIENT_1 -DDMP_DEVICE2_DHCPV6CLIENTSERVERIDENTITY_1 -DDMP_DEVICE2_DHCPV6SERVER_1 -DDMP_DEVICE2_DHCPV6SERVERADV_1 -DDMP_DEVICE2_DHCPV6SERVERCLIENTINFO_1 -DDMP_DEVICE2_NEIGHBORDISCOVERY_1 -DDMP_DEVICE2_ROUTERADVERTISEMENT_1 -DSUPPORT_TR69C -DDMP_DOWNLOAD_1 -DDMP_UPLOAD_1 -DDMP_DOWNLOADTCP_1 -DDMP_UPLOADTCP_1 -DDMP_UDPECHO_1 -DDMP_UDPECHOPLUS_1 -DDMP_PERIODICSTATSBASE_1 -DDMP_PERIODICSTATSADV_1 -DSUPPORT_XMPP -DDMP_DEVICE2_XMPPCONNREQ_1 -DDMP_DEVICE2_XMPPBASIC_1 -DDMP_DEVICE2_XMPPADVANCED_1 -DSUPPORT_CPU_MEMORY_WEB_PAGE -DSUPPORT_JQPLOT -DSUPPORT_WEB_SOCKETS -DSUPPORT_QUICKSETUP -DDMP_X_BROADCOM_COM_QUICKSETUP_1 -DSUPPORT_HTTPD -DSUPPORT_HTTPD_BASIC_SSL -DSUPPORT_CLI_CMD -DCLI_CMD_EDIT -DSUPPORT_CONSOLED -DSUPPORT_TELNETD -DSUPPORT_SSHD -DSUPPORT_FTPD -DSUPPORT_EBTABLES -DSUPPORT_TOD -DDMP_X_BROADCOM_COM_ACCESSTIMERESTRICTION_1 -DSUPPORT_URLFILTER -DSUPPORT_POLICYROUTING -DSUPPORT_UPNP -DDMP_X_BROADCOM_COM_UPNP_1 -DSUPPORT_DDNSD -DDMP_X_BROADCOM_COM_DYNAMICDNS_1 -DSUPPORT_DNSPROXY -DDMP_X_BROADCOM_COM_DNSPROXY_1 -DSUPPORT_IPP -DDMP_X_BROADCOM_COM_IPPRINTING_1 -DDMP_X_BROADCOM_COM_DLNA_1 -DSUPPORT_FCCTL -DSUPPORT_DSLDIAGD -DSUPPORT_SNTP -DDMP_TIME_1 -DSUPPORT_UDHCP -DDHCP_SERVER_DEFAULT -DDMP_X_BROADCOM_COM_ETHERNETOAM_1 -DSUPPORT_ETHSWCTL -DSUPPORT_PWRMNGT -DDMP_X_BROADCOM_COM_PWRMNGT_1 -DSUPPORT_HOSTMIPS_PWRSAVE -DSUPPORT_ETH_PWRSAVE -DSUPPORT_ENERGY_EFFICIENT_ETHERNET -DSUPPORT_ETH_DEEP_GREEN_MODE -DSUPPORT_BMU -DDMP_X_BROADCOM_COM_BMU_1 -DSUPPORT_STORAGESERVICE -DDMP_STORAGESERVICE_1 -DSUPPORT_NTFS_3G -DSUPPORT_SAMBA -DDMP_X_BROADCOM_COM_MCAST_1 -DDMP_X_BROADCOM_COM_IGMPSNOOP_1 -DDMP_X_BROADCOM_COM_MLDSNOOP_1 -DSUPPORT_IGMP -DDMP_X_BROADCOM_COM_IGMP_1 -DSUPPORT_MLD -DDMP_X_BROADCOM_COM_MLD_1 -DSUPPORT_PPTP -DSUPPORT_SIP -DSUPPORT_NF_MANGLE -DSUPPORT_INTF_GROUPING -DSUPPORT_PORT_MAP -DDMP_BRIDGING_1 -DSUPPORT_WANVLANMUX -DSUPPORT_VLANCTL -DSUPPORT_LANVLAN -DSUPPORT_CMS_ALLOW_REAL_HW_SWITCHING -DSUPPORT_QOS -DDMP_QOS_1 -DDMP_QOSDYNAMICFLOW_1 -DDMP_X_BROADCOM_COM_QOS_1 -DSUPPORT_RATE_LIMIT -DSUPPORT_DEBUG_TOOLS -DSUPPORT_CERT -DDMP_X_BROADCOM_COM_DIGITALCERTIFICATES_1 -DSUPPORT_RIP -DCOMPRESSED_CONFIG_FILE -DCMS_CONFIG_COMPAT -DDMP_WIFILAN_1 -DDMP_X_BROADCOM_COM_WIFILAN_1 -DCHIP_63138 -DCONFIG_BCM963138 -DBRCM_CMS_BUILD -DCONFIG_BCM_MAX_GEM_PORTS=1 -DSUPPORT_SECURE_BOOT -DSUPPORT_INCREMENTAL_FLASHING -DCMS_LOG3 -I/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/include -Werror=return-type -Werror=uninitialized -I/home/users/popeye_shen/ac88u-gpl/bcm963xx/kernel -Wl,-L/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib -Wl,-L/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/mips-linux/lib -L/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib -L/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public -o busybox_unstripped -Wl,--sort-common -Wl,--sort-section,alignment -Wl,--gc-sections -Wl,--start-group applets/built-in.o archival/lib.a archival/libunarchive/lib.a console-tools/lib.a coreutils/lib.a coreutils/libcoreutils/lib.a debianutils/lib.a e2fsprogs/lib.a editors/lib.a findutils/lib.a init/lib.a libbb/lib.a libpwdgrp/lib.a loginutils/lib.a mailutils/lib.a miscutils/lib.a modutils/lib.a networking/lib.a networking/libiproute/lib.a networking/udhcp/lib.a printutils/lib.a procps/lib.a runit/lib.a selinux/lib.a shell/lib.a sysklogd/lib.a util-linux/lib.a util-linux/volume_id/lib.a archival/built-in.o archival/libunarchive/built-in.o console-tools/built-in.o coreutils/built-in.o coreutils/libcoreutils/built-in.o debianutils/built-in.o e2fsprogs/built-in.o editors/built-in.o findutils/built-in.o init/built-in.o libbb/built-in.o libpwdgrp/built-in.o loginutils/built-in.o mailutils/built-in.o miscutils/built-in.o modutils/built-in.o networking/built-in.o networking/libiproute/built-in.o networking/udhcp/built-in.o printutils/built-in.o procps/built-in.o runit/built-in.o selinux/built-in.o shell/built-in.o sysklogd/built-in.o util-linux/built-in.o util-linux/volume_id/built-in.o -Wl,--end-group -Wl,--start-group -lbcm_crc -lbcm_flashutil -lcms_boardctl -lcms_msg -lcms_util -Wl,--end-group -Wl,--warn-common -Wl,-Map,busybox_unstripped.map -Wl,--verbose
+==========
+GNU ld (GNU Binutils) 2.21
+  Supported emulations:
+   armelf_linux_eabi
+   armelfb_linux_eabi
+using internal linker script:
+==================================================
+/* Script for -z combreloc: combine and sort reloc sections */
+OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
+	      "elf32-littlearm")
+OUTPUT_ARCH(arm)
+ENTRY(_start)
+SEARCH_DIR("=/usr/local/lib"); SEARCH_DIR("=/lib"); SEARCH_DIR("=/usr/lib");
+SECTIONS
+{
+  /* Read-only sections, merged into text segment: */
+  PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x00008000)); . = SEGMENT_START("text-segment", 0x00008000) + SIZEOF_HEADERS;
+  .interp         : { *(.interp) }
+  .note.gnu.build-id : { *(.note.gnu.build-id) }
+  .hash           : { *(.hash) }
+  .gnu.hash       : { *(.gnu.hash) }
+  .dynsym         : { *(.dynsym) }
+  .dynstr         : { *(.dynstr) }
+  .gnu.version    : { *(.gnu.version) }
+  .gnu.version_d  : { *(.gnu.version_d) }
+  .gnu.version_r  : { *(.gnu.version_r) }
+  .rel.dyn        :
+    {
+      *(.rel.init)
+      *(.rel.text .rel.text.* .rel.gnu.linkonce.t.*)
+      *(.rel.fini)
+      *(.rel.rodata .rel.rodata.* .rel.gnu.linkonce.r.*)
+      *(.rel.data.rel.ro* .rel.gnu.linkonce.d.rel.ro.*)
+      *(.rel.data .rel.data.* .rel.gnu.linkonce.d.*)
+      *(.rel.tdata .rel.tdata.* .rel.gnu.linkonce.td.*)
+      *(.rel.tbss .rel.tbss.* .rel.gnu.linkonce.tb.*)
+      *(.rel.ctors)
+      *(.rel.dtors)
+      *(.rel.got)
+      *(.rel.bss .rel.bss.* .rel.gnu.linkonce.b.*)
+      PROVIDE_HIDDEN (__rel_iplt_start = .);
+      *(.rel.iplt)
+      PROVIDE_HIDDEN (__rel_iplt_end = .);
+      PROVIDE_HIDDEN (__rela_iplt_start = .);
+      PROVIDE_HIDDEN (__rela_iplt_end = .);
+    }
+  .rela.dyn       :
+    {
+      *(.rela.init)
+      *(.rela.text .rela.text.* .rela.gnu.linkonce.t.*)
+      *(.rela.fini)
+      *(.rela.rodata .rela.rodata.* .rela.gnu.linkonce.r.*)
+      *(.rela.data .rela.data.* .rela.gnu.linkonce.d.*)
+      *(.rela.tdata .rela.tdata.* .rela.gnu.linkonce.td.*)
+      *(.rela.tbss .rela.tbss.* .rela.gnu.linkonce.tb.*)
+      *(.rela.ctors)
+      *(.rela.dtors)
+      *(.rela.got)
+      *(.rela.bss .rela.bss.* .rela.gnu.linkonce.b.*)
+      PROVIDE_HIDDEN (__rel_iplt_start = .);
+      PROVIDE_HIDDEN (__rel_iplt_end = .);
+      PROVIDE_HIDDEN (__rela_iplt_start = .);
+      *(.rela.iplt)
+      PROVIDE_HIDDEN (__rela_iplt_end = .);
+    }
+  .rel.plt        :
+    {
+      *(.rel.plt)
+    }
+  .rela.plt       :
+    {
+      *(.rela.plt)
+    }
+  .init           :
+  {
+    KEEP (*(.init))
+  } =0
+  .plt            : { *(.plt) }
+  .iplt           : { *(.iplt) }
+  .text           :
+  {
+    *(.text.unlikely .text.*_unlikely)
+    *(.text.exit .text.exit.*)
+    *(.text.startup .text.startup.*)
+    *(.text.hot .text.hot.*)
+    *(.text .stub .text.* .gnu.linkonce.t.*)
+    /* .gnu.warning sections are handled specially by elf32.em.  */
+    *(.gnu.warning)
+    *(.glue_7t) *(.glue_7) *(.vfp11_veneer) *(.v4_bx)
+  } =0
+  .fini           :
+  {
+    KEEP (*(.fini))
+  } =0
+  PROVIDE (__etext = .);
+  PROVIDE (_etext = .);
+  PROVIDE (etext = .);
+  .rodata         : { *(.rodata .rodata.* .gnu.linkonce.r.*) }
+  .rodata1        : { *(.rodata1) }
+  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) }
+   PROVIDE_HIDDEN (__exidx_start = .);
+  .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) }
+   PROVIDE_HIDDEN (__exidx_end = .);
+  .eh_frame_hdr : { *(.eh_frame_hdr) }
+  .eh_frame       : ONLY_IF_RO { KEEP (*(.eh_frame)) }
+  .gcc_except_table   : ONLY_IF_RO { *(.gcc_except_table .gcc_except_table.*) }
+  /* Adjust the address for the data segment.  We want to adjust up to
+     the same address within the page on the next page up.  */
+  . = ALIGN (CONSTANT (MAXPAGESIZE)) - ((CONSTANT (MAXPAGESIZE) - .) & (CONSTANT (MAXPAGESIZE) - 1)); . = DATA_SEGMENT_ALIGN (CONSTANT (MAXPAGESIZE), CONSTANT (COMMONPAGESIZE));
+  /* Exception handling  */
+  .eh_frame       : ONLY_IF_RW { KEEP (*(.eh_frame)) }
+  .gcc_except_table   : ONLY_IF_RW { *(.gcc_except_table .gcc_except_table.*) }
+  /* Thread Local Storage sections  */
+  .tdata	  : { *(.tdata .tdata.* .gnu.linkonce.td.*) }
+  .tbss		  : { *(.tbss .tbss.* .gnu.linkonce.tb.*) *(.tcommon) }
+  .preinit_array     :
+  {
+    PROVIDE_HIDDEN (__preinit_array_start = .);
+    KEEP (*(.preinit_array))
+    PROVIDE_HIDDEN (__preinit_array_end = .);
+  }
+  .init_array     :
+  {
+    PROVIDE_HIDDEN (__init_array_start = .);
+    KEEP (*(SORT(.init_array.*)))
+    KEEP (*(.init_array))
+    PROVIDE_HIDDEN (__init_array_end = .);
+  }
+  .fini_array     :
+  {
+    PROVIDE_HIDDEN (__fini_array_start = .);
+    KEEP (*(SORT(.fini_array.*)))
+    KEEP (*(.fini_array))
+    PROVIDE_HIDDEN (__fini_array_end = .);
+  }
+  .ctors          :
+  {
+    /* gcc uses crtbegin.o to find the start of
+       the constructors, so we make sure it is
+       first.  Because this is a wildcard, it
+       doesn't matter if the user does not
+       actually link against crtbegin.o; the
+       linker won't look for a file to match a
+       wildcard.  The wildcard also means that it
+       doesn't matter which directory crtbegin.o
+       is in.  */
+    KEEP (*crtbegin.o(.ctors))
+    KEEP (*crtbegin?.o(.ctors))
+    /* We don't want to include the .ctor section from
+       the crtend.o file until after the sorted ctors.
+       The .ctor section from the crtend file contains the
+       end of ctors marker and it must be last */
+    KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .ctors))
+    KEEP (*(SORT(.ctors.*)))
+    KEEP (*(.ctors))
+  }
+  .dtors          :
+  {
+    KEEP (*crtbegin.o(.dtors))
+    KEEP (*crtbegin?.o(.dtors))
+    KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .dtors))
+    KEEP (*(SORT(.dtors.*)))
+    KEEP (*(.dtors))
+  }
+  .jcr            : { KEEP (*(.jcr)) }
+  .data.rel.ro : { *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*) *(.data.rel.ro* .gnu.linkonce.d.rel.ro.*) }
+  .dynamic        : { *(.dynamic) }
+  . = DATA_SEGMENT_RELRO_END (0, .);
+  .got            : { *(.got.plt) *(.igot.plt) *(.got) *(.igot) }
+  .data           :
+  {
+    PROVIDE (__data_start = .);
+    *(.data .data.* .gnu.linkonce.d.*)
+    SORT(CONSTRUCTORS)
+  }
+  .data1          : { *(.data1) }
+  _edata = .; PROVIDE (edata = .);
+  __bss_start = .;
+  __bss_start__ = .;
+  .bss            :
+  {
+   *(.dynbss)
+   *(.bss .bss.* .gnu.linkonce.b.*)
+   *(COMMON)
+   /* Align here to ensure that the .bss section occupies space up to
+      _end.  Align after .bss to ensure correct alignment even if the
+      .bss section disappears because there are no input sections.
+      FIXME: Why do we need it? When there is no .bss section, we don't
+      pad the .data section.  */
+   . = ALIGN(. != 0 ? 32 / 8 : 1);
+  }
+  _bss_end__ = . ; __bss_end__ = . ;
+  . = ALIGN(32 / 8);
+  . = ALIGN(32 / 8);
+  __end__ = . ;
+  _end = .; PROVIDE (end = .);
+  . = DATA_SEGMENT_END (.);
+  /* Stabs debugging sections.  */
+  .stab          0 : { *(.stab) }
+  .stabstr       0 : { *(.stabstr) }
+  .stab.excl     0 : { *(.stab.excl) }
+  .stab.exclstr  0 : { *(.stab.exclstr) }
+  .stab.index    0 : { *(.stab.index) }
+  .stab.indexstr 0 : { *(.stab.indexstr) }
+  .comment       0 : { *(.comment) }
+  /* DWARF debug sections.
+     Symbols in the DWARF debugging sections are relative to the beginning
+     of the section so we begin them at 0.  */
+  /* DWARF 1 */
+  .debug          0 : { *(.debug) }
+  .line           0 : { *(.line) }
+  /* GNU DWARF 1 extensions */
+  .debug_srcinfo  0 : { *(.debug_srcinfo .zdebug_srcinfo) }
+  .debug_sfnames  0 : { *(.debug_sfnames .zdebug_sfnames) }
+  /* DWARF 1.1 and DWARF 2 */
+  .debug_aranges  0 : { *(.debug_aranges .zdebug_aranges) }
+  .debug_pubnames 0 : { *(.debug_pubnames .zdebug_pubnames) }
+  /* DWARF 2 */
+  .debug_info     0 : { *(.debug_info .gnu.linkonce.wi.* .zdebug_info) }
+  .debug_abbrev   0 : { *(.debug_abbrev .zdebug_abbrev) }
+  .debug_line     0 : { *(.debug_line .zdebug_line) }
+  .debug_frame    0 : { *(.debug_frame .zdebug_frame) }
+  .debug_str      0 : { *(.debug_str .zdebug_str) }
+  .debug_loc      0 : { *(.debug_loc .zdebug_loc) }
+  .debug_macinfo  0 : { *(.debug_macinfo .zdebug_macinfo) }
+  /* SGI/MIPS DWARF 2 extensions */
+  .debug_weaknames 0 : { *(.debug_weaknames .zdebug_weaknames) }
+  .debug_funcnames 0 : { *(.debug_funcnames .zdebug_funcnames) }
+  .debug_typenames 0 : { *(.debug_typenames .zdebug_typenames) }
+  .debug_varnames  0 : { *(.debug_varnames .zdebug_varnames) }
+  /* DWARF 3 */
+  .debug_pubtypes 0 : { *(.debug_pubtypes .zdebug_pubtypes) }
+  .debug_ranges   0 : { *(.debug_ranges .zdebug_ranges) }
+  .gnu.attributes 0 : { KEEP (*(.gnu.attributes)) }
+  .note.gnu.arm.ident 0 : { KEEP (*(.note.gnu.arm.ident)) }
+  /DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink) *(.gnu.lto_*) }
+}
+
+
+==================================================
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/lib/crt1.o succeeded
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/lib/crt1.o
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/lib/crti.o succeeded
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/lib/crti.o
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/crtbegin.o succeeded
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/crtbegin.o
+attempt to open applets/built-in.o succeeded
+applets/built-in.o
+attempt to open archival/lib.a succeeded
+attempt to open archival/libunarchive/lib.a succeeded
+attempt to open console-tools/lib.a succeeded
+attempt to open coreutils/lib.a succeeded
+attempt to open coreutils/libcoreutils/lib.a succeeded
+attempt to open debianutils/lib.a succeeded
+attempt to open e2fsprogs/lib.a succeeded
+attempt to open editors/lib.a succeeded
+attempt to open findutils/lib.a succeeded
+attempt to open init/lib.a succeeded
+attempt to open libbb/lib.a succeeded
+(libbb/lib.a)appletlib.o
+(libbb/lib.a)bb_basename.o
+(libbb/lib.a)default_error_retval.o
+(libbb/lib.a)get_last_path_component.o
+(libbb/lib.a)last_char_is.o
+(libbb/lib.a)messages.o
+(libbb/lib.a)ptr_to_globals.o
+(libbb/lib.a)xfunc_die.o
+(libbb/lib.a)xfuncs.o
+(libbb/lib.a)xfuncs_printf.o
+(libbb/lib.a)copyfd.o
+(libbb/lib.a)full_write.o
+(libbb/lib.a)perror_msg.o
+(libbb/lib.a)read.o
+(libbb/lib.a)safe_write.o
+(libbb/lib.a)time.o
+(libbb/lib.a)verror_msg.o
+(libbb/lib.a)bb_strtonum.o
+attempt to open libpwdgrp/lib.a succeeded
+attempt to open loginutils/lib.a succeeded
+(loginutils/lib.a)deluser.o
+attempt to open mailutils/lib.a succeeded
+attempt to open miscutils/lib.a succeeded
+(miscutils/lib.a)chrt.o
+(miscutils/lib.a)flash_eraseall.o
+(miscutils/lib.a)sysinfo.o
+(miscutils/lib.a)taskset.o
+attempt to open modutils/lib.a succeeded
+(modutils/lib.a)depmod.o
+(modutils/lib.a)insmod.o
+(modutils/lib.a)modprobe.o
+(modutils/lib.a)modutils.o
+(modutils/lib.a)rmmod.o
+attempt to open networking/lib.a succeeded
+(networking/lib.a)ftpgetput.o
+(networking/lib.a)ifconfig.o
+(networking/lib.a)interface.o
+(networking/lib.a)nc.o
+(networking/lib.a)ping.o
+(networking/lib.a)route.o
+(networking/lib.a)sendarp.o
+(networking/lib.a)tftp.o
+(networking/lib.a)tftpd.o
+(networking/lib.a)traceroute.o
+(networking/lib.a)vconfig.o
+(networking/lib.a)wget.o
+attempt to open networking/libiproute/lib.a succeeded
+attempt to open networking/udhcp/lib.a succeeded
+attempt to open printutils/lib.a succeeded
+attempt to open procps/lib.a succeeded
+(procps/lib.a)kill.o
+(procps/lib.a)ps.o
+(procps/lib.a)top.o
+attempt to open runit/lib.a succeeded
+attempt to open selinux/lib.a succeeded
+attempt to open shell/lib.a succeeded
+(shell/lib.a)ash.o
+(shell/lib.a)ash_ptr_hack.o
+(shell/lib.a)math.o
+(shell/lib.a)shell_common.o
+attempt to open sysklogd/lib.a succeeded
+(sysklogd/lib.a)klogd.o
+(sysklogd/lib.a)logread.o
+(sysklogd/lib.a)syslogd_and_logger.o
+attempt to open util-linux/lib.a succeeded
+(util-linux/lib.a)dmesg.o
+(util-linux/lib.a)more.o
+(util-linux/lib.a)mount.o
+(util-linux/lib.a)umount.o
+attempt to open util-linux/volume_id/lib.a succeeded
+attempt to open archival/built-in.o succeeded
+attempt to open archival/libunarchive/built-in.o succeeded
+attempt to open console-tools/built-in.o succeeded
+attempt to open coreutils/built-in.o succeeded
+attempt to open coreutils/libcoreutils/built-in.o succeeded
+attempt to open debianutils/built-in.o succeeded
+attempt to open e2fsprogs/built-in.o succeeded
+attempt to open editors/built-in.o succeeded
+attempt to open findutils/built-in.o succeeded
+attempt to open init/built-in.o succeeded
+attempt to open libbb/built-in.o succeeded
+attempt to open libpwdgrp/built-in.o succeeded
+attempt to open loginutils/built-in.o succeeded
+attempt to open mailutils/built-in.o succeeded
+attempt to open miscutils/built-in.o succeeded
+attempt to open modutils/built-in.o succeeded
+attempt to open networking/built-in.o succeeded
+attempt to open networking/libiproute/built-in.o succeeded
+attempt to open networking/udhcp/built-in.o succeeded
+attempt to open printutils/built-in.o succeeded
+attempt to open procps/built-in.o succeeded
+attempt to open runit/built-in.o succeeded
+attempt to open selinux/built-in.o succeeded
+attempt to open shell/built-in.o succeeded
+attempt to open sysklogd/built-in.o succeeded
+attempt to open util-linux/built-in.o succeeded
+attempt to open util-linux/volume_id/built-in.o succeeded
+(archival/lib.a)bbunzip.o
+(archival/libunarchive/lib.a)decompress_bunzip2.o
+(archival/libunarchive/lib.a)decompress_unzip.o
+(coreutils/lib.a)cat.o
+(coreutils/lib.a)chmod.o
+(coreutils/lib.a)cp.o
+(coreutils/lib.a)date.o
+(coreutils/lib.a)dd.o
+(coreutils/lib.a)df.o
+(coreutils/lib.a)echo.o
+(coreutils/lib.a)expr.o
+(coreutils/lib.a)false.o
+(coreutils/lib.a)ln.o
+(coreutils/lib.a)ls.o
+(coreutils/lib.a)mkdir.o
+(coreutils/lib.a)mknod.o
+(coreutils/lib.a)pwd.o
+(coreutils/lib.a)rm.o
+(coreutils/lib.a)sleep.o
+(coreutils/lib.a)stty.o
+(coreutils/lib.a)sync.o
+(coreutils/lib.a)test.o
+(coreutils/lib.a)test_ptr_hack.o
+(coreutils/lib.a)true.o
+(coreutils/lib.a)tty.o
+(coreutils/libcoreutils/lib.a)cp_mv_stat.o
+(coreutils/libcoreutils/lib.a)getopt_mk_fifo_nod.o
+(findutils/lib.a)grep.o
+(init/lib.a)halt.o
+(init/lib.a)init.o
+(libbb/lib.a)bb_pwd.o
+(libbb/lib.a)compare_string_array.o
+(libbb/lib.a)concat_path_file.o
+(libbb/lib.a)copy_file.o
+(libbb/lib.a)crc32.o
+(libbb/lib.a)create_icmp6_socket.o
+(libbb/lib.a)create_icmp_socket.o
+(libbb/lib.a)device_open.o
+(libbb/lib.a)execable.o
+(libbb/lib.a)fclose_nonstdin.o
+(libbb/lib.a)fflush_stdout_and_exit.o
+(libbb/lib.a)find_mount_point.o
+(libbb/lib.a)find_pid_by_name.o
+(libbb/lib.a)get_line_from_file.o
+(libbb/lib.a)getopt32.o
+(libbb/lib.a)human_readable.o
+(libbb/lib.a)inet_common.o
+(libbb/lib.a)info_msg.o
+(libbb/lib.a)inode_hash.o
+(libbb/lib.a)isdirectory.o
+(libbb/lib.a)lineedit.o
+(libbb/lib.a)lineedit_ptr_hack.o
+(libbb/lib.a)llist.o
+(libbb/lib.a)login.o
+(libbb/lib.a)make_directory.o
+(libbb/lib.a)makedev.o
+(libbb/lib.a)match_fstype.o
+(libbb/lib.a)mode_string.o
+(libbb/lib.a)mtab_file.o
+(libbb/lib.a)parse_config.o
+(libbb/lib.a)parse_mode.o
+(libbb/lib.a)perror_nomsg_and_die.o
+(libbb/lib.a)printable_string.o
+(libbb/lib.a)process_escape_sequence.o
+(libbb/lib.a)procps.o
+(libbb/lib.a)read_key.o
+(libbb/lib.a)read_printf.o
+(libbb/lib.a)recursive_action.o
+(libbb/lib.a)remove_file.o
+(libbb/lib.a)safe_gethostname.o
+(libbb/lib.a)safe_poll.o
+(libbb/lib.a)safe_strncpy.o
+(libbb/lib.a)signals.o
+(libbb/lib.a)simplify_path.o
+(libbb/lib.a)skip_whitespace.o
+(libbb/lib.a)speed_table.o
+(libbb/lib.a)str_tolower.o
+(libbb/lib.a)strrstr.o
+(libbb/lib.a)u_signal_names.o
+(libbb/lib.a)udp_io.o
+(libbb/lib.a)update_passwd.o
+(libbb/lib.a)vfork_daemon_rexec.o
+(libbb/lib.a)wfopen.o
+(libbb/lib.a)wfopen_input.o
+(libbb/lib.a)xatonum.o
+(libbb/lib.a)xconnect.o
+(libbb/lib.a)xgetcwd.o
+(libbb/lib.a)xreadlink.o
+(libbb/lib.a)xrealloc_vector.o
+(libbb/lib.a)xregcomp.o
+(libbb/lib.a)ask_confirmation.o
+(libbb/lib.a)bb_qsort.o
+(libbb/lib.a)concat_subpath_file.o
+(libbb/lib.a)perror_nomsg.o
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libbcm_crc.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libbcm_crc.a failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libbcm_crc.so succeeded
+-lbcm_crc (/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libbcm_crc.so)
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libbcm_flashutil.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libbcm_flashutil.a failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libbcm_flashutil.so succeeded
+-lbcm_flashutil (/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libbcm_flashutil.so)
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libcms_boardctl.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libcms_boardctl.a failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libcms_boardctl.so succeeded
+-lcms_boardctl (/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libcms_boardctl.so)
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libcms_msg.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libcms_msg.a failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libcms_msg.so succeeded
+-lcms_msg (/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libcms_msg.so)
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libcms_util.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libcms_util.a failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libcms_util.so succeeded
+-lcms_util (/home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libcms_util.so)
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libgcc.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libgcc.a failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libgcc.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libgcc.a failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.so failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a succeeded
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_udivsi3.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_divsi3.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_lshrdi3.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_ashldi3.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_arm_addsubdf3.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_arm_muldivdf3.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_aeabi_ldivmod.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_aeabi_uldivmod.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_dvmd_lnx.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_fixunsdfdi.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)bpabi.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_arm_fixunsdfsi.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_divdi3.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a)_udivdi3.o
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libgcc_eh.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libgcc_eh.a failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libgcc_eh.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libgcc_eh.a failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc_eh.so failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc_eh.a succeeded
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc_eh.a)unwind-arm.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc_eh.a)libunwind.o
+(/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc_eh.a)pr-support.o
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libc.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libc.a failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libc.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libc.a failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libc.so failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libc.a failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/../../../../arm-unknown-linux-uclibcgnueabi/lib/libc.so failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/../../../../arm-unknown-linux-uclibcgnueabi/lib/libc.a failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/lib/libc.so failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/lib/libc.a failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/lib/libc.so succeeded
+opened script file /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/lib/libc.so
+opened script file /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/lib/libc.so
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/lib/libc.so.0 succeeded
+/lib/libc.so.0 (/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/lib/libc.so.0)
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/lib/uclibc_nonshared.a succeeded
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/lib/ld-uClibc.so.0 succeeded
+/lib/ld-uClibc.so.0 (/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/lib/ld-uClibc.so.0)
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libgcc.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libgcc.a failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libgcc.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libgcc.a failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.so failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc.a succeeded
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libgcc_eh.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/libgcc_eh.a failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libgcc_eh.so failed
+attempt to open /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libgcc_eh.a failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc_eh.so failed
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/libgcc_eh.a succeeded
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/crtend.o succeeded
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/lib/gcc/arm-unknown-linux-uclibcgnueabi/4.6.2/crtend.o
+attempt to open /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/lib/crtn.o succeeded
+/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/usr/lib/crtn.o
+libcrypt.so.0 needed by /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libcms_util.so
+found libcrypt.so.0 at /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/lib/libcrypt.so.0
+libm.so.0 needed by /home/users/popeye_shen/ac88u-gpl/bcm963xx/targets/VR9517UAC44-A-ASU/fs.install/lib/public/libcms_util.so
+found libm.so.0 at /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/lib/libm.so.0
+ld-uClibc.so.0 needed by /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/lib/libc.so.0
+found ld-uClibc.so.0 at /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/arm-unknown-linux-uclibcgnueabi/sysroot/lib/ld-uClibc.so.0libbb/lib.a(inet_common.o): In function `INET_rresolve':
+/home/users/popeye_shen/ac88u-gpl/bcm963xx/userspace/gpl/apps/busybox/libbb/inet_common.c:140: warning: gethostbyaddr is obsolescent, use getaddrinfo() instead.
+libbb/lib.a(inet_common.o): In function `INET_resolve':
+/home/users/popeye_shen/ac88u-gpl/bcm963xx/userspace/gpl/apps/busybox/libbb/inet_common.c:41: warning: gethostbyname is obsolescent, use getnameinfo() instead.
+

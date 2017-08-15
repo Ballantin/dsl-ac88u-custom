@@ -1,0 +1,30 @@
+diff --git a/scanner.c b/scanner.c
+old mode 100644
+new mode 100755
+index ee3af48..58586c4
+--- a/scanner.c
++++ b/scanner.c
+@@ -822,6 +822,11 @@ _notify_start(void)
+ 	if( flag )
+ 		fclose(flag);
+ #endif
++#ifdef SCAN_DONE_CALLBACK
++	FILE *flag = fopen("/tmp/.upnp-av_scan", "w");
++	if( flag )
++		fclose(flag);
++#endif
+ }
+ 
+ static void
+@@ -832,6 +837,11 @@ _notify_stop(void)
+ 		system("/bin/sh /ramfs/.rescan_done");
+ 	unlink("/ramfs/.upnp-av_scan");
+ #endif
++#ifdef SCAN_DONE_CALLBACK
++	if( access("/usr/scripts/freeCachedbyMinidlna.sh", F_OK) == 0 )
++		system("/bin/sh /usr/scripts/freeCachedbyMinidlna.sh");
++	unlink("/tmp/.upnp-av_scan");
++#endif
+ }
+ 
+ void

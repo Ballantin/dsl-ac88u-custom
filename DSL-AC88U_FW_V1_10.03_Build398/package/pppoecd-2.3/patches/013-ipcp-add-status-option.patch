@@ -1,0 +1,28 @@
+--- a/pppd/ipcp.c	2016-04-26 16:41:14.121428488 +0800
++++ b/pppd/ipcp.c	2016-04-26 16:32:59.000000000 +0800
+@@ -1896,11 +1896,13 @@
+     char *script;
+ {
+     char strspeed[32], strlocal[32], strremote[32];
+-    char *argv[8];
++    char *argv[9];
++    char  strstatus[32];
+ 
+     slprintf(strspeed, sizeof(strspeed), "%d", baud_rate);
+     slprintf(strlocal, sizeof(strlocal), "%I", ipcp_gotoptions[0].ouraddr);
+     slprintf(strremote, sizeof(strremote), "%I", ipcp_hisoptions[0].hisaddr);
++    slprintf(strstatus, sizeof(strstatus), "%d", status);
+ 
+     argv[0] = script;
+     argv[1] = ifname;
+@@ -1909,7 +1911,9 @@
+     argv[4] = strlocal;
+     argv[5] = strremote;
+     argv[6] = ipparam;
+-    argv[7] = NULL;
++    argv[7] = strstatus;
++    argv[8] = NULL;
++	
+     ipcp_script_pid = run_program(script, argv, 0, ipcp_script_done, NULL);
+ }
+ 

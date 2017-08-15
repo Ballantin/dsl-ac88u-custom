@@ -1,0 +1,136 @@
+<html>
+   <head>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+         <link rel="stylesheet" href='colors.css' type='text/css'>
+            <meta http-equiv="Pragma" content="no-cache">
+            <meta http-equiv="refresh" content="20">
+<script language="javascript">
+<!-- hide
+var cellularObj = '<%ejGetOther(cellularInfo, cellular)%>';
+var cellularInterfaceObj = '<%ejGetOther(cellularInfo, cellularInterface)%>';
+var cellularInterfaceItem = cellularInterfaceObj.split('|');
+var cellularSIMObj = '<%ejGetOther(cellularInfo, cellularSIM)%>';
+var cellularSIMItem = cellularSIMObj.split('|');
+// done hiding -->
+</script>
+            <title></title>
+            <base target="_self">
+   </head>
+   <body>
+      <blockquote>
+         <form>
+            <b>Cellular Info</b><br>
+               <br>
+               <table border="1" cellpadding="3" cellspacing="0">
+               <tr>
+                  <td class='hd'>RoamingStatus:</td>
+<script language="javascript">
+<!-- hide
+  document.writeln("<td>" + cellularObj + "</td>");
+// done hiding -->
+</script>
+               </tr>
+               </table>
+            <br><br>
+            <b>Cellular Interface Info</b><br>
+            <br>
+            <table border="1" cellpadding="3" cellspacing="0">
+                <tr>
+                  <td class='hd'>Status:</td>
+<script language="javascript">
+<!-- hide
+  document.writeln("<td>" + cellularInterfaceItem[0] + "</td>");
+// done hiding -->
+</script>
+               </tr>
+              <tr>
+                  <td class='hd'>International Mobile Station Equipment Identity(IMEI):</td>
+<script language="javascript">
+<!-- hide
+  document.writeln("<td>" + cellularInterfaceItem[1] + "</td>");
+// done hiding -->
+</script>
+               </tr>
+               <tr>
+                  <td class='hd'>Current Access Technology:</td>
+<script language="javascript">
+<!-- hide
+  document.writeln("<td>" + cellularInterfaceItem[2] + "</td>");
+// done hiding -->
+</script>
+               </tr>
+               <tr>
+                  <td class='hd'>Network In Use:</td>
+<script language="javascript">
+<!-- hide
+  document.writeln("<td>" + cellularInterfaceItem[3] + "</td>");
+// done hiding -->
+</script>
+               </tr>
+               <tr>
+                  <td class='hd'>Received Signal Strength:</td>
+<script language="javascript">
+<!-- hide
+  document.writeln("<td>" + cellularInterfaceItem[4] + "</td>");
+// done hiding -->
+</script>
+               </tr>
+               <tr>
+                  <td class='hd'>Upstream Max Bit Rate:</td>
+<script language="javascript">
+<!-- hide
+  document.writeln("<td>" + cellularInterfaceItem[5] + "</td>");
+// done hiding -->
+</script>
+               </tr>
+               <tr>
+                  <td class='hd'>Downstream Max Bit Rate:</td>
+<script language="javascript">
+<!-- hide
+  document.writeln("<td>" + cellularInterfaceItem[6] + "</td>");
+// done hiding -->
+</script>
+               </tr>
+            </table>
+            
+            <br><br>
+            <b>SIM card Info</b><br>
+            <br>
+            <table border="1" cellpadding="3" cellspacing="0">
+               <tr>
+                  <td class='hd'>Status:</td>
+<script language="javascript">
+<!-- hide
+  document.writeln("<td>" + cellularSIMItem[0] + "</td>");
+// done hiding -->
+</script>
+               </tr>
+               <tr>
+                  <td class='hd'>International Mobile Subscriber Identity(IMSI):</td>
+<script language="javascript">
+<!-- hide
+  document.writeln("<td>" + cellularSIMItem[1] + "</td>");
+// done hiding -->
+</script>
+               </tr>
+               <tr>
+                  <td class='hd'>Integrated Circuit Card Identifier(ICCID):</td>
+<script language="javascript">
+<!-- hide
+  document.writeln("<td>" + cellularSIMItem[2] + "</td>");
+// done hiding -->
+</script>
+               </tr>
+               <tr>
+                  <td class='hd'>Mobile Subscriber Integrated Service Digital Network Number(MSISDN):</td>
+<script language="javascript">
+<!-- hide
+  document.writeln("<td>" + cellularSIMItem[3] + "</td>");
+// done hiding -->
+</script>
+               </tr>
+            </table>
+         </form>
+      </blockquote>
+   </body>
+</html>

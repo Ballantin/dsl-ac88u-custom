@@ -1,0 +1,13 @@
+diff --git a/upnpglobalvars.h b/upnpglobalvars.h
+index 6e60e38..93e2ce9 100644
+--- a/upnpglobalvars.h
++++ b/upnpglobalvars.h
+@@ -71,7 +71,7 @@ extern char uuidvalue_igd[];	/* uuid of root device (IGD) */
+ extern char uuidvalue_wan[];	/* uuid of WAN Device */
+ extern char uuidvalue_wcd[];	/* uuid of WAN Connection Device */
+ 
+-#define SERIALNUMBER_MAX_LEN (10)
++#define SERIALNUMBER_MAX_LEN (18)
+ extern char serialnumber[];
+ 
+ #define MODELNUMBER_MAX_LEN (48)

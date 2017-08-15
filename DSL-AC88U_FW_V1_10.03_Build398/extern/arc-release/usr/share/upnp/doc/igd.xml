@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+	<specVersion>
+		<major>1</major>
+		<minor>0</minor>
+	</specVersion>
+	<device>
+		<deviceType>urn:schemas-upnp-org:device:InternetGatewayDevice:1</deviceType>
+		<friendlyName><!--# exec cmd="Upnp_FriendlyName" --></friendlyName>
+		<manufacturer><!--# exec cmd="Upnp_Manufacturer" --></manufacturer>
+		<manufacturerURL><!--# exec cmd="Upnp_ManufacturerUrl" --></manufacturerURL>
+		<modelDescription><!--# exec cmd="Upnp_ModelDescription" --></modelDescription>
+		<modelName><!--# exec cmd="Upnp_ModelName" --></modelName>
+		<modelNumber><!--# exec cmd="Upnp_ModelNumber" --></modelNumber>
+		<modelURL><!--# exec cmd="Upnp_ModelUrl" --></modelURL>
+		<serialNumber><!--# exec cmd="Upnp_SerialNumber" --></serialNumber>
+		<UDN>uuid:<!--# exec cmd="Upnp_IGD_UUID" -->-0000-<!--# exec cmd="Upnp_UUID" --></UDN>
+		<UPC />
+		<serviceList>
+			<service>
+				<serviceType>urn:schemas-upnp-org:service:Layer3Forwarding:1</serviceType>
+				<serviceId>urn:upnp-org:serviceId:L3Forwarding1</serviceId>
+				<SCPDURL><!--# exec cmd="Upnp_UrlBase" -->:<!--# echo var="Upnp_ServPort" -->/igd_l3f.xml</SCPDURL>
+				<controlURL><!--# exec cmd="Upnp_UrlBase" -->:<!--# echo var="Upnp_ServPort" -->/upnp/control?Layer3Forwarding</controlURL>
+				<eventSubURL><!--# exec cmd="Upnp_UrlBase" -->:<!--# echo var="Upnp_ServPort" -->/upnp/event?Layer3Forwarding</eventSubURL>
+			</service>
+		</serviceList>
+		<deviceList>
+			<device>
+				<deviceType>urn:schemas-upnp-org:device:WANDevice:1</deviceType>
+				<friendlyName><!--# exec cmd="Upnp_FriendlyName" -->(WANDevice)</friendlyName>
+				<manufacturer><!--# exec cmd="Upnp_Manufacturer" --></manufacturer>
+				<manufacturerURL><!--# exec cmd="Upnp_ManufacturerUrl" --></manufacturerURL>
+				<modelDescription><!--# exec cmd="Upnp_ModelDescription" --> (WAN Interface Device)</modelDescription>
+				<modelName><!--# exec cmd="Upnp_ModelName" --> WAN Interface</modelName>
+				<modelNumber><!--# exec cmd="Upnp_ModelNumber" --></modelNumber>
+				<modelURL><!--# exec cmd="Upnp_ModelUrl" --></modelURL>
+				<serialNumber><!--# exec cmd="Upnp_SerialNumber" --></serialNumber>
+			    	<UDN>uuid:<!--# exec cmd="Upnp_IGD_UUID" -->-0001-<!--# exec cmd="Upnp_UUID" --></UDN>
+			    	<UPC />
+				<serviceList>
+					<service>
+						<serviceType>urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1</serviceType>
+						<serviceId>urn:upnp-org:serviceId:WANCommonIFC1</serviceId>
+						<SCPDURL><!--# exec cmd="Upnp_UrlBase" -->:<!--# echo var="Upnp_ServPort" -->/igd_wcic.xml</SCPDURL>
+						<controlURL><!--# exec cmd="Upnp_UrlBase" -->:<!--# echo var="Upnp_ServPort" -->/upnp/control?WANCommonInterfaceConfig</controlURL>
+						<eventSubURL><!--# exec cmd="Upnp_UrlBase" -->:<!--# echo var="Upnp_ServPort" -->/upnp/event?WANCommonInterfaceConfig</eventSubURL>
+					</service>
+				</serviceList>
+				<deviceList>
+					<device>
+						<deviceType>urn:schemas-upnp-org:device:WANConnectionDevice:1</deviceType>
+						<friendlyName><!--# exec cmd="Upnp_FriendlyName" -->(WAN Connection Device)</friendlyName>
+						<manufacturer><!--# exec cmd="Upnp_Manufacturer" --></manufacturer>
+						<manufacturerURL><!--# exec cmd="Upnp_ManufacturerUrl" --></manufacturerURL>
+						<modelDescription><!--# exec cmd="Upnp_ModelDescription" --> (WAN Connection Device)</modelDescription>
+						<modelName><!--# exec cmd="Upnp_ModelName" --> WAN Connector</modelName>
+						<modelNumber><!--# exec cmd="Upnp_ModelNumber" --></modelNumber>
+						<modelURL><!--# exec cmd="Upnp_ModelUrl" --></modelURL>
+						<serialNumber><!--# exec cmd="Upnp_SerialNumber" --></serialNumber>
+				        	<UDN>uuid:<!--# exec cmd="Upnp_IGD_UUID" -->-0002-<!--# exec cmd="Upnp_UUID" --></UDN>
+				        	<UPC />
+
+						<serviceList>
+							<service>
+								<serviceType>urn:schemas-upnp-org:service:WANIPConnection:1</serviceType>
+								<serviceId>urn:upnp-org:serviceId:WANIPConn1</serviceId>
+								<SCPDURL><!--# exec cmd="Upnp_UrlBase" -->:<!--# echo var="Upnp_ServPort" -->/igd_wic.xml</SCPDURL>
+								<controlURL><!--# exec cmd="Upnp_UrlBase" -->:<!--# echo var="Upnp_ServPort" -->/upnp/control?WANIPConnection</controlURL>
+								<eventSubURL><!--# exec cmd="Upnp_UrlBase" -->:<!--# echo var="Upnp_ServPort" -->/upnp/event?WANIPConnection</eventSubURL>
+							</service>
+						</serviceList>
+					</device>
+				</deviceList>
+			</device>
+		</deviceList>
+		<presentationURL><!--# exec cmd="Upnp_UrlBase" --></presentationURL>
+	</device>
+</root>

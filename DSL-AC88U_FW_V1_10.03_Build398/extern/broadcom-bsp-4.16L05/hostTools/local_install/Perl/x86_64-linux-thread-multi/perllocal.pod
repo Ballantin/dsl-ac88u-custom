@@ -1,0 +1,88 @@
+=head2 Sun Feb 21 09:18:39 2016: C<Module> L<Convert::Binary::C|Convert::Binary::C>
+
+=over 4
+
+=item *
+
+C<installed into: /auto/builder/opt/linux/hostTools/local_install/Perl>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=item *
+
+C<VERSION: 0.77>
+
+=item *
+
+C<EXE_FILES: bin/ccconfig>
+
+=back
+
+=head2 Sun Feb 21 09:18:49 2016: C<Module> L<Digest::CRC|Digest::CRC>
+
+=over 4
+
+=item *
+
+C<installed into: /auto/builder/opt/linux/hostTools/local_install/Perl>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=item *
+
+C<VERSION: 0.21>
+
+=item *
+
+C<EXE_FILES: >
+
+=back
+
+=head2 Tue Aug 30 15:42:26 2016: C<Module> L<Convert::Binary::C|Convert::Binary::C>
+
+=over 4
+
+=item *
+
+C<installed into: /home/users/popeye_shen/ac88u/arc-gz-bcm963xx/extern/broadcom-bsp-4.16L05/hostTools/local_install/Perl>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=item *
+
+C<VERSION: 0.77>
+
+=item *
+
+C<EXE_FILES: bin/ccconfig>
+
+=back
+
+=head2 Tue Aug 30 15:42:27 2016: C<Module> L<Digest::CRC|Digest::CRC>
+
+=over 4
+
+=item *
+
+C<installed into: /home/users/popeye_shen/ac88u/arc-gz-bcm963xx/extern/broadcom-bsp-4.16L05/hostTools/local_install/Perl>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=item *
+
+C<VERSION: 0.21>
+
+=item *
+
+C<EXE_FILES: >
+
+=back
+

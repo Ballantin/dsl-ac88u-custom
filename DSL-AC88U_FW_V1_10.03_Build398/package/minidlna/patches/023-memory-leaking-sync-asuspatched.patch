@@ -1,0 +1,188 @@
+diff --git a/image_utils.c b/image_utils.c
+old mode 100644
+new mode 100755
+index c0d1f2c..445c9bc
+--- a/image_utils.c
++++ b/image_utils.c
+@@ -42,6 +42,7 @@
+ #include "upnpreplyparse.h"
+ #include "image_utils.h"
+ #include "log.h"
++#include <sys/sysinfo.h>
+ 
+ #if __BYTE_ORDER == __LITTLE_ENDIAN
+ # define SWAP16(w) ( (((w) >> 8) & 0x00ff) | (((w) << 8) & 0xff00) )
+@@ -400,15 +401,21 @@ image_s *
+ image_new(int32_t width, int32_t height)
+ {
+ 	image_s *vimage;
+-
++	struct sysinfo info;
++	sysinfo( &info );
++	
+ 	if((vimage = (image_s *)malloc(sizeof(image_s))) == NULL)
+ 	{
+ 		DPRINTF(E_WARN, L_METADATA, "malloc failed\n");
+ 		return NULL;
+ 	}
+ 	vimage->width = width; vimage->height = height;
+-
+-	if((vimage->buf = (pix *)malloc(width * height * sizeof(pix))) == NULL)
++	DPRINTF(E_WARN, L_METADATA, "available memory %lu\n", info.freeram*info.mem_unit);
++	DPRINTF(E_WARN, L_METADATA, "size for malloc  %lu\n", (width * height * sizeof(pix)));
++	if( ((info.freeram*info.mem_unit)<(width * height * sizeof(pix))) ) {
++		system("echo 3 > /proc/sys/vm/drop_caches");
++	}
++	if ( (vimage->buf = (pix *)malloc(width * height * sizeof(pix))) == NULL )
+ 	{
+ 		DPRINTF(E_WARN, L_METADATA, "malloc failed\n");
+ 		free(vimage);
+@@ -435,6 +442,7 @@ image_new_from_jpeg(const char *path, int is_file, const uint8_t *buf, int size,
+ 	{
+ 		if( (file = fopen(path, "r")) == NULL )
+ 		{
++			jpeg_destroy_decompress(&cinfo);	/* Jared: Fix memory leaking */
+ 			return NULL;
+ 		}
+ 		jpeg_stdio_src(&cinfo, file);
+@@ -457,6 +465,7 @@ image_new_from_jpeg(const char *path, int is_file, const uint8_t *buf, int size,
+ 	jpeg_start_decompress(&cinfo);
+ 	w = cinfo.output_width;
+ 	h = cinfo.output_height;
++	DPRINTF(E_WARN, L_METADATA, "image_new from %s.\n", path);
+ 	vimage = (rotate & (ROTATE_90|ROTATE_270)) ? image_new(h, w) : image_new(w, h);
+ 	if(!vimage)
+ 	{
+@@ -559,6 +568,7 @@ image_new_from_jpeg(const char *path, int is_file, const uint8_t *buf, int size,
+ 	if( is_file )
+ 		fclose(file);
+ 
++	DPRINTF(E_WARN, L_METADATA, "image_new from %s. DONE\n", path);
+ 	return vimage;
+ }
+ 
+@@ -775,8 +785,10 @@ image_resize(image_s * src_image, int32_t width, int32_t height)
+ 	image_s * dst_image;
+ 
+ 	dst_image = image_new(width, height);
+-	if( !dst_image )
++	if( !dst_image ) {
++		DPRINTF(E_WARN, L_METADATA, "image_resize NULL\n");
+ 		return NULL;
++	}
+ 	if( (src_image->width < width) || (src_image->height < height) )
+ 		image_upsize(dst_image, src_image, width, height);
+ 	else
+diff --git a/metadata.c b/metadata.c
+old mode 100644
+new mode 100755
+index f3987c6..c89df54
+--- a/metadata.c
++++ b/metadata.c
+@@ -482,6 +482,20 @@ libjpeg_error_handler(j_common_ptr cinfo)
+ 	return;
+ }
+ 
++//- 20130708 Sungmin add
++static int
++thumb_cache_exists(const char *orig_path, char **cache_file)
++{	
++	if( asprintf(cache_file, "%s/art_cache%s", db_path, orig_path) < 0 )	
++	{		
++		*cache_file = NULL;		
++		return 0;	
++	}	
++	strcpy(strchr(*cache_file, '\0')-4, ".jpg");
++
++	return (!access(*cache_file, F_OK));
++}
++
+ int64_t
+ GetImageMetadata(const char *path, char *name)
+ {
+@@ -587,7 +601,30 @@ GetImageMetadata(const char *path, char *name)
+ 			}
+ 		}
+ 		else
++		{
+ 			thumb = 1;
++			//- 20130708 Sungmin add
++			if(ed->data && ed->size)
++			{
++				char* art_file;
++				if( !thumb_cache_exists(path, &art_file) )
++				{
++					char cache_dir[MAXPATHLEN];
++					strncpyt(cache_dir, art_file, sizeof(cache_dir));
++					make_dir(dirname(cache_dir), S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
++
++					FILE *thumb = fopen(art_file, "wb");
++					//DPRINTF(E_WARN, L_METADATA, " * cache_dir: %s\n", cache_dir);
++					//DPRINTF(E_WARN, L_METADATA, " * thumbnail: %s\n", art_file);
++					if(thumb)
++					{
++						fwrite(ed->data, 1, ed->size, thumb);
++						fclose(thumb);
++					}
++				}
++				free(art_file);
++			}
++		}
+ 	}
+ 	//DEBUG DPRINTF(E_DEBUG, L_METADATA, " * thumbnail: %d\n", thumb);
+ 
+diff --git a/upnphttp.c b/upnphttp.c
+old mode 100644
+new mode 100755
+index ce219e8..30d2664
+--- a/upnphttp.c
++++ b/upnphttp.c
+@@ -1567,7 +1567,7 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
+ 	char *resolution = NULL;
+ 	char *key, *val;
+ 	char *saveptr, *item = NULL;
+-	int rotate;
++	int rotate = 0;
+ 	/* Not implemented yet *
+ 	char *pixelshape=NULL; */
+ 	long long id;
+@@ -1745,8 +1745,13 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
+ 				goto resized_error;
+ 			}
+ 			imdst = image_resize(imsrc, dstw, dsth);
+-			data = image_save_to_jpeg_buf(imdst, &size);
+-
++			if( imdst )
++				data = image_save_to_jpeg_buf(imdst, &size);
++			else {
++				DPRINTF(E_ERROR, L_HTTP, "Unable to resize image %s!\n", file_path);
++				Send500(h);
++				goto resized_error;
++			}
+ 			ret = sprintf(buf, "%x\r\n", size);
+ 			send_data(h, buf, ret, MSG_MORE);
+ 			send_data(h, (char *)data, size, MSG_MORE);
+@@ -1758,6 +1763,8 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
+ 		}
+ 	}
+ 	DPRINTF(E_INFO, L_HTTP, "Done serving %s\n", file_path);
++	if( data) 
++		free(data);	/* Jared: Fix memory leaking */
+ 	if( imsrc )
+ 		image_free(imsrc);
+ 	if( imdst )
+diff --git a/upnpreplyparse.c b/upnpreplyparse.c
+old mode 100644
+new mode 100755
+index 2411f05..a3986b7
+--- a/upnpreplyparse.c
++++ b/upnpreplyparse.c
+@@ -122,7 +122,7 @@ DisplayNameValueList(char * buffer, int bufsize)
+ {
+     struct NameValueParserData pdata;
+     struct NameValue * nv;
+-    ParseNameValue(buffer, bufsize, &pdata);
++    ParseNameValue(buffer, bufsize, &pdata, 0);
+     for(nv = pdata.head.lh_first;
+         nv != NULL;
+         nv = nv->entries.le_next)

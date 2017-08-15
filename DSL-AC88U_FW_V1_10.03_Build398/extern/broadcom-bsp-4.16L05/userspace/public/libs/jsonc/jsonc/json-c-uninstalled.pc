@@ -1,0 +1,11 @@
+prefix=
+exec_prefix=
+libdir=/home/users/popeye_shen/ac88u-gpl/bcm963xx/userspace/public/libs/jsonc/jsonc
+includedir=/home/users/popeye_shen/ac88u-gpl/bcm963xx/userspace/public/libs/jsonc/jsonc
+
+Name: json
+Description: JSON implementation in C
+Version: 0.11
+Requires:
+Libs:  -L/home/users/popeye_shen/ac88u-gpl/bcm963xx/userspace/public/libs/jsonc/jsonc -ljson-c
+Cflags: -I/home/users/popeye_shen/ac88u-gpl/bcm963xx/userspace/public/libs/jsonc/jsonc

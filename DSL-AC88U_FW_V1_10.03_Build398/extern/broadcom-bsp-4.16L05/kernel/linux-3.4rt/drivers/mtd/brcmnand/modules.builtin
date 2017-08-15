@@ -1,0 +1,3 @@
+kernel/drivers/mtd/brcmnand/bcm63xx-nand.ko
+kernel/drivers/mtd/brcmnand/brcmnand_base.ko
+kernel/drivers/mtd/brcmnand/brcmnand_bbt.ko

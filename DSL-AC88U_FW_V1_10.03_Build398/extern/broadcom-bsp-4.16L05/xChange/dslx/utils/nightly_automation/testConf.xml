@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NightlyBuildTestSuite>
+  <TestCase TestName="BULKCALL" ImageServer="http://bcacpe-hudson.broadcom.com/nightly/" AbacusEnv="406L03QA.env" Duration_HR="4" report_template="report_template.tcl" repeat="Y">
+    <TestInitSetup>
+      <DutConfig>
+        <IP>192.168.1.1</IP>
+        <PROFILE>SMP</PROFILE>
+      </DutConfig>
+      <DutConfig>
+        <IP>192.168.1.2</IP>
+        <PROFILE>SMP</PROFILE>
+      </DutConfig>
+    </TestInitSetup>
+    <TestExecution TCLSCRIPT="abacus_ctrl.tcl">
+      <Dut DutNum='0'>
+          <FROM>1</FROM>
+          <TO>2</TO>
+		</Dut>
+      <Dut DutNum='1'>
+          <FROM>1</FROM>
+          <TO>2</TO>
+		</Dut>
+    </TestExecution>
+  </TestCase>
+</NightlyBuildTestSuite>

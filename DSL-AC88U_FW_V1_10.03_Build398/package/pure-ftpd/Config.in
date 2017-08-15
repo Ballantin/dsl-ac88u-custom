@@ -1,0 +1,23 @@
+# pure-ftpd configuration
+
+menu "Configuration"
+  depends on PACKAGE_pure-ftpd || PACKAGE_pure-ftpd-tls
+  
+config PACKAGE_pure-ftpd-with-ARC_ISO_SYMLINK
+   bool "ARCADYAN isolate symblic out of usb storage"
+   default y
+   	
+		menu "mount point"
+			depends PACKAGE_pure-ftpd-with-ARC_ISO_SYMLINK
+
+			config PACKAGE_pure-ftpd-usb-mountpoint-tmp-media
+			bool "/tmp/mnt"
+			default y
+			
+			config PACKAGE_pure-ftpd-usb-mountpoint-tmp-usbMountNameReversal
+			bool "/tmp/usbMountNameReversal"
+			default n
+
+		endmenu
+
+endmenu

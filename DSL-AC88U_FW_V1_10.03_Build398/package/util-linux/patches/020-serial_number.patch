@@ -1,0 +1,251 @@
+diff --git a/misc-utils/lsblk.c b/misc-utils/lsblk.c
+old mode 100644
+new mode 100755
+index dc1cf69..33704fc
+--- a/misc-utils/lsblk.c
++++ b/misc-utils/lsblk.c
+@@ -344,7 +344,9 @@ static void reset_blkdev_cxt(struct blkdev_cxt *cxt)
+ 	free(cxt->partuuid);
+ 	free(cxt->partlabel);
+ 	free(cxt->wwn);
+-	free(cxt->serial);
++	
++	if(cxt->serial!=NULL)
++		free(cxt->serial);
+ 
+ 	sysfs_deinit(&cxt->sysfs);
+ 
+@@ -499,18 +501,71 @@ static int get_udev_properties(struct blkdev_cxt *cxt)
+ 			cxt->partflags = xstrdup(data);
+ 		if ((data = udev_device_get_property_value(dev, "ID_WWN")))
+ 			cxt->wwn = xstrdup(data);
++		#if 0
+ 		if ((data = udev_device_get_property_value(dev, "ID_SERIAL_SHORT")))
+ 			cxt->serial = xstrdup(data);
++		#endif
+ 		udev_device_unref(dev);
+ 		cxt->probed = 1;
+ 	}
+ 
+ 	return cxt->probed == 1 ? 0 : -1;
+-
+ }
+ #endif /* HAVE_LIBUDEV */
+ 
+-static void probe_device(struct blkdev_cxt *cxt)
++static int get_udev_serial(struct blkdev_cxt *cxt)
++{
++	struct udev_device *dev;
++	struct udev_enumerate *enumerate;
++	struct udev_list_entry *devices, *dev_list_entry;
++
++	if (cxt->probed)
++		return 0;		/* already done */
++
++	if (!udev)
++		udev = udev_new();
++	if (!udev)
++		return -1;
++
++	enumerate = udev_enumerate_new(udev);
++	if(!enumerate) 
++		goto OUT;
++
++	//warnx(_("%s[%04d] cxt->name: %s"), __FUNCTION__,__LINE__,cxt->name);
++	udev_enumerate_add_match_subsystem(enumerate, "block");
++	udev_enumerate_scan_devices(enumerate);
++	devices = udev_enumerate_get_list_entry(enumerate);
++	udev_list_entry_foreach(dev_list_entry, devices) {
++		const char *path;
++		const char *sysname;
++		
++		path = udev_list_entry_get_name(dev_list_entry);
++		dev = udev_device_new_from_syspath(udev, path);
++		sysname = udev_device_get_sysname(dev);
++		if( strncmp( cxt->name, sysname, strlen(cxt->name))!=0) continue;
++		//warnx(_("%s[%04d] Device Node Path: %s"), __FUNCTION__,__LINE__,udev_device_get_devnode(dev));
++		//warnx(_("%s[%04d] sysname: %s"), __FUNCTION__,__LINE__,sysname); 
++		//warnx(_("%s[%04d] devnode: %s"), __FUNCTION__,__LINE__,udev_device_get_devnode(dev)); 
++		dev = udev_device_get_parent_with_subsystem_devtype(dev, "usb","usb_device");
++		if(dev) {
++			const char *value = udev_device_get_sysattr_value(dev, "serial");
++			
++			if(value) {
++				
++				//warnx(_("%s[%04d] serial: %s"), __FUNCTION__,__LINE__,value);
++				cxt->serial = xstrdup(value);
++				cxt->probed = 1;
++			}
++			udev_device_unref(dev);
++		}
++	}
++	udev_enumerate_unref(enumerate);
++
++	OUT:
++	return cxt->probed == 1 ? 0 : -1;
++}
++
++static void probe_device(struct blkdev_cxt *cxt, int iProbe_what)
+ {
+ 	blkid_probe pr = NULL;
+ 
+@@ -521,8 +576,39 @@ static void probe_device(struct blkdev_cxt *cxt)
+ 		return;
+ 
+ 	/* try udev DB */
+-	if (get_udev_properties(cxt) == 0)
+-		return;				/* success */
++	if (get_udev_properties(cxt) == 0) {
++		int iShould_return = 1;
++		
++		switch (iProbe_what) {
++			case COL_LABEL:
++				if (!cxt->label)
++					iShould_return = 0;
++				break;
++			case COL_UUID:
++				if (!cxt->uuid)
++					iShould_return = 0;
++				break;
++			case COL_PARTTYPE:
++				if (!cxt->parttype)
++					iShould_return = 0;
++				break;
++			case COL_PARTLABEL:
++				if (!cxt->partlabel)
++					iShould_return = 0;
++				break;
++			case COL_PARTUUID:
++				if (!cxt->partuuid)
++					iShould_return = 0;
++				break;
++			case COL_PARTFLAGS:
++				if (!cxt->partflags)
++					iShould_return = 0;
++				break;
++			default:
++				break;
++		}
++		if(iShould_return) return;				/* success */
++	}
+ 
+ 	cxt->probed = 1;
+ 
+@@ -564,6 +650,60 @@ static void probe_device(struct blkdev_cxt *cxt)
+ 	return;
+ }
+ 
++static void probe_device_fs(struct blkdev_cxt *cxt)
++{
++	blkid_probe pr = NULL;
++
++	if (cxt->probed)
++		return;
++
++	if (!cxt->size)
++		return;
++
++	/* try udev DB */
++	//if (get_udev_properties(cxt) == 0 && cxt->fstype)
++	//	return;				/* success */
++
++	cxt->probed = 1;
++
++	/* try libblkid (fallback) */
++	if (getuid() != 0)
++		return;				/* no permissions to read from the device */
++
++	pr = blkid_new_probe_from_filename(cxt->filename);
++	if (!pr)
++		return;
++
++	blkid_probe_enable_superblocks(pr, 1);
++	blkid_probe_set_superblocks_flags(pr, BLKID_SUBLKS_TYPE);
++	blkid_probe_enable_partitions(pr, 1);
++	blkid_probe_set_partitions_flags(pr, BLKID_PARTS_ENTRY_DETAILS);
++
++	if (!blkid_do_safeprobe(pr)) {
++		const char *data = NULL;
++
++		if (!blkid_probe_lookup_value(pr, "TYPE", &data, NULL))
++			cxt->fstype = xstrdup(data);
++		#if 0
++		if (!blkid_probe_lookup_value(pr, "UUID", &data, NULL))
++			cxt->uuid = xstrdup(data);
++		if (!blkid_probe_lookup_value(pr, "LABEL", &data, NULL))
++			cxt->label = xstrdup(data);
++		if (!blkid_probe_lookup_value(pr, "PART_ENTRY_TYPE", &data, NULL))
++			cxt->parttype = xstrdup(data);
++		if (!blkid_probe_lookup_value(pr, "PART_ENTRY_UUID", &data, NULL))
++			cxt->partuuid = xstrdup(data);
++		if (!blkid_probe_lookup_value(pr, "PART_ENTRY_NAME", &data, NULL))
++			cxt->partlabel = xstrdup(data);
++		if (!blkid_probe_lookup_value(pr, "PART_ENTRY_FLAGS", &data, NULL))
++			cxt->partflags = xstrdup(data);
++		#endif
++	}
++
++	blkid_free_probe(pr);
++	return;
++}
++
+ static int is_readonly_device(struct blkdev_cxt *cxt)
+ {
+ 	int fd, ro = 0;
+@@ -834,7 +974,7 @@ static void set_scols_data(struct blkdev_cxt *cxt, int col, int id, struct libsc
+ 			set_sortdata_u64(ln, col, makedev(cxt->maj, cxt->min));
+ 		break;
+ 	case COL_FSTYPE:
+-		probe_device(cxt);
++		probe_device_fs(cxt);
+ 		if (cxt->fstype)
+ 			str = xstrdup(cxt->fstype);
+ 		break;
+@@ -843,32 +983,32 @@ static void set_scols_data(struct blkdev_cxt *cxt, int col, int id, struct libsc
+ 			str = get_device_mountpoint(cxt);
+ 		break;
+ 	case COL_LABEL:
+-		probe_device(cxt);
++		probe_device(cxt, COL_LABEL);
+ 		if (cxt->label)
+ 			str = xstrdup(cxt->label);
+ 		break;
+ 	case COL_UUID:
+-		probe_device(cxt);
++		probe_device(cxt, COL_UUID);
+ 		if (cxt->uuid)
+ 			str = xstrdup(cxt->uuid);
+ 		break;
+ 	case COL_PARTTYPE:
+-		probe_device(cxt);
++		probe_device(cxt, COL_PARTTYPE);
+ 		if (cxt->parttype)
+ 			str = xstrdup(cxt->parttype);
+ 		break;
+ 	case COL_PARTLABEL:
+-		probe_device(cxt);
++		probe_device(cxt, COL_PARTLABEL);
+ 		if (cxt->partlabel)
+ 			str = xstrdup(cxt->partlabel);
+ 		break;
+ 	case COL_PARTUUID:
+-		probe_device(cxt);
++		probe_device(cxt, COL_PARTUUID);
+ 		if (cxt->partuuid)
+ 			str = xstrdup(cxt->partuuid);
+ 		break;
+ 	case COL_PARTFLAGS:
+-		probe_device(cxt);
++		probe_device(cxt, COL_PARTFLAGS);
+ 		if (cxt->partflags)
+ 			str = xstrdup(cxt->partflags);
+ 		break;
+@@ -902,7 +1042,7 @@ static void set_scols_data(struct blkdev_cxt *cxt, int col, int id, struct libsc
+ 		break;
+ 	case COL_SERIAL:
+ 		if (!cxt->partition && cxt->nslaves == 0) {
+-			get_udev_properties(cxt);
++			get_udev_serial(cxt);
+ 			if (cxt->serial)
+ 				str = xstrdup(cxt->serial);
+ 		}

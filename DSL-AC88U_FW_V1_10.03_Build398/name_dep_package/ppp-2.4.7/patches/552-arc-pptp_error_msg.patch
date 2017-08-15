@@ -1,0 +1,156 @@
+--- a/pppd/plugins/pptp/pptp.c	2016-12-15 18:28:37.619123224 +0800
++++ b/pppd/plugins/pptp/pptp.c	2016-12-15 17:49:34.982305675 +0800
+@@ -72,6 +72,8 @@
+ static int callmgr_sock;
+ static int pptp_fd;
+ int call_ID;
++
++
+ 
+ static int open_callmgr(int call_id,struct in_addr inetaddr, char *phonenr,int window);
+ static void launch_callmgr(int call_is,struct in_addr inetaddr, char *phonenr,int window);
+@@ -123,6 +125,8 @@
+   if (!hostinfo)
+ 	{
+ 		error("PPTP: Unknown host %s\n", pptp_server);
++		system("echo 'Unknown host' > /tmp/vpn_client_error_msg");
++		system("mngcli action new_event=vpn_client_stop");
+ 		return -1;
+ 	}
+ 	dst_addr.sa_addr.pptp.sin_addr=*(struct in_addr*)hostinfo->h_addr;
+@@ -138,6 +142,8 @@
+ 		{
+ 			close(sock);
+ 			error("PPTP: connect failed (%s)\n",strerror(errno));
++			system("echo 'Fails to connect to server.' > /tmp/vpn_client_error_msg");
++			system("mngcli action new_event=vpn_client_stop");
+ 			return -1;
+ 		}
+ 		getsockname(sock,(struct sockaddr*)&addr,&len);
+@@ -157,12 +163,16 @@
+ 	if (pptp_fd<0)
+ 	{
+ 		error("PPTP: failed to create PPTP socket (%s)\n",strerror(errno));
++		system("echo 'Fails to create PPTP socket' > /tmp/vpn_client_error_msg");
++		system("mngcli action new_event=vpn_client_stop");
+ 		return -1;
+ 	}
+ 	if (bind(pptp_fd,(struct sockaddr*)&src_addr,sizeof(src_addr)))
+ 	{
+ 		close(pptp_fd);
+ 		error("PPTP: failed to bind PPTP socket (%s)\n",strerror(errno));
++		system("echo 'Fails to bind PPTP socket' > /tmp/vpn_client_error_msg");
++		system("mngcli action new_event=vpn_client_stop");
+ 		return -1;
+ 	}
+ 	len=sizeof(src_addr);
+@@ -187,6 +197,8 @@
+ 		close(callmgr_sock);
+ 		close(pptp_fd);
+ 		error("PPTP: failed to connect PPTP socket (%s)\n",strerror(errno));
++		system("echo 'Fails to connect PPTP socket' > /tmp/vpn_client_error_msg");
++		system("mngcli action new_event=vpn_client_stop");
+ 		return -1;
+ 	}
+ 
+@@ -253,6 +265,8 @@
+ 		    {
+ 			close(fd);
+ 			error("Call manager exited with error %d", status);
++			
++		
+ 			return -1;
+ 		    }
+                     break;
+@@ -263,6 +277,9 @@
+     }
+     close(fd);
+     error("Could not launch call manager after %d tries.", i);
++	system("echo 'Could not launch call manager' > /tmp/vpn_client_error_msg");
++	system("mngcli action new_event=vpn_client_stop");
++	
+     return -1;   /* make gcc happy */
+ }
+ 
+--- a/pppd/chap_ms.c	2016-12-15 18:28:37.564122703 +0800
++++ b/pppd/chap_ms.c	2016-12-15 18:24:40.713388202 +0800
+@@ -417,6 +417,8 @@
+ 	    || !chapms2_find_in_response_cache(id, NULL /* challenge */, msg)) {
+ 		/* Authenticator Response did not match expected. */
+ 		error("MS-CHAPv2 mutual authentication failed.");
++		system("echo 'MS-CHAPv2 mutual authentication failed' > /tmp/vpn_client_error_msg");
++		system("mngcli action new_event=vpn_client_stop");
+ 		return 0;
+ 	}
+ 	/* Authenticator Response matches. */
+@@ -500,6 +502,8 @@
+ print_msg:
+ 	if (p != NULL)
+ 		error("MS-CHAP authentication failed: %v", p);
++		system("echo 'MS-CHAP authentication failed' > /tmp/vpn_client_error_msg");
++		system("mngcli action new_event=vpn_client_stop");
+ 	free(msg);
+ }
+ 
+--- a/pppd/chap-new.c	2016-12-15 18:28:37.539122467 +0800
++++ b/pppd/chap-new.c	2016-12-15 18:29:30.667320731 +0800
+@@ -530,6 +530,8 @@
+ 	else {
+ 		cs->flags |= AUTH_FAILED;
+ 		error("CHAP authentication failed");
++		system("echo 'CHAP authentication failed' > /tmp/vpn_client_error_msg");
++		system("mngcli action new_event=vpn_client_stop");
+ 		auth_withpeer_fail(0, PPP_CHAP);
+ 	}
+ }
+@@ -582,6 +584,8 @@
+ 	if ((cs->flags & (AUTH_STARTED|AUTH_DONE)) == AUTH_STARTED) {
+ 		cs->flags &= ~AUTH_STARTED;
+ 		error("CHAP authentication failed due to protocol-reject");
++		system("echo 'CHAP authentication failed due to protocol-reject' > /tmp/vpn_client_error_msg");
++		system("mngcli action new_event=vpn_client_stop");
+ 		auth_withpeer_fail(0, PPP_CHAP);
+ 	}
+ }
+--- a/pppd/ccp.c	2016-12-15 18:31:45.691902530 +0800
++++ b/pppd/ccp.c	2016-12-16 10:34:55.287614660 +0800
+@@ -624,6 +624,8 @@
+ #ifdef MPPE
+     if (ccp_wantoptions[unit].mppe) {
+ 	error("MPPE required but peer negotiation failed");
++	system("echo 'MPPE required but peer negotiation failed' > /tmp/vpn_client_error_msg");
++	system("mngcli action new_event=vpn_client_stop");
+ 	lcp_close(unit, "MPPE required but peer negotiation failed");
+     }
+ #endif /* MPPE */
+@@ -670,11 +672,15 @@
+ 	    } while (auth_mschap_bits);
+ 	    if (numbits > 1) {
+ 		error("MPPE required, but auth done in both directions.");
++		system("echo 'MPPE required, but auth done in both directions' > /tmp/vpn_client_error_msg");
++		system("mngcli action new_event=vpn_client_stop");
+ 		lcp_close(f->unit, "MPPE required but not available");
+ 		return;
+ 	    }
+ 	    if (!numbits) {
+ 		error("MPPE required, but MS-CHAP[v2] auth not performed.");
++		system("echo 'MPPE required, but MS-CHAP[v2] auth not performed' > /tmp/vpn_client_error_msg");
++		system("mngcli action new_event=vpn_client_stop");
+ 		lcp_close(f->unit, "MPPE required but not available");
+ 		return;
+ 	    }
+--- a/pppd/plugins/pptp/pptp_callmgr.c	2016-12-16 10:39:54.171798082 +0800
++++ b/pppd/plugins/pptp/pptp_callmgr.c	2016-12-16 13:26:52.413103789 +0800
+@@ -114,8 +114,11 @@
+     if (pcallid>0) call_ID=pcallid;
+ 
+     /* Step 1: Open sockets. */
+-    if ((inet_sock = open_inetsock(inetaddr)) < 0)
++    if ((inet_sock = open_inetsock(inetaddr)) < 0){
+         fatal("Could not open control connection to %s", inet_ntoa(inetaddr));
++		system("echo 'PPTP callmgr could not open control connection to server' > /tmp/vpn_client_error_msg");
++		system("mngcli action new_event=vpn_client_stop");
++	}
+     dbglog("control connection");
+     if ((unix_sock = open_unixsock(inetaddr)) < 0)
+         fatal("Could not open unix socket for %s", inet_ntoa(inetaddr));

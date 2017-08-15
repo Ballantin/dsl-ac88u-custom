@@ -1,0 +1,11 @@
+--- a/ip/iptuntap.c	2011-06-30 07:01:48.000000000 +0800
++++ b/ip/iptuntap.c	2015-06-09 16:36:49.000000000 +0800
+@@ -30,7 +30,7 @@
+ #include "utils.h"
+ #include "ip_common.h"
+ 
+-#define TUNDEV "/dev/net/tun"
++#define TUNDEV "/dev/tun"
+ 
+ static void usage(void) __attribute__((noreturn));
+ 

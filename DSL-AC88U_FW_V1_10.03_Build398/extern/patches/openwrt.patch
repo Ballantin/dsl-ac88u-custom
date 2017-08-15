@@ -1,0 +1,13 @@
+diff --git a/toolchain/Config.in b/toolchain/Config.in
+index 1c09983..d653aac 100644
+--- a/toolchain/Config.in
++++ b/toolchain/Config.in
+@@ -157,7 +157,7 @@ config GDB
+ 	bool
+ 	depends !avr32
+ 	prompt "Build gdb" if TOOLCHAINOPTS
+-	default y
++	default n
+ 	help
+ 		Enable if you want to build the gdb
+ 

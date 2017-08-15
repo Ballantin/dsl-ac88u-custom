@@ -1,0 +1,457 @@
+.SS ah (IPv6-specific)
+This module matches the parameters in Authentication header of IPsec packets.
+.TP
+[\fB!\fP] \fB\-\-ahspi\fP \fIspi\fP[\fB:\fP\fIspi\fP]
+Matches SPI.
+.TP
+[\fB!\fP] \fB\-\-ahlen\fP \fIlength\fP
+Total length of this header in octets.
+.TP
+\fB\-\-ahres\fP
+Matches if the reserved field is filled with zero.
+.SS ah (IPv4-specific)
+This module matches the SPIs in Authentication header of IPsec packets.
+.TP
+[\fB!\fP] \fB\-\-ahspi\fP \fIspi\fP[\fB:\fP\fIspi\fP]
+.SS conntrack
+This module, when combined with connection tracking, allows access to the
+connection tracking state for this packet/connection.
+.TP
+[\fB!\fP] \fB\-\-ctstate\fP \fIstatelist\fP
+\fIstatelist\fP is a comma separated list of the connection states to match.
+Possible states are listed below.
+.TP
+[\fB!\fP] \fB\-\-ctproto\fP \fIl4proto\fP
+Layer-4 protocol to match (by number or name)
+.TP
+[\fB!\fP] \fB\-\-ctorigsrc\fP \fIaddress\fP[\fB/\fP\fImask\fP]
+.TP
+[\fB!\fP] \fB\-\-ctorigdst\fP \fIaddress\fP[\fB/\fP\fImask\fP]
+.TP
+[\fB!\fP] \fB\-\-ctreplsrc\fP \fIaddress\fP[\fB/\fP\fImask\fP]
+.TP
+[\fB!\fP] \fB\-\-ctrepldst\fP \fIaddress\fP[\fB/\fP\fImask\fP]
+Match against original/reply source/destination address
+.TP
+[\fB!\fP] \fB\-\-ctorigsrcport\fP \fIport\fP[\fB:\fP\fIport\fP]
+.TP
+[\fB!\fP] \fB\-\-ctorigdstport\fP \fIport\fP[\fB:\fP\fIport\fP]
+.TP
+[\fB!\fP] \fB\-\-ctreplsrcport\fP \fIport\fP[\fB:\fP\fIport\fP]
+.TP
+[\fB!\fP] \fB\-\-ctrepldstport\fP \fIport\fP[\fB:\fP\fIport\fP]
+Match against original/reply source/destination port (TCP/UDP/etc.) or GRE key.
+Matching against port ranges is only supported in kernel versions above 2.6.38.
+.TP
+[\fB!\fP] \fB\-\-ctstatus\fP \fIstatelist\fP
+\fIstatuslist\fP is a comma separated list of the connection statuses to match.
+Possible statuses are listed below.
+.TP
+[\fB!\fP] \fB\-\-ctexpire\fP \fItime\fP[\fB:\fP\fItime\fP]
+Match remaining lifetime in seconds against given value or range of values
+(inclusive)
+.TP
+\fB\-\-ctdir\fP {\fBORIGINAL\fP|\fBREPLY\fP}
+Match packets that are flowing in the specified direction. If this flag is not
+specified at all, matches packets in both directions.
+.PP
+States for \fB\-\-ctstate\fP:
+.TP
+\fBINVALID\fP
+The packet is associated with no known connection.
+.TP
+\fBNEW\fP
+The packet has started a new connection, or otherwise associated
+with a connection which has not seen packets in both directions.
+.TP
+\fBESTABLISHED\fP
+The packet is associated with a connection which has seen packets
+in both directions.
+.TP
+\fBRELATED\fP
+The packet is starting a new connection, but is associated with an
+existing connection, such as an FTP data transfer, or an ICMP error.
+.TP
+\fBUNTRACKED\fP
+The packet is not tracked at all, which happens if you explicitly untrack it
+by using \-j CT \-\-notrack in the raw table.
+.TP
+\fBSNAT\fP
+A virtual state, matching if the original source address differs from the reply
+destination.
+.TP
+\fBDNAT\fP
+A virtual state, matching if the original destination differs from the reply
+source.
+.PP
+Statuses for \fB\-\-ctstatus\fP:
+.TP
+\fBNONE\fP
+None of the below.
+.TP
+\fBEXPECTED\fP
+This is an expected connection (i.e. a conntrack helper set it up).
+.TP
+\fBSEEN_REPLY\fP
+Conntrack has seen packets in both directions.
+.TP
+\fBASSURED\fP
+Conntrack entry should never be early-expired.
+.TP
+\fBCONFIRMED\fP
+Connection is confirmed: originating packet has left box.
+.SS dscp
+This module matches the 6 bit DSCP field within the TOS field in the
+IP header.  DSCP has superseded TOS within the IETF.
+.TP
+[\fB!\fP] \fB\-\-dscp\fP \fIvalue\fP
+Match against a numeric (decimal or hex) value [0-63].
+.TP
+[\fB!\fP] \fB\-\-dscp\-class\fP \fIclass\fP
+Match the DiffServ class. This value may be any of the
+BE, EF, AFxx or CSx classes.  It will then be converted
+into its according numeric value.
+.SS dst (IPv6-specific)
+This module matches the parameters in Destination Options header
+.TP
+[\fB!\fP] \fB\-\-dst\-len\fP \fIlength\fP
+Total length of this header in octets.
+.TP
+\fB\-\-dst\-opts\fP \fItype\fP[\fB:\fP\fIlength\fP][\fB,\fP\fItype\fP[\fB:\fP\fIlength\fP]...]
+numeric type of option and the length of the option data in octets.
+.SS eui64 (IPv6-specific)
+This module matches the EUI-64 part of a stateless autoconfigured IPv6 address.
+It compares the EUI-64 derived from the source MAC address in Ethernet frame
+with the lower 64 bits of the IPv6 source address. But "Universal/Local"
+bit is not compared. This module doesn't match other link layer frame, and
+is only valid in the
+.BR PREROUTING ,
+.BR INPUT
+and
+.BR FORWARD
+chains.
+.SS frag (IPv6-specific)
+This module matches the parameters in Fragment header.
+.TP
+[\fB!\fP] \fB\-\-fragid\fP \fIid\fP[\fB:\fP\fIid\fP]
+Matches the given Identification or range of it.
+.TP
+[\fB!\fP] \fB\-\-fraglen\fP \fIlength\fP
+This option cannot be used with kernel version 2.6.10 or later. The length of
+Fragment header is static and this option doesn't make sense.
+.TP
+\fB\-\-fragres\fP
+Matches if the reserved fields are filled with zero.
+.TP
+\fB\-\-fragfirst\fP
+Matches on the first fragment.
+.TP
+\fB\-\-fragmore\fP
+Matches if there are more fragments.
+.TP
+\fB\-\-fraglast\fP
+Matches if this is the last fragment.
+.SS hbh (IPv6-specific)
+This module matches the parameters in Hop-by-Hop Options header
+.TP
+[\fB!\fP] \fB\-\-hbh\-len\fP \fIlength\fP
+Total length of this header in octets.
+.TP
+\fB\-\-hbh\-opts\fP \fItype\fP[\fB:\fP\fIlength\fP][\fB,\fP\fItype\fP[\fB:\fP\fIlength\fP]...]
+numeric type of option and the length of the option data in octets.
+.SS hl (IPv6-specific)
+This module matches the Hop Limit field in the IPv6 header.
+.TP
+[\fB!\fP] \fB\-\-hl\-eq\fP \fIvalue\fP
+Matches if Hop Limit equals \fIvalue\fP.
+.TP
+\fB\-\-hl\-lt\fP \fIvalue\fP
+Matches if Hop Limit is less than \fIvalue\fP.
+.TP
+\fB\-\-hl\-gt\fP \fIvalue\fP
+Matches if Hop Limit is greater than \fIvalue\fP.
+.SS icmp (IPv4-specific)
+This extension can be used if `\-\-protocol icmp' is specified. It
+provides the following option:
+.TP
+[\fB!\fP] \fB\-\-icmp\-type\fP {\fItype\fP[\fB/\fP\fIcode\fP]|\fItypename\fP}
+This allows specification of the ICMP type, which can be a numeric
+ICMP type, type/code pair, or one of the ICMP type names shown by the command
+.nf
+ iptables \-p icmp \-h
+.fi
+.SS icmp6 (IPv6-specific)
+This extension can be used if `\-\-protocol ipv6\-icmp' or `\-\-protocol icmpv6' is
+specified. It provides the following option:
+.TP
+[\fB!\fP] \fB\-\-icmpv6\-type\fP \fItype\fP[\fB/\fP\fIcode\fP]|\fItypename\fP
+This allows specification of the ICMPv6 type, which can be a numeric
+ICMPv6
+.IR type ,
+.IR type
+and
+.IR code ,
+or one of the ICMPv6 type names shown by the command
+.nf
+ ip6tables \-p ipv6\-icmp \-h
+.fi
+.SS ipv6header (IPv6-specific)
+This module matches IPv6 extension headers and/or upper layer header.
+.TP
+\fB\-\-soft\fP
+Matches if the packet includes \fBany\fP of the headers specified with
+\fB\-\-header\fP.
+.TP
+[\fB!\fP] \fB\-\-header\fP \fIheader\fP[\fB,\fP\fIheader\fP...]
+Matches the packet which EXACTLY includes all specified headers. The headers
+encapsulated with ESP header are out of scope.
+Possible \fIheader\fP types can be:
+.TP
+\fBhop\fP|\fBhop\-by\-hop\fP
+Hop-by-Hop Options header
+.TP
+\fBdst\fP
+Destination Options header
+.TP
+\fBroute\fP
+Routing header
+.TP
+\fBfrag\fP
+Fragment header
+.TP
+\fBauth\fP
+Authentication header
+.TP
+\fBesp\fP
+Encapsulating Security Payload header
+.TP
+\fBnone\fP
+No Next header which matches 59 in the 'Next Header field' of IPv6 header or
+any IPv6 extension headers
+.TP
+\fBproto\fP
+which matches any upper layer protocol header. A protocol name from
+/etc/protocols and numeric value also allowed. The number 255 is equivalent to
+\fBproto\fP.
+.SS length
+This module matches the length of the layer-3 payload (e.g. layer-4 packet)
+of a packet against a specific value
+or range of values.
+.TP
+[\fB!\fP] \fB\-\-length\fP \fIlength\fP[\fB:\fP\fIlength\fP]
+.SS limit
+This module matches at a limited rate using a token bucket filter.
+A rule using this extension will match until this limit is reached.
+It can be used in combination with the
+.B LOG
+target to give limited logging, for example.
+.PP
+xt_limit has no negation support - you will have to use \-m hashlimit !
+\-\-hashlimit \fIrate\fP in this case whilst omitting \-\-hashlimit\-mode.
+.TP
+\fB\-\-limit\fP \fIrate\fP[\fB/second\fP|\fB/minute\fP|\fB/hour\fP|\fB/day\fP]
+Maximum average matching rate: specified as a number, with an optional
+`/second', `/minute', `/hour', or `/day' suffix; the default is
+3/hour.
+.TP
+\fB\-\-limit\-burst\fP \fInumber\fP
+Maximum initial number of packets to match: this number gets
+recharged by one every time the limit specified above is not reached,
+up to this number; the default is 5.
+.SS mac
+.TP
+[\fB!\fP] \fB\-\-mac\-source\fP \fIaddress\fP
+Match source MAC address.  It must be of the form XX:XX:XX:XX:XX:XX.
+Note that this only makes sense for packets coming from an Ethernet device
+and entering the
+.BR PREROUTING ,
+.B FORWARD
+or
+.B INPUT
+chains.
+.SS mark
+This module matches the netfilter mark field associated with a packet
+(which can be set using the
+.B MARK
+target below).
+.TP
+[\fB!\fP] \fB\-\-mark\fP \fIvalue\fP[\fB/\fP\fImask\fP]
+Matches packets with the given unsigned mark value (if a \fImask\fP is
+specified, this is logically ANDed with the \fImask\fP before the
+comparison).
+.SS mh (IPv6-specific)
+This extension is loaded if `\-\-protocol ipv6\-mh' or `\-\-protocol mh' is
+specified. It provides the following option:
+.TP
+[\fB!\fP] \fB\-\-mh\-type\fP \fItype\fP[\fB:\fP\fItype\fP]
+This allows specification of the Mobility Header(MH) type, which can be
+a numeric MH
+.IR type ,
+.IR type
+or one of the MH type names shown by the command
+.nf
+ ip6tables \-p ipv6\-mh \-h
+.fi
+.SS owner
+This module attempts to match various characteristics of the packet creator,
+for locally generated packets. This match is only valid in the OUTPUT and
+POSTROUTING chains. Forwarded packets do not have any socket associated with
+them. Packets from kernel threads do have a socket, but usually no owner.
+.TP
+[\fB!\fP] \fB\-\-uid\-owner\fP \fIusername\fP
+.TP
+[\fB!\fP] \fB\-\-uid\-owner\fP \fIuserid\fP[\fB\-\fP\fIuserid\fP]
+Matches if the packet socket's file structure (if it has one) is owned by the
+given user. You may also specify a numerical UID, or an UID range.
+.TP
+[\fB!\fP] \fB\-\-gid\-owner\fP \fIgroupname\fP
+.TP
+[\fB!\fP] \fB\-\-gid\-owner\fP \fIgroupid\fP[\fB\-\fP\fIgroupid\fP]
+Matches if the packet socket's file structure is owned by the given group.
+You may also specify a numerical GID, or a GID range.
+.TP
+[\fB!\fP] \fB\-\-socket\-exists\fP
+Matches if the packet is associated with a socket.
+.SS policy
+This modules matches the policy used by IPsec for handling a packet.
+.TP
+\fB\-\-dir\fP {\fBin\fP|\fBout\fP}
+Used to select whether to match the policy used for decapsulation or the
+policy that will be used for encapsulation.
+.B in
+is valid in the
+.B PREROUTING, INPUT and FORWARD
+chains,
+.B out
+is valid in the
+.B POSTROUTING, OUTPUT and FORWARD
+chains.
+.TP
+\fB\-\-pol\fP {\fBnone\fP|\fBipsec\fP}
+Matches if the packet is subject to IPsec processing. \fB\-\-pol none\fP
+cannot be combined with \fB\-\-strict\fP.
+.TP
+\fB\-\-strict\fP
+Selects whether to match the exact policy or match if any rule of
+the policy matches the given policy.
+.PP
+For each policy element that is to be described, one can use one or more of
+the following options. When \fB\-\-strict\fP is in effect, at least one must be
+used per element.
+.TP
+[\fB!\fP] \fB\-\-reqid\fP \fIid\fP
+Matches the reqid of the policy rule. The reqid can be specified with
+.B setkey(8)
+using
+.B unique:id
+as level.
+.TP
+[\fB!\fP] \fB\-\-spi\fP \fIspi\fP
+Matches the SPI of the SA.
+.TP
+[\fB!\fP] \fB\-\-proto\fP {\fBah\fP|\fBesp\fP|\fBipcomp\fP}
+Matches the encapsulation protocol.
+.TP
+[\fB!\fP] \fB\-\-mode\fP {\fBtunnel\fP|\fBtransport\fP}
+Matches the encapsulation mode.
+.TP
+[\fB!\fP] \fB\-\-tunnel\-src\fP \fIaddr\fP[\fB/\fP\fImask\fP]
+Matches the source end-point address of a tunnel mode SA.
+Only valid with \fB\-\-mode tunnel\fP.
+.TP
+[\fB!\fP] \fB\-\-tunnel\-dst\fP \fIaddr\fP[\fB/\fP\fImask\fP]
+Matches the destination end-point address of a tunnel mode SA.
+Only valid with \fB\-\-mode tunnel\fP.
+.TP
+\fB\-\-next\fP
+Start the next element in the policy specification. Can only be used with
+\fB\-\-strict\fP.
+.SS rt (IPv6-specific)
+Match on IPv6 routing header
+.TP
+[\fB!\fP] \fB\-\-rt\-type\fP \fItype\fP
+Match the type (numeric).
+.TP
+[\fB!\fP] \fB\-\-rt\-segsleft\fP \fInum\fP[\fB:\fP\fInum\fP]
+Match the `segments left' field (range).
+.TP
+[\fB!\fP] \fB\-\-rt\-len\fP \fIlength\fP
+Match the length of this header.
+.TP
+\fB\-\-rt\-0\-res\fP
+Match the reserved field, too (type=0)
+.TP
+\fB\-\-rt\-0\-addrs\fP \fIaddr\fP[\fB,\fP\fIaddr\fP...]
+Match type=0 addresses (list).
+.TP
+\fB\-\-rt\-0\-not\-strict\fP
+List of type=0 addresses is not a strict list.
+.SS state
+The "state" module is an obsolete version of "conntrack".
+"state" allows access to the connection tracking state for this packet.
+.TP
+[\fB!\fP] \fB\-\-state\fP \fIstate\fP
+Where state is a comma separated list of the connection states to match. Only a
+subset of the states unterstood by "conntrack" are recognized: \fBINVALID\fP,
+\fBESTABLISHED\fP, \fBNEW\fP, \fBRELATED\fP or \fBUNTRACKED\fP. For their
+description, see the "conntrack" heading in this manpage.
+.SS tcp
+These extensions can be used if `\-\-protocol tcp' is specified. It
+provides the following options:
+.TP
+[\fB!\fP] \fB\-\-source\-port\fP,\fB\-\-sport\fP \fIport\fP[\fB:\fP\fIport\fP]
+Source port or port range specification. This can either be a service
+name or a port number. An inclusive range can also be specified,
+using the format \fIfirst\fP\fB:\fP\fIlast\fP.
+If the first port is omitted, "0" is assumed; if the last is omitted,
+"65535" is assumed.
+If the first port is greater than the second one they will be swapped.
+The flag
+\fB\-\-sport\fP
+is a convenient alias for this option.
+.TP
+[\fB!\fP] \fB\-\-destination\-port\fP,\fB\-\-dport\fP \fIport\fP[\fB:\fP\fIport\fP]
+Destination port or port range specification.  The flag
+\fB\-\-dport\fP
+is a convenient alias for this option.
+.TP
+[\fB!\fP] \fB\-\-tcp\-flags\fP \fImask\fP \fIcomp\fP
+Match when the TCP flags are as specified.  The first argument \fImask\fP is the
+flags which we should examine, written as a comma-separated list, and
+the second argument \fIcomp\fP is a comma-separated list of flags which must be
+set.  Flags are:
+.BR "SYN ACK FIN RST URG PSH ALL NONE" .
+Hence the command
+.nf
+ iptables \-A FORWARD \-p tcp \-\-tcp\-flags SYN,ACK,FIN,RST SYN
+.fi
+will only match packets with the SYN flag set, and the ACK, FIN and
+RST flags unset.
+.TP
+[\fB!\fP] \fB\-\-syn\fP
+Only match TCP packets with the SYN bit set and the ACK,RST and FIN bits
+cleared.  Such packets are used to request TCP connection initiation;
+for example, blocking such packets coming in an interface will prevent
+incoming TCP connections, but outgoing TCP connections will be
+unaffected.
+It is equivalent to \fB\-\-tcp\-flags SYN,RST,ACK,FIN SYN\fP.
+If the "!" flag precedes the "\-\-syn", the sense of the
+option is inverted.
+.TP
+[\fB!\fP] \fB\-\-tcp\-option\fP \fInumber\fP
+Match if TCP option set.
+.SS udp
+These extensions can be used if `\-\-protocol udp' is specified. It
+provides the following options:
+.TP
+[\fB!\fP] \fB\-\-source\-port\fP,\fB\-\-sport\fP \fIport\fP[\fB:\fP\fIport\fP]
+Source port or port range specification.
+See the description of the
+\fB\-\-source\-port\fP
+option of the TCP extension for details.
+.TP
+[\fB!\fP] \fB\-\-destination\-port\fP,\fB\-\-dport\fP \fIport\fP[\fB:\fP\fIport\fP]
+Destination port or port range specification.
+See the description of the
+\fB\-\-destination\-port\fP
+option of the TCP extension for details.

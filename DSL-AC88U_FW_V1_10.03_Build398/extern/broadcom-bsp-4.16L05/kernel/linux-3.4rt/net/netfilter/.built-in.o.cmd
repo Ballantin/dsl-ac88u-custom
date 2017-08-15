@@ -1,0 +1,1 @@
+cmd_net/netfilter/built-in.o :=  /opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/bin/arm-unknown-linux-uclibcgnueabi-ld -EL    -r -o net/netfilter/built-in.o net/netfilter/netfilter.o net/netfilter/x_tables.o net/netfilter/xt_tcpudp.o 

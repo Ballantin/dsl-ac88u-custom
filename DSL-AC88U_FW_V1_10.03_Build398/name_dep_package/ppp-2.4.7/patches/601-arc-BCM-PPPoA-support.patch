@@ -1,0 +1,731 @@
+--- a/pppd/options.c	2017-02-08 11:01:11.412547500 +0800
++++ b/pppd/options.c	2017-02-15 14:09:14.932827975 +0800
+@@ -76,6 +76,11 @@
+ #include "pppd.h"
+ #include "pathnames.h"
+ 
++#ifdef ARC-BCM-pppoa-support
++#include "fsm.h" /* Needed for lcp.h to include cleanly */
++#include "lcp.h"
++#endif
++
+ #if defined(ultrix) || defined(NeXT)
+ char *strdup __P((char *));
+ #endif
+@@ -91,6 +96,12 @@
+ /*
+  * Option variables and default values.
+  */
++
++#ifdef ARC-BCM-pppoa-support
++extern bool llc_encaps;
++extern bool vc_encaps;
++#endif
++
+ int	debug = 0;		/* Debug flag */
+ int	kdebugflag = 0;		/* Tell kernel to print debug messages */
+ int	default_device = 1;	/* Using /dev/tty or equivalent */
+@@ -128,12 +139,32 @@
+ int	child_wait = 5;		/* # seconds to wait for children at exit */
+ struct userenv *userenv_list;	/* user environment variables */
+ 
++#ifdef ARC-BCM-pppoa-support
++int 	autoscan=0;
++int 	autoscanP2=0;
++int		ipext=0;
++#endif
++
+ #ifdef MAXOCTETS
+ unsigned int  maxoctets = 0;    /* default - no limit */
+ int maxoctets_dir = 0;       /* default - sum of traffic */
+ int maxoctets_timeout = 1;   /* default 1 second */ 
++
++#ifdef ARC-BCM-pppoa-support
++int	opflag=0;
++//char servicename[BUFLEN_264]; /* service name from the connection */
++char    oldsession[MAXPATHLEN]="";  /* Mac address and session ID of the previous session */
++int isPppoa = 0;             /* flag for pppoa */
++#endif
+ #endif
+ 
++#ifdef ARC-BCM-pppoa-support
++int console = 0;
++int	srvdisc=0;
++char	req_name[MAXPATHLEN] = "";	/* logical name for link */
++static char ip_addr[MAXPATHLEN] = ""; /* IP address */
++extern int setdevname_pppoatm(const char *cp);
++#endif
+ 
+ extern option_t auth_options[];
+ extern struct stat devstat;
+@@ -411,33 +442,158 @@
+     int argc;
+     char **argv;
+ {
+-    char *arg;
+-    option_t *opt;
+-    int n;
+-
+-    privileged_option = privileged;
+-    option_source = "command line";
+-    option_priority = OPRIO_CMDLINE;
+-    while (argc > 0) {
+-	arg = *argv++;
+-	--argc;
+-	opt = find_option(arg);
+-	if (opt == NULL) {
+-	    option_error("unrecognized option '%s'", arg);
+-	    usage();
+-	    return 0;
++	int bcm_pppoa = 0;
++	if( strncmp(argv[0], "-c", sizeof("-c")) == 0)
++		bcm_pppoa = 1;
++	
++#if 0
++	int i=0;
++	char cmd[128] = "";
++
++	sprintf(cmd, "echo argv[] = > /tmp/pppoa_test");
++	system(cmd);
++		
++	for(i=0; i<argc; i++)
++	{
++		sprintf(cmd, "echo argv[%d] = %s >> /tmp/pppoa_test", i, argv[i]);
++		system(cmd);
++	}
++#endif
++
++	if(bcm_pppoa)
++	{
++#ifdef ARC-BCM-pppoa-support
++		int opt;
++
++#ifdef INET6
++		while ((opt = getopt(argc, argv, "64a:u:p:o:lvc:f:A:")) != -1) 
++		{
++#else
++		while ((opt = getopt(argc, argv, "a:u:p:o:lvc:f:A:")) != -1) 
++		{
++#endif
++			switch (opt) 
++			{
++#ifdef INET6
++				case '6':
++				{
++					int 	   i;
++					option_t   *op;
++					char		 *cmd[] = {"+ipv6"};
++					privileged_option = privileged;
++					option_source 	= "command line";
++					option_priority   = OPRIO_CMDLINE;
++					for (i = 0; i < 1; i++)
++					{
++						op = find_option(cmd[i]);
++						if (op == NULL)
++						{
++							option_error("Unrecognized option '%s'", cmd[i]);
++							return 0;
++						}
++						if (!process_option(op, cmd[i], NULL))
++						{
++							fprintf(stderr, "Failed to process option '%s'", cmd[i]);
++							return 0;
++						}
++					}
++					break;
++				}
++				case '4':
++				{
++					int		i;
++					option_t	*op;
++					char 	  *cmd[] = {"noip"};
++					privileged_option = privileged;
++					option_source 	= "command line";
++					option_priority   = OPRIO_CMDLINE;
++					for (i = 0; i < 1; i++)
++					{
++						op = find_option(cmd[i]);
++						if (op == NULL)
++						{
++							option_error("Unrecognized option '%s'", cmd[i]);
++							return 0;
++						}
++						if (!process_option(op, cmd[i], NULL))
++						{
++							fprintf(stderr, "Failed to process option '%s'", cmd[i]);
++							return 0;
++						}
++					}
++					break;
++				}
++#endif
++				case 'a':
++					setdevname_pppoatm(optarg);
++					isPppoa = 1;
++					break;
++				case 'u':
++					strncpy(user, optarg, MAXNAMELEN);
++					strncpy(our_name, optarg, MAXNAMELEN);
++					break;
++				case 'p':
++					strncpy(passwd, optarg, MAXSECRETLEN);
++					break;
++				case 'o':
++					idle_time_limit = atoi(optarg);
++					demand=1;
++					break;
++				case 'l':
++					llc_encaps=1;
++					break;
++				case 'v':
++					vc_encaps=1;
++					break;
++				case 'c':
++					strncpy(use_ifname, optarg, MAXPATHLEN);
++					break;
++				case 'f':
++					opflag = atoi(optarg);
++					break;
++				case 'A':
++					strncpy(ip_addr, optarg, MAXPATHLEN);
++					ip_addr[strlen(ip_addr)] = ':';
++					setipaddr (ip_addr, NULL, 1);
++					break;
++				default:
++					fprintf(stderr, "usage: %s [-c interface] [-a vcc]  [-u username] [-p passwd] [-f] [-l] [-o idle] [-A ipaddr]\n", argv[0]);
++					return 0;
++			}
++		}
++#endif
++		return 1;
+ 	}
+-	n = n_arguments(opt);
+-	if (argc < n) {
+-	    option_error("too few parameters for option %s", arg);
+-	    return 0;
++	else
++	{
++   		char *arg;
++    	option_t *opt;
++    	int n;
++
++    	privileged_option = privileged;
++    	option_source = "command line";
++    	option_priority = OPRIO_CMDLINE;
++    	while (argc > 0) {
++		arg = *argv++;
++		--argc;
++		opt = find_option(arg);
++		if (opt == NULL) {
++	    	option_error("unrecognized option '%s'", arg);
++	    	usage();
++	    	return 0;
++		}
++		n = n_arguments(opt);
++		if (argc < n) {
++	    	option_error("too few parameters for option %s", arg);
++	    	return 0;
++		}
++		if (!process_option(opt, arg, argv))
++	    	return 0;
++		argc -= n;
++		argv += n;
++    	}
++    	return 1;
+ 	}
+-	if (!process_option(opt, arg, argv))
+-	    return 0;
+-	argc -= n;
+-	argv += n;
+-    }
+-    return 1;
+ }
+ 
+ /*
+--- a/pppd/main.c	2017-02-08 11:01:11.374546900 +0800
++++ b/pppd/main.c	2017-02-14 10:21:55.558944613 +0800
+@@ -288,8 +288,10 @@
+ #ifdef INET6
+     &ipv6cp_protent,
+ #endif
++//#ifdef ARC-BCM-pppoa-support
+     &ccp_protent,
+     &ecp_protent,
++//#endif
+ #ifdef IPX_CHANGE
+     &ipxcp_protent,
+ #endif
+@@ -307,6 +309,9 @@
+ #define PPP_DRV_NAME	"ppp"
+ #endif /* !defined(PPP_DRV_NAME) */
+ 
++int bcm_pppoa = 0;
++
++
+ int
+ main(argc, argv)
+     int argc;
+@@ -318,6 +323,14 @@
+     struct protent *protp;
+     char numbuf[16];
+ 
++	char cmd[128] = "";
++
++	if( strncmp(argv[1], "-c", sizeof("-c")) == 0 )
++	{
++		bcm_pppoa = 1;
++		open_ccp_flag = 0;
++	}
++
+     strlcpy(path_ipup, _PATH_IPUP, sizeof(path_ipup));
+     strlcpy(path_ipdown, _PATH_IPDOWN, sizeof(path_ipdown));
+     strlcpy(path_ipv6up, _PATH_IPV6UP, sizeof(path_ipv6up));
+@@ -555,12 +568,14 @@
+ 		if (phase == PHASE_MASTER)
+ 		    mp_bundle_terminated();
+ 	    }
+-	    if (open_ccp_flag) {
+-		if (phase == PHASE_NETWORK || phase == PHASE_RUNNING) {
+-		    ccp_fsm[0].flags = OPT_RESTART; /* clears OPT_SILENT */
+-		    (*ccp_protent.open)(0);
++		if(bcm_pppoa == 0) {
++			if (open_ccp_flag) {
++				if (phase == PHASE_NETWORK || phase == PHASE_RUNNING) {
++		    		ccp_fsm[0].flags = OPT_RESTART; /* clears OPT_SILENT */
++		    		(*ccp_protent.open)(0);
++				}
++	    	}
+ 		}
+-	    }
+ 	}
+ 	/* restore FSMs to original state */
+ 	lcp_close(0, "");
+@@ -648,7 +663,7 @@
+ 	got_sigchld = 0;
+ 	reap_kids();	/* Don't leave dead kids lying around */
+     }
+-    if (got_sigusr2) {
++    if (got_sigusr2) {// && !bcm_pppoa) {
+ 	open_ccp_flag = 1;
+ 	got_sigusr2 = 0;
+     }
+@@ -1123,6 +1138,12 @@
+      * Upcall the proper protocol input routine.
+      */
+     for (i = 0; (protp = protocols[i]) != NULL; ++i) {
++	if(strncmp(protp->name, "CCP", sizeof("CCP")) == 0 && bcm_pppoa) {
++		continue;
++	}
++	if(strncmp(protp->name, "ECP", sizeof("ECP")) == 0 && bcm_pppoa) {
++		continue;
++	}
+ 	if (protp->protocol == protocol && protp->enabled_flag) {
+ 	    (*protp->input)(0, p, len);
+ 	    return;
+--- a/pppd/pppoatm.c	1969-12-31 19:00:00.000000000 -0500
++++ b/pppd/pppoatm.c	2016-11-22 00:50:54.055838575 -0500
+@@ -0,0 +1,273 @@
++/* pppoatm.c - pppd plugin to implement PPPoATM protocol.
++ *
++ * Copyright 2000 Mitchell Blank Jr.
++ * Based in part on work from Jens Axboe and Paul Mackerras.
++ * Updated to ppp-2.4.1 by Bernhard Kaindl
++ *
++ * Updated to ppp-2.4.2 by David Woodhouse 2004.
++ *  - disconnect method added
++ *  - remove_options() abuse removed.
++ *
++ *  This program is free software; you can redistribute it and/or
++ *  modify it under the terms of the GNU General Public License
++ *  as published by the Free Software Foundation; either version
++ *  2 of the License, or (at your option) any later version.
++ */
++#include <unistd.h>
++#include <string.h>
++#include <stdlib.h>
++#ifdef ARC-BCM-pppoa-support
++#include "pppd.h"
++#include "pathnames.h"
++#include "fsm.h" /* Needed for lcp.h to include cleanly */
++#include "lcp.h"
++#include <atm.h>
++
++//TBD: this is temporary until we get Shane's workaround working...
++#define __user /* get rid of compile error with new kernel */
++#include <include/linux/version.h>
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 33)
++#include <include/generated/autoconf.h>
++#else
++#include <include/linux/autoconf.h>
++#endif
++#include <include/linux/atmdev.h> /* uses kernel include path */
++#include <linux/atmppp.h>
++#include <sys/stat.h>
++#include <net/if.h>
++#include <sys/ioctl.h>
++
++const char pppd_version[] = VERSION;
++
++static struct sockaddr_atmpvc pvcaddr;
++static char *qosstr = NULL;
++static int pppoatm_accept = 0;
++bool llc_encaps = 0;
++bool vc_encaps = 0;
++static int device_got_set = 0;
++static int pppoatm_max_mtu, pppoatm_max_mru;
++//static int setdevname_pppoatm(const char *cp);
++struct channel pppoatm_channel;
++static int fd_pppoa = -1;
++
++int setdevname_pppoatm(const char *cp);
++static void set_line_discipline_pppoatm(int fd);
++static option_t pppoa_options[] = {
++	{ "accept", o_bool, &pppoatm_accept,
++	  "set PPPoATM socket to accept incoming connections", 1 },
++	{ "device name", o_wild, (void *) &setdevname_pppoatm,
++	  "ATM service provider IDs: VPI.VCI",
++	  OPT_DEVNAM | OPT_PRIVFIX | OPT_NOARG  | OPT_A2STRVAL | OPT_STATIC,
++	  devnam},
++	{ "llc-encaps", o_bool, &llc_encaps,
++	  "use LLC encapsulation for PPPoATM", 1},
++	{ "vc-encaps", o_bool, &vc_encaps,
++	  "use VC multiplexing for PPPoATM (default)", 1},
++	{ "qos", o_string, &qosstr,
++	  "set QoS for PPPoATM connection", 1},
++	{ NULL }
++};
++
++/* returns:
++ *  -1 if there's a problem with setting the device
++ *   0 if we can't parse "cp" as a valid name of a device
++ *   1 if "cp" is a reasonable thing to name a device
++ * Note that we don't actually open the device at this point
++ * We do need to fill in:
++ *   devnam: a string representation of the device
++ *   devstat: a stat structure of the device.  In this case
++ *     we're not opening a device, so we just make sure
++ *     to set up S_ISCHR(devstat.st_mode) != 1, so we
++ *     don't get confused that we're on stdin.
++ */
++int (*old_setdevname_hook)(const char* cp) = NULL;
++int setdevname_pppoatm(const char *cp)
++{
++	struct sockaddr_atmpvc addr;
++	char *pvc;
++	//extern struct stat devstat;
++	if (device_got_set)
++		return 0;
++	info("PPPoATM setdevname_pppoatm: '%s'", cp);
++	if ((pvc = strchr(cp, '.')) == NULL)
++      return 0;
++	memset(&addr, 0, sizeof addr);
++	if (text2atm(pvc+1, (struct sockaddr *) &addr, sizeof(addr),
++	    T2A_PVC | T2A_NAME) < 0) {
++    //           if(doit)
++                   info("atm does not recognize: cp = %s", cp);
++				   info("atm does not recognize: pvc+1 = %s", pvc+1);
++		return 0;
++           }
++	strncpy(devnam, cp, (pvc-cp));
++   	devnam[pvc-cp] = '\0';
++	//if (!doit) return 1;
++	//if (!dev_set_ok()) return -1;
++	memcpy(&pvcaddr, &addr, sizeof pvcaddr);
++	//strlcpy(devnam, cp, sizeof devnam);
++	//devstat.st_mode = S_IFSOCK;
++	//if (the_channel != &pppoatm_channel) {
++		the_channel = &pppoatm_channel;
++		lcp_wantoptions[0].neg_accompression = 0;
++		lcp_allowoptions[0].neg_accompression = 0;
++		lcp_wantoptions[0].neg_asyncmap = 0;
++		lcp_allowoptions[0].neg_asyncmap = 0;
++		lcp_wantoptions[0].neg_pcompression = 0;
++	//}
++	info("PPPoATM setdevname_pppoatm - SUCCESS : %s", cp);
++	info("PPPoATM setdevname_pppoatm - SUCCESS : %s", pvc+1);
++	device_got_set = 1;
++	return 1;
++}
++
++#define pppoatm_overhead() (llc_encaps ? 6 : 2)
++
++// brcm2
++static void disconnect_pppoatm(int fd)
++{
++#if 1
++   /* For 4.x xtm driver */
++   struct atm_backend_ppp be;
++
++   be.backend_num = ATM_BACKEND_PPP_BCM_DISCONN;
++   if (ioctl(fd, ATM_SETBACKEND, &be) < 0)
++      fatal("ioctl(ATM_SETBACKEND): %m");
++#else
++   /* For 3.x atm driver */
++	unsigned char ppp_disconn[64];
++        unsigned char * outp;
++
++	outp = ppp_disconn;
++	MAKEHEADER(outp, PPP_LCP);	// 2 bytes
++	PUTCHAR(5, outp);		// TERMREQ==5 			// 1 byte
++	PUTCHAR(2, outp);  		// id=02			// 1 byte
++    PUTSHORT(4, outp);		// HEADERLEN==4 in fsm.h	// 2 byte
++	
++	write(fd, ppp_disconn+2, 6);
++#endif
++}
++
++static void no_device_given_pppoatm(void)
++{
++	fatal("No vpi.vci specified");
++}
++static int open_device_pppoatm(void)
++{
++	int fd;
++	struct atm_qos qos;
++	int i = 0;
++
++	if (!device_got_set)
++		no_device_given_pppoatm();
++	fd = socket(AF_ATMPVC, SOCK_DGRAM, 0);
++	if (fd < 0)
++		fatal("failed to create socket: %m");
++
++	fd_pppoa = fd;
++	memset(&qos, 0, sizeof qos);
++	qos.txtp.traffic_class = qos.rxtp.traffic_class = ATM_UBR;
++	/* TODO: support simplified QoS setting */
++	if (qosstr != NULL)
++		if (text2qos(qosstr, &qos, 0))
++			fatal("Can't parse QoS: \"%s\"");
++	qos.txtp.max_sdu = lcp_allowoptions[0].mru + pppoatm_overhead();
++	qos.rxtp.max_sdu = lcp_wantoptions[0].mru + pppoatm_overhead();
++	qos.aal = ATM_AAL5;
++	if (setsockopt(fd, SOL_ATM, SO_ATMQOS, &qos, sizeof(qos)) < 0)
++		fatal("setsockopt(SO_ATMQOS): %m");
++	/* TODO: accept on SVCs... */
++	if (connect(fd, (struct sockaddr *) &pvcaddr,
++	    sizeof(struct sockaddr_atmpvc)))
++		fatal("connect(%s): %m", devnam);
++	pppoatm_max_mtu = lcp_allowoptions[0].mru;
++	pppoatm_max_mru = lcp_wantoptions[0].mru;
++	set_line_discipline_pppoatm(fd);
++	//strlcpy(ppp_devnam, devnam, sizeof(ppp_devnam));
++	if (redisconn) {
++    	    while (i++ < 5) {
++    		usleep(300000);
++    		disconnect_pppoatm(fd);
++	    }
++	    usleep(100000);
++	}
++	fd_pppoa = fd;
++	return fd;
++}
++static void close_device_pppoatm(void)
++{
++	//close(fd_pppoa);
++	if (fd_pppoa > 0) {
++		struct atm_backend_ppp be;
++		be.backend_num = ATM_BACKEND_PPP_BCM_CLOSE_DEV;
++		if (ioctl(fd_pppoa, ATM_SETBACKEND, &be) < 0)
++			fatal("ioctl(ATM_SETBACKEND): %m");
++		close(fd_pppoa);
++      	fd_pppoa= -1;
++	}
++}
++
++static void set_line_discipline_pppoatm(int fd)
++{
++	struct atm_backend_ppp be;
++	be.backend_num = ATM_BACKEND_PPP_BCM;
++	if (!llc_encaps)
++		be.encaps = PPPOATM_ENCAPS_VC;
++	else if (!vc_encaps)
++		be.encaps = PPPOATM_ENCAPS_LLC;
++	else
++		be.encaps = PPPOATM_ENCAPS_AUTODETECT;
++	if (ioctl(fd, ATM_SETBACKEND, &be) < 0)
++		fatal("ioctl(ATM_SETBACKEND): %m");
++}
++static void send_config_pppoatm(int mtu, u_int32_t asyncmap,
++	int pcomp, int accomp)
++//static void send_config_pppoatm(int unit, int mtu, u_int32_t asyncmap,
++//	int pcomp, int accomp)
++// brcm end
++{
++	int sock;
++	struct ifreq ifr;
++	if (mtu > pppoatm_max_mtu)
++		error("Couldn't increase MTU to %d", mtu);
++	sock = socket(AF_INET, SOCK_DGRAM, 0);
++	if (sock < 0)
++		fatal("Couldn't create IP socket: %m");
++	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
++	ifr.ifr_mtu = mtu;
++	if (ioctl(sock, SIOCSIFMTU, (caddr_t) &ifr) < 0)
++		fatal("ioctl(SIOCSIFMTU): %m");
++	(void) close (sock);
++}
++
++// brcm begin
++static void recv_config_pppoatm(int mru, u_int32_t asyncmap,
++	int pcomp, int accomp)
++//static void recv_config_pppoatm(int unit, int mru, u_int32_t asyncmap,
++//	int pcomp, int accomp)
++// brcm end
++{
++	if (mru > pppoatm_max_mru)
++		error("Couldn't increase MRU to %d", mru);
++}
++
++
++
++void plugin_init(void)
++{
++	info("PPPoATM plugin_init");
++	add_options(pppoa_options);
++}
++struct channel pppoatm_channel = {
++    options: pppoa_options,
++    process_extra_options: NULL,
++    check_options: NULL,
++    connect: &open_device_pppoatm,
++    disconnect: &close_device_pppoatm,
++    establish_ppp: &generic_establish_ppp,
++    disestablish_ppp: &generic_disestablish_ppp,
++    send_config: &send_config_pppoatm,
++    recv_config: &recv_config_pppoatm,
++    close: NULL,
++    cleanup: NULL
++};
++#endif
+\ No newline at end of file
+--- a/pppd/pppd.h	2016-11-21 21:57:13.477921699 -0500
++++ b/pppd/pppd.h	2016-11-21 21:35:56.258284293 -0500
+@@ -748,6 +748,10 @@
+ extern void (*ipv6_up_hook) __P((void));
+ extern void (*ipv6_down_hook) __P((void));
+
++#ifdef ARC-BCM-pppoa-support
++extern int redisconn;
++#endif
++
+ extern int (*chap_check_hook) __P((void));
+ extern int (*chap_passwd_hook) __P((char *user, char *passwd));
+ extern void (*multilink_join_hook) __P((void));
+--- a/pppd/auth.c	2014-08-09 08:31:39.000000000 -0400
++++ b/pppd/auth.c	2016-11-21 21:25:35.675016001 -0500
+@@ -1197,6 +1197,9 @@
+ 	status = EXIT_IDLE_TIMEOUT;
+ 	lcp_close(0, "Link inactive");
+ 	need_holdoff = 0;
++#ifdef ARC-BCM-pppoa-support
++	redisconn = 0;
++#endif
+     } else {
+ 	TIMEOUT(check_idle, NULL, tlim);
+     }
+--- a/pppd/lcp.h	2014-08-09 08:31:39.000000000 -0400
++++ b/pppd/lcp.h	2016-11-22 05:12:42.006836035 -0500
+@@ -93,6 +93,9 @@
+     bool neg_asyncmap;		/* Negotiate the async map? */
+     bool neg_upap;		/* Ask for UPAP authentication? */
+     bool neg_chap;		/* Ask for CHAP authentication? */
++#ifdef ARC-BCM-pppoa-support
++    bool neg_mschap;	        /* Ask for CHAP authentication? */
++#endif
+     bool neg_eap;		/* Ask for EAP authentication? */
+     bool neg_magicnumber;	/* Ask for magic number? */
+     bool neg_pcompression;	/* HDLC Protocol Field Compression? */
+--- a/pppd/lcp.c	2017-02-08 11:01:11.360546700 +0800
++++ b/pppd/lcp.c	2017-02-13 16:34:14.295011287 +0800
+@@ -56,6 +56,12 @@
+ #include "chap-new.h"
+ #include "magic.h"
+ 
++#ifdef ARC-BCM-pppoa-support
++extern int opflag;
++extern bool refuse_pap;
++extern bool refuse_chap;
++#endif
++
+ static const char rcsid[] = RCSID;
+ 
+ /*
+@@ -382,6 +388,44 @@
+     fsm *f = &lcp_fsm[unit];
+     lcp_options *wo = &lcp_wantoptions[unit];
+ 
++#ifdef ARC-BCM-pppoa-support
++    lcp_options *ao = &lcp_allowoptions[unit];
++
++    // brcm
++    //wo->neg_mschap = 0;
++    //wo->neg_chap = 0;
++    //wo->neg_upap = 0;
++    ao->neg_mschap = 0;
++    ao->neg_chap = 0;
++    ao->neg_upap = 0;
++
++    // brcm
++    ao->chap_mdtype = CHAP_MD5;
++    if (opflag==3) {
++        ao->neg_chap = 1;
++	refuse_pap = 1;
++        ao->chap_mdtype = CHAP_MICROSOFT;
++    }
++    else if (opflag==2) {
++        ao->neg_chap = 1;
++	refuse_pap = 1;
++        ao->chap_mdtype = CHAP_MD5;
++    }
++    else if (opflag==1) {
++        ao->neg_upap = 1;
++	refuse_chap = 1;
++    }
++    else if (opflag==0) {
++        ao->neg_chap = 1;
++        ao->neg_upap = 1;
++    }
++    else {
++        ao->neg_chap = 1;
++        ao->neg_upap = 1;
++	ao->neg_mschap = 1;
++    }
++#endif
++
+     f->flags &= ~(OPT_PASSIVE | OPT_SILENT);
+     if (wo->passive)
+ 	f->flags |= OPT_PASSIVE;
+--- a/pppd/ipcp.c	2016-11-22 05:14:10.016919958 -0500
++++ b/pppd/ipcp.c	2016-11-22 05:12:24.564483581 -0500
+@@ -306,6 +306,10 @@
+ } ipcp_script_state;
+ static pid_t ipcp_script_pid;
+ 
++#ifdef ARC-BCM-pppoa-support
++int redisconn=0;
++#endif
++
+ /*
+  * Make a string representation of a network IP address.
+  */
+@@ -703,6 +707,10 @@
+     ipcp_options *go = &ipcp_gotoptions[f->unit];
+     ipcp_options *ao = &ipcp_allowoptions[f->unit];
+ 
++#ifdef ARC-BCM-pppoa-support
++    usepeerdns = 1; // 2016/11/14 Code_Sung add for auto DNS cannot work
++#endif
++
+     wo->req_addr = (wo->neg_addr || wo->old_addrs) &&
+ 	(ao->neg_addr || ao->old_addrs);
+     if (wo->ouraddr == 0)
+@@ -1961,6 +1969,9 @@
+     ipcp_is_up = 1;
+ 
+     notify(ip_up_notifier, 0);
++#ifdef ARC-BCM-pppoa-support
++	redisconn=1;
++#endif
+     if (ip_up_hook)
+ 	ip_up_hook();

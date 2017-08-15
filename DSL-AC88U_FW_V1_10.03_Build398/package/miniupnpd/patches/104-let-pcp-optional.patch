@@ -1,0 +1,39 @@
+diff --git a/genconfig.sh b/genconfig.sh
+index d530d16..0837dc1 100755
+--- a/genconfig.sh
++++ b/genconfig.sh
+@@ -13,6 +13,7 @@ case "$argv" in
+ 	--strict) STRICT=1 ;;
+ 	--leasefile) LEASEFILE=1 ;;
+ 	--vendorcfg) VENDORCFG=1 ;;
++	--pcp) PCP=1 ;;
+ 	--pcp-peer) PCP_PEER=1 ;;
+ 	--portinuse) PORTINUSE=1 ;;
+ 	--help|-h)
+@@ -22,6 +23,7 @@ case "$argv" in
+ 		echo " --strict    be more strict regarding compliance with UPnP specifications"
+ 		echo " --leasefile enable lease file"
+ 		echo " --vendorcfg enable configuration of manufacturer info"
++		echo " --pcp enable pcp operation"
+ 		echo " --pcp-peer  enable PCP PEER operation"
+ 		echo " --portinuse enable port in use check"
+ 		exit 1
+@@ -345,10 +347,16 @@ echo "/* Comment the following line to disable NAT-PMP operations */" >> ${CONFI
+ echo "#define ENABLE_NATPMP" >> ${CONFIGFILE}
+ echo "" >> ${CONFIGFILE}
+ 
+-echo "/* Comment the following line to disable PCP operations */" >> ${CONFIGFILE}
+-echo "#define ENABLE_PCP" >> ${CONFIGFILE}
++if [ -n "$PCP" ] ; then
++	echo "/* Comment the following line to disable PCP operations */" >> ${CONFIGFILE}
++	echo "#define ENABLE_PCP" >> ${CONFIGFILE}
++	echo "" >> ${CONFIGFILE}
++else
++	echo "/*#define ENABLE_PCP*/" >> ${CONFIGFILE}
++fi
+ echo "" >> ${CONFIGFILE}
+ 
++
+ echo "#ifdef ENABLE_PCP" >> ${CONFIGFILE}
+ if [ -n "$PCP_PEER" ]; then
+ echo "/* Comment the following line to disable PCP PEER operation */" >> ${CONFIGFILE}

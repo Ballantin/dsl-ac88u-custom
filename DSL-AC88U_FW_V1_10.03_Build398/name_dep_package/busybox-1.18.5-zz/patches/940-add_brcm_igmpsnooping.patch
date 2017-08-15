@@ -1,0 +1,383 @@
+diff -ubBr busybox-1.18.5-orig/include/usage.src.h busybox-1.18.5/include/usage.src.h
+--- busybox-1.18.5-orig/include/usage.src.h	2015-04-24 17:37:43.954877469 +0800
++++ busybox-1.18.5/include/usage.src.h	2015-04-27 10:10:03.342862987 +0800
+@@ -186,6 +186,13 @@
+      "\n	delbr BRIDGE		Delete BRIDGE" \
+      "\n	addif BRIDGE IFACE	Add IFACE to BRIDGE" \
+      "\n	delif BRIDGE IFACE	Delete IFACE from BRIDGE" \
++     "\n	enableportsnooping <bridge> <value>\t0-disable 1-standard 2-blocking" \
++     "\n	enableproxymode <bridge> <value> \tTo enable 1 or disable 0" \
++     "\n	mldenableportsnooping <bridge> <value>\t0-disable 1-standard 2-blocking" \
++     "\n	mldenableproxymode <bridge> <value>\tTo enable 1 or disable 0" \
++     "\n	enableigmplan2lan <bridge> <value> \t0-disable 1-enable" \
++     "\n	enablemldlan2lan <bridge> <value> \t0-disable 1-enable" \
++     "\n	enableigmpratelimit <bridge> <value>\t0-disable, 1..500-packet rate" \
+ 	IF_FEATURE_BRCTL_FANCY( \
+      "\n	setageing BRIDGE TIME		Set ageing time" \
+      "\n	setfd BRIDGE TIME		Set bridge forward delay" \
+diff -ubBr busybox-1.18.5-orig/networking/brctl.c busybox-1.18.5/networking/brctl.c
+--- busybox-1.18.5-orig/networking/brctl.c	2015-04-24 17:37:43.927877945 +0800
++++ busybox-1.18.5/networking/brctl.c	2015-04-27 10:11:07.402738064 +0800
+@@ -94,12 +94,286 @@
+ }
+ #endif
+ 
++// brcm begin		//by seal
++#define BRCTL_ENABLE_SNOOPING                   21
++#define BRCTL_ENABLE_PROXY_MODE                 22
++#define BRCTL_ENABLE_IGMP_RATE_LIMIT            23
++#define BRCTL_MLD_ENABLE_SNOOPING               24
++#define BRCTL_MLD_ENABLE_PROXY_MODE             25
++#define BRCTL_ENABLE_IGMP_LAN2LAN_MC            31
++#define BRCTL_ENABLE_MLD_LAN2LAN_MC             32
++int br_socket_fd = -1;
++
++int br_init(void)
++{
++	if ((br_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
++		return errno;
++	return 0;
++}
++
++void br_shutdown(void)
++{
++	close(br_socket_fd);
++	br_socket_fd = -1;
++}
++
++int br_enable_port_snooping(const char *br, int enable)
++{
++	int ret;
++	char _br[IFNAMSIZ];
++	unsigned long arg[3] 
++			= { BRCTL_ENABLE_SNOOPING, (unsigned long) _br, 0};
++
++	strncpy(_br, br, IFNAMSIZ);
++	arg[2] = enable;
++	ret = ioctl(br_socket_fd, SIOCSIFBR, arg);
++
++	return ret < 0 ? errno : 0;
++}
++
++int br_mld_enable_port_snooping(const char *br, int enable)
++{
++	int ret;
++	char _br[IFNAMSIZ];
++	unsigned long arg[3] 
++			= { BRCTL_MLD_ENABLE_SNOOPING, (unsigned long) _br, 0};
++
++	strncpy(_br, br, IFNAMSIZ);
++	arg[2] = enable;
++	ret = ioctl(br_socket_fd, SIOCSIFBR, arg);
++
++	return ret < 0 ? errno : 0;
++}
++
++int br_igmp_enable_lan_to_lan_mcast(const char *br, int enable)
++{
++	int ret;
++	char _br[IFNAMSIZ];
++	unsigned long arg[3]
++			= { BRCTL_ENABLE_IGMP_LAN2LAN_MC, (unsigned long) _br, 0};
++
++	strncpy(_br, br, IFNAMSIZ);
++	arg[2] = enable;
++	ret = ioctl(br_socket_fd, SIOCSIFBR, arg);
++
++	return ret < 0 ? errno : 0;
++}
++
++int br_mld_enable_lan_to_lan_mcast(const char *br, int enable)
++{
++	int ret;
++	char _br[IFNAMSIZ];
++	unsigned long arg[3]
++			= { BRCTL_ENABLE_MLD_LAN2LAN_MC, (unsigned long) _br, 0};
++
++	strncpy(_br, br, IFNAMSIZ);
++	arg[2] = enable;
++	ret = ioctl(br_socket_fd, SIOCSIFBR, arg);
++
++	return ret < 0 ? errno : 0;
++}
++
++int br_enable_proxy_mode(const char *br, int enable)
++{
++	int ret;
++	char _br[IFNAMSIZ];
++	unsigned long arg[3] 
++			= { BRCTL_ENABLE_PROXY_MODE, (unsigned long) _br, 0};
++
++        strncpy(_br, br, IFNAMSIZ);
++	arg[2] = enable;
++	ret = ioctl(br_socket_fd, SIOCSIFBR, arg);
++
++	return ret < 0 ? errno : 0;
++
++}
++
++int br_mld_enable_proxy_mode(const char *br, int enable)
++{
++	int ret;
++	char _br[IFNAMSIZ];
++	unsigned long arg[3] 
++			= { BRCTL_MLD_ENABLE_PROXY_MODE, (unsigned long) _br, 0};
++
++        strncpy(_br, br, IFNAMSIZ);
++	arg[2] = enable;
++	ret = ioctl(br_socket_fd, SIOCSIFBR, arg);
++
++	return ret < 0 ? errno : 0;
++
++}
++
++int br_igmp_enable_rate_limit(const char *br, int limit)
++{
++	int ret;
++	char _br[IFNAMSIZ];
++	unsigned long arg[3] = { BRCTL_ENABLE_IGMP_RATE_LIMIT, 
++                            (unsigned long) _br, 0};
++
++	strncpy(_br, br, IFNAMSIZ);
++	arg[2] = limit;
++	ret = ioctl(br_socket_fd, SIOCSIFBR, arg);
++
++	return ret < 0 ? errno : 0;
++}
++
++// brcm begin
++static int br_cmd_enableportsnooping(int argc, char*const* argv)
++{
++	int err;
++	int enable;
++
++        sscanf(argv[2], "%i", &enable);
++
++	if((enable < 0) || (enable > 2)) {
++		fprintf(stderr, "bad value\n");
++		return 1;
++        }
++
++	err = br_enable_port_snooping(argv[1], enable);
++	if (err)
++		fprintf(stderr, "enable port snooping failed: %s\n",
++			strerror(errno));
++
++	return err != 0;
++}
++
++static int br_cmd_enableproxymode(int argc, char *const* argv)
++{
++	int err;
++	int enable;
++
++        sscanf(argv[2], "%i", &enable);
++
++	if((enable != 0) && (enable != 1)) {
++		fprintf(stderr, "bad value\n");
++		return 1;
++	}
++
++	err = br_enable_proxy_mode(argv[1], enable);
++	if (err)
++		fprintf(stderr, "enable proxy mode failed: %s\n",
++			strerror(errno));
++
++	return err != 0;
++}
++
++static int br_cmd_mld_enableportsnooping(int argc, char*const* argv)
++{
++	int err;
++	int enable;
++
++        sscanf(argv[2], "%i", &enable);
++
++	if((enable < 0) || (enable > 2)) {
++		fprintf(stderr, "bad value\n");
++		return 1;
++	}
++
++	err = br_mld_enable_port_snooping(argv[1], enable);
++	if (err)
++		fprintf(stderr, "enable mld port snooping failed: %s\n",
++			strerror(errno));
++
++	return err != 0;
++}
++
++static int br_cmd_mld_enableproxymode(int argc, char*const* argv)
++{
++	int err;
++	int enable;
++
++        sscanf(argv[2], "%i", &enable);
++
++	if((enable != 0) && (enable != 1)) {
++		fprintf(stderr, "bad value\n");
++		return 1;
++	}
++
++	err = br_mld_enable_proxy_mode(argv[1], enable);
++	if (err)
++		fprintf(stderr, "enable mld proxy mode failed: %s\n",
++			strerror(errno));
++
++	return err != 0;
++}
++
++static int br_cmd_enableigmpratelimit(int argc, char*const* argv)
++{
++	int err;
++	int limit;
++
++	sscanf(argv[2], "%i", &limit);
++
++	if( limit > 500 )
++	{
++		fprintf(stderr, "bad value\n");
++		return 1;
++	}
++
++	err = br_igmp_enable_rate_limit(argv[1], limit);
++	if (err)
++	{
++		fprintf(stderr, "enable igmp rate limit failed: %s\n",
++			strerror(errno));
++	}
++
++	return err != 0;
++}
++
++static int br_cmd_igmp_enableLanToLanMcast(int argc, char*const* argv)
++{
++	int err;
++	char enable;
++
++	sscanf(argv[2], "%hhi", &enable);
++
++	if((enable != -1) && (enable != 0) && (enable != 1)) 
++	{
++		fprintf(stderr, "bad value %d\n", enable);
++		return 1;
++	}
++
++	err = br_igmp_enable_lan_to_lan_mcast(argv[1], enable);
++	if (err)
++	{
++		fprintf(stderr, "enable igmp lan to lan mcast failed: %s\n",
++			strerror(errno));
++	}
++
++	return err != 0;
++}
++
++static int br_cmd_mld_enableLanToLanMcast(int argc, char*const* argv)
++{
++	int err;
++	char enable;
++
++	sscanf(argv[2], "%hhi", &enable);
++
++	if((enable != -1) && (enable != 0) && (enable != 1)) 
++	{
++		fprintf(stderr, "bad value %d\n", enable);
++		return 1;
++	}
++
++	err = br_mld_enable_lan_to_lan_mcast(argv[1], enable);
++	if (err)
++	{
++		fprintf(stderr, "enable mld lan to lan mcast failed: %s\n",
++			strerror(errno));
++	}
++
++	return err != 0;
++
++}
+ 
+ int brctl_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+ int brctl_main(int argc UNUSED_PARAM, char **argv)
+ {
+ 	static const char keywords[] ALIGN1 =
+ 		"addbr\0" "delbr\0" "addif\0" "delif\0"
++		"enableportsnooping\0" "enableproxymode\0" "enableigmplan2lan\0" "mldenableportsnooping\0" "mldenableproxymode\0" "enablemldlan2lan\0" "enableigmpratelimit\0"
+ 	IF_FEATURE_BRCTL_FANCY(
+ 		"stp\0"
+ 		"setageing\0" "setfd\0" "sethello\0" "setmaxage\0"
+@@ -108,6 +382,7 @@
+ 	IF_FEATURE_BRCTL_SHOW("show\0");
+ 
+ 	enum { ARG_addbr = 0, ARG_delbr, ARG_addif, ARG_delif
++		, ARG_enableportsnooping, ARG_enableproxymode, ARG_enableigmplan2lan, ARG_mldenableportsnooping, ARG_mldenableproxymode, ARG_enablemldlan2lan, ARG_enableigmpratelimit
+ 		IF_FEATURE_BRCTL_FANCY(,
+ 		   ARG_stp,
+ 		   ARG_setageing, ARG_setfd, ARG_sethello, ARG_setmaxage,
+@@ -132,9 +407,53 @@
+ 		key = index_in_strings(keywords, *argv);
+ 		if (key == -1) /* no match found in keywords array, bail out. */
+ 			bb_error_msg_and_die(bb_msg_invalid_arg, *argv, applet_name);
++
++		if (key == ARG_enableportsnooping || key == ARG_enableigmplan2lan ||
++				key == ARG_mldenableportsnooping || key == ARG_enablemldlan2lan) {			//Add by seal to support igmp snooping 150423
++			if (br_init()) {
++				fprintf(stderr, "can't setup bridge control: %s\n",
++					strerror(errno));
++				exit(0);
++			}
++		}
++		if (key == ARG_enableportsnooping) {			//Add by seal to support igmp snooping 150423
++			printf("ARG_enableportsnooping\n");
++			br_cmd_enableportsnooping(argc, argv);
++			goto done_igmpsnooping;
++		}
++		if (key == ARG_enableigmplan2lan) { 
++			printf("ARG_enableigmplan2lan\n");
++			br_cmd_igmp_enableLanToLanMcast(argc, argv);
++			goto done_igmpsnooping;
++		}
++		if (key == ARG_mldenableportsnooping) { 
++			printf("ARG_mldenableportsnooping\n");
++			br_cmd_mld_enableportsnooping(argc, argv);
++			goto done_igmpsnooping;
++		}
++		if (key == ARG_enablemldlan2lan) { 
++			printf("ARG_enablemldlan2lan\n");
++			br_cmd_mld_enableLanToLanMcast(argc, argv);
++			goto done_igmpsnooping;
++		}
++		if (key == ARG_enableproxymode) { 
++			printf("ARG_enableproxymode\n");
++			br_cmd_enableproxymode(argc, argv);
++			goto done_igmpsnooping;
++		}
++		if (key == ARG_mldenableproxymode) { 
++			printf("ARG_mldenableproxymode\n");
++			br_cmd_mld_enableproxymode(argc, argv);
++			goto done_igmpsnooping;
++		}
++		if (key == ARG_enableigmpratelimit) { 
++			printf("ARG_enableigmpratelimit\n");
++			br_cmd_enableigmpratelimit(argc, argv);
++			goto done_igmpsnooping;
++		}
++
+ 		argv++;
+ 		fd = xsocket(AF_INET, SOCK_STREAM, 0);
+-
+ #if ENABLE_FEATURE_BRCTL_SHOW
+ 		if (key == ARG_show) { /* show */
+ 			char brname[IFNAMSIZ];
+@@ -311,6 +630,11 @@
+  done:
+ 		close(fd);
+ 	}
++done_igmpsnooping:
++	if (key == ARG_enableportsnooping || key == ARG_enableigmplan2lan ||
++			key == ARG_mldenableportsnooping || key == ARG_enablemldlan2lan) {			//Add by seal to support igmp snooping 150423
++		br_shutdown();
++	}
+ 
+ 	return EXIT_SUCCESS;
+ }
+

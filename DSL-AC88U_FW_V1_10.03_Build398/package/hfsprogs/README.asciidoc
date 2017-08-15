@@ -1,0 +1,17 @@
+OpenWRT package for hfsprogs
+============================
+
+What is it?
+-----------
+
+This is a OpenWRT package for fsck.hfs / fsck.hfsplus
+
+How to use it?
+--------------
+
+- Download Attitude Adjustment SDK
+- Install prerequisites for SDK
+- Copy this repository into `package` subdirectory
+- Issue `make package/hfsprogs/compile` command from the top of the SDK directory
+- Grab built package from `bin/$arch/packages` directory
+
